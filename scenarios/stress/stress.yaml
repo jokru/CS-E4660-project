@@ -1,0 +1,25 @@
+description: "High-volume load. Not loaded by default; use MOCK_IO_SCENARIO_DIR=scenarios/stress."
+
+defaults:
+  seed: 7
+  latency: {dist: lognormal, median_ms: 5, sigma: 0.8}
+  failure_rate: 0.0
+
+jobs:
+  - name: fanout
+    copies: 50
+    ops:
+      - name: fetch
+        call_groups:
+          - {io: http, action: get, count: 500, mode: gather, max_concurrency: 50}
+      - name: write
+        call_groups:
+          - {io: db, action: insert, count: 500, mode: gather, max_concurrency: 20}
+          - {io: gcs, action: upload, count: 50, mode: gather, payload_bytes: 4096}
+
+  - name: chatty_sequential
+    copies: 10
+    ops:
+      - name: step
+        call_groups:
+          - {io: db, action: query, count: 1000}

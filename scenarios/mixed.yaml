@@ -1,0 +1,48 @@
+description: "Realistic mix: sequential and gathered I/O, retries, copies, multiprocess executor."
+
+defaults:
+  seed: 42
+  latency: {dist: lognormal, median_ms: 30, sigma: 0.6}
+  failure_rate: 0.0
+
+jobs:
+  - name: sync_customers
+    copies: 3
+    ops:
+      - name: list_pages
+        call_groups:
+          - {io: http, action: get, count: 1}
+      - name: fetch_pages
+        retries: 2
+        call_groups:
+          - io: http
+            action: get
+            count: 20
+            mode: gather
+            max_concurrency: 5
+            latency: {dist: normal, mean_ms: 80, stddev_ms: 25}
+            failure_rate: 0.02
+      - name: upsert
+        call_groups:
+          - {io: db, action: query, count: 1}
+          - {io: db, action: insert, count: 20, mode: gather, max_concurrency: 4}
+
+  - name: archive_exports
+    executor: multiprocess
+    ops:
+      - name: export
+        call_groups:
+          - {io: db, action: query, count: 3}
+          - io: gcs
+            action: upload
+            count: 10
+            mode: gather
+            payload_bytes: 65536
+            latency: {dist: uniform, min_ms: 40, max_ms: 120}
+      - name: verify
+        call_groups:
+          - {io: gcs, action: list, count: 1}
+          - {io: gcs, action: download, count: 2, payload_bytes: 65536}
+      - name: notify
+        call_groups:
+          - {io: http, action: post, count: 1, latency: {dist: fixed, ms: 15}}

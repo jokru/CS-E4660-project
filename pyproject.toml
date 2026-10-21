@@ -1,0 +1,54 @@
+[project]
+name = "mock-io-app"
+version = "0.1.0"
+description = "Dagster sample app with scenario-driven mocked I/O for trace collector load testing"
+requires-python = ">=3.12"
+dependencies = [
+    "dagster>=1.9",
+    "dagster-graphql>=1.9",
+    "fastapi>=0.115",
+    "httpx>=0.27",
+    "uvicorn>=0.32",
+    "pydantic>=2.9",
+    "pyyaml>=6",
+    "opentelemetry-api>=1.28",
+    "opentelemetry-sdk>=1.28",
+    "opentelemetry-exporter-otlp>=1.28",
+    "opentelemetry-instrumentation-fastapi>=0.49b0",
+]
+
+[project.scripts]
+mock-io-run = "mock_io_app.cli:main"
+mock-io-api = "mock_io_app.api.app:main"
+mock-io-ctl = "mock_io_app.api.client_cli:main"
+
+[dependency-groups]
+dev = [
+    "dagster-webserver>=1.9",
+    "pytest>=8",
+    "pytest-asyncio>=0.24",
+    "ruff>=0.7",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mock_io_app"]
+
+[tool.dagster]
+module_name = "mock_io_app.definitions"
+code_location_name = "mock_io_app"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
