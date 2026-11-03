@@ -1,6 +1,7 @@
 import os
 import re
-from dataclasses import dataclass
+from collections.abc import Mapping
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal
 
@@ -16,16 +17,18 @@ MAX_CONCURRENCY = 1_000
 MAX_PAYLOAD_BYTES = 10 * 1024 * 1024
 MAX_RETRIES = 10
 MAX_DEPENDENCIES = 50
+MAX_SERVICES = 100
 MAX_OPS_PER_JOB = 2_000
 MAX_TOTAL_OPS = 50_000
 MAX_TOTAL_CALLS = 1_000_000
 MAX_SCENARIO_FILE_BYTES = 1024 * 1024
 
-IOType = Literal["db", "gcs", "http"]
+IOType = Literal["db", "gcs", "http", "service"]
 ALLOWED_ACTIONS: dict[str, frozenset[str]] = {
     "db": frozenset({"query", "insert"}),
     "gcs": frozenset({"upload", "download", "list"}),
     "http": frozenset({"get", "post"}),
+    "service": frozenset({"call"}),
 }
 
 DEFAULT_SCENARIO_DIR = Path(__file__).resolve().parents[2] / "scenarios"
@@ -45,6 +48,8 @@ class Defaults(_Spec):
 class CallGroupSpec(_Spec):
     io: IOType
     action: str
+    # Name of an entry in the scenario's `services`; required for (and only for) io=service.
+    service: str | None = Field(default=None, pattern=NAME_PATTERN)
     count: int = Field(default=1, ge=1, le=MAX_CALL_COUNT)
     mode: Literal["sequential", "gather"] = "sequential"
     # None -> unbounded within the group
@@ -61,6 +66,23 @@ class CallGroupSpec(_Spec):
                 f"action {self.action!r} not allowed for io {self.io!r}; "
                 f"expected one of {sorted(allowed)}"
             )
+        if (self.io == "service") != (self.service is not None):
+            raise ValueError("`service` must be set if and only if io is 'service'")
+        return self
+
+
+class ServiceSpec(_Spec):
+    # first_party: its internal call_groups run (and are traced) inside the call.
+    # third_party: a black box; only the client-side call is traced.
+    kind: Literal["first_party", "third_party"]
+    call_groups: list[CallGroupSpec] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def _check_groups(self) -> "ServiceSpec":
+        if self.kind == "third_party" and self.call_groups:
+            raise ValueError("third_party services are black boxes and cannot define call_groups")
+        if self.kind == "first_party" and not self.call_groups:
+            raise ValueError("first_party services must define call_groups")
         return self
 
 
@@ -86,25 +108,74 @@ class JobSpec(_Spec):
             raise ValueError(f"duplicate op names in job {self.name!r}")
         return self
 
-    def calls_per_run(self) -> int:
-        return sum(g.count for op in self.ops for g in op.call_groups)
+    def calls_per_run(self, service_calls: Mapping[str, int] | None = None) -> int:
+        return sum(_group_calls(g, service_calls) for op in self.ops for g in op.call_groups)
 
 
 class Scenario(_Spec):
     description: str = ""
     defaults: Defaults = Defaults()
+    services: dict[str, ServiceSpec] = Field(default_factory=dict, max_length=MAX_SERVICES)
     jobs: list[JobSpec] = Field(min_length=1)
 
     @model_validator(mode="after")
     def _check_jobs(self) -> "Scenario":
+        for name in self.services:
+            if not is_valid_name(name):
+                raise ValueError(f"service name {name!r} must match {NAME_PATTERN}")
+        service_calls = _service_call_counts(self.services)
+        for job in self.jobs:
+            for op in job.ops:
+                _check_service_refs(op.call_groups, self.services, f"job {job.name!r}")
         expanded = [name for job in self.jobs for name in expanded_job_names(job)]
         if len(expanded) != len(set(expanded)):
             raise ValueError("job names collide after copies expansion")
-        total = sum(job.copies * job.calls_per_run() for job in self.jobs)
+        total = sum(job.copies * job.calls_per_run(service_calls) for job in self.jobs)
         if total > MAX_TOTAL_CALLS:
             raise ValueError(f"scenario defines {total} calls, max is {MAX_TOTAL_CALLS}")
         _check_dependencies(self.jobs)
         return self
+
+
+def _group_calls(group: CallGroupSpec, service_calls: Mapping[str, int] | None) -> int:
+    # A service call counts itself plus everything its handler does.
+    inner = (service_calls or {}).get(group.service or "", 0)
+    return group.count * (1 + inner)
+
+
+def _check_service_refs(
+    groups: list[CallGroupSpec], services: Mapping[str, ServiceSpec], where: str
+) -> None:
+    for group in groups:
+        if group.service is not None and group.service not in services:
+            raise ValueError(f"{where} calls unknown service {group.service!r}")
+
+
+def _service_call_counts(services: Mapping[str, ServiceSpec]) -> dict[str, int]:
+    """Total calls one invocation of each service performs inside; rejects unknown refs and cycles."""
+    counts: dict[str, int] = {}
+    visiting: set[str] = set()
+
+    def visit(name: str) -> int:
+        if name in counts:
+            return counts[name]
+        if name in visiting:
+            raise ValueError(f"service call cycle involving {name!r}")
+        visiting.add(name)
+        spec = services[name]
+        _check_service_refs(spec.call_groups, services, f"service {name!r}")
+        total = sum(
+            g.count * (1 + (visit(g.service) if g.service else 0)) for g in spec.call_groups
+        )
+        visiting.discard(name)
+        if total > MAX_TOTAL_CALLS:
+            raise ValueError(f"service {name!r} expands to more than {MAX_TOTAL_CALLS} calls")
+        counts[name] = total
+        return total
+
+    for name in services:
+        visit(name)
+    return counts
 
 
 def _check_dependencies(jobs: list[JobSpec]) -> None:
@@ -152,6 +223,7 @@ class ExpandedJob:
     defaults: Defaults
     # Expanded names of every upstream job copy whose ops run before this job's ops.
     upstream: tuple[str, ...] = ()
+    services: Mapping[str, ServiceSpec] = field(default_factory=dict)
 
 
 def expanded_job_names(job: JobSpec) -> list[str]:
@@ -168,6 +240,7 @@ def expand_jobs(scenario_name: str, scenario: Scenario) -> list[ExpandedJob]:
             name=f"{scenario_name}__{name}",
             spec=job,
             defaults=scenario.defaults,
+            services=scenario.services,
             upstream=tuple(
                 f"{scenario_name}__{up}"
                 for dep in job.depends_on

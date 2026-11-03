@@ -1,0 +1,6765 @@
+description: 'Supermarket chain data platform: 10 importers, 15+2 transformers, 20+2 loaders with mixed dependencies. Generated
+  by scripts/generate_supermarket.py.'
+defaults:
+  seed: 42
+  latency:
+    dist: lognormal
+    median_ms: 30
+    sigma: 0.6
+  failure_rate: 0.0
+jobs:
+- name: import_pos_sales
+  ops:
+  - name: download_promo_index
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: get_weather_forecast
+    call_groups:
+    - io: http
+      action: get
+      count: 5
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: upsert_pos_transactions
+    call_groups:
+    - io: db
+      action: insert
+      count: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: get_holiday_calendar
+    call_groups:
+    - io: http
+      action: get
+      count: 4
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: download_sensor_dump
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: log_rejected_rows
+    call_groups:
+    - io: db
+      action: insert
+      count: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upload_staged_receipts
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 1
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: post_import_heartbeat
+    call_groups:
+    - io: http
+      action: post
+      count: 2
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: record_ingest_watermark
+    call_groups:
+    - io: db
+      action: insert
+      count: 1
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: download_loyalty_export
+    call_groups:
+    - io: gcs
+      action: download
+      count: 4
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_normalized_events
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 2
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_validated_batches
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: store_shelf_snapshots
+    call_groups:
+    - io: db
+      action: insert
+      count: 3
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: post_delivery_ack
+    call_groups:
+    - io: http
+      action: post
+      count: 5
+      mode: gather
+      max_concurrency: 3
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: lookup_sku_catalog
+    call_groups:
+    - io: db
+      action: query
+      count: 3
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: get_supplier_prices
+    call_groups:
+    - io: http
+      action: get
+      count: 5
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+- name: import_loyalty_cards
+  ops:
+  - name: download_promo_index
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_loyalty_export
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      mode: gather
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: resolve_supplier_codes
+    call_groups:
+    - io: db
+      action: query
+      count: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: download_supplier_csv
+    call_groups:
+    - io: gcs
+      action: download
+      count: 2
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: scan_price_history
+    call_groups:
+    - io: db
+      action: query
+      count: 2
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: get_traffic_report
+    call_groups:
+    - io: http
+      action: get
+      count: 5
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: upload_rejected_rows
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 3
+      mode: gather
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: post_import_heartbeat
+    call_groups:
+    - io: http
+      action: post
+      count: 2
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: upsert_pos_transactions
+    call_groups:
+    - io: db
+      action: insert
+      count: 3
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: get_store_hours
+    call_groups:
+    - io: http
+      action: get
+      count: 5
+      mode: gather
+      max_concurrency: 3
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: get_courier_status
+    call_groups:
+    - io: http
+      action: get
+      count: 2
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: upload_normalized_events
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 2
+      mode: gather
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: register_batch_manifest
+    call_groups:
+    - io: db
+      action: insert
+      count: 7
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: log_rejected_rows
+    call_groups:
+    - io: db
+      action: insert
+      count: 16
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: read_store_registry
+    call_groups:
+    - io: db
+      action: query
+      count: 3
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: select_loyalty_members
+    call_groups:
+    - io: db
+      action: query
+      count: 1
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: get_fx_rates
+    call_groups:
+    - io: http
+      action: get
+      count: 1
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: record_ingest_watermark
+    call_groups:
+    - io: db
+      action: insert
+      count: 3
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upsert_supplier_contacts
+    call_groups:
+    - io: db
+      action: insert
+      count: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: post_delivery_ack
+    call_groups:
+    - io: http
+      action: post
+      count: 3
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+- name: import_supplier_prices
+  ops:
+  - name: append_import_audit_log
+    call_groups:
+    - io: db
+      action: insert
+      count: 7
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upload_staged_receipts
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: get_traffic_report
+    call_groups:
+    - io: http
+      action: get
+      count: 5
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: upload_validated_batches
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 2
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_sensor_dump
+    call_groups:
+    - io: gcs
+      action: download
+      count: 2
+      mode: gather
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: store_shelf_snapshots
+    call_groups:
+    - io: db
+      action: insert
+      count: 2
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: register_batch_manifest
+    call_groups:
+    - io: db
+      action: insert
+      count: 13
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: get_fx_rates
+    call_groups:
+    - io: http
+      action: get
+      count: 5
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: upload_normalized_events
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 2
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_supplier_csv
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: post_import_heartbeat
+    call_groups:
+    - io: http
+      action: post
+      count: 1
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: find_open_purchase_orders
+    call_groups:
+    - io: db
+      action: query
+      count: 3
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upsert_supplier_contacts
+    call_groups:
+    - io: db
+      action: insert
+      count: 18
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: download_promo_index
+    call_groups:
+    - io: gcs
+      action: download
+      count: 2
+      mode: gather
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upsert_pos_transactions
+    call_groups:
+    - io: db
+      action: insert
+      count: 2
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: get_store_hours
+    call_groups:
+    - io: http
+      action: get
+      count: 6
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: upload_rejected_rows
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 3
+      mode: gather
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_loyalty_export
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: get_courier_status
+    call_groups:
+    - io: http
+      action: get
+      count: 3
+      mode: gather
+      max_concurrency: 3
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: insert_staging_receipts
+    call_groups:
+    - io: db
+      action: insert
+      count: 13
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: get_supplier_prices
+    call_groups:
+    - io: http
+      action: get
+      count: 4
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: get_weather_forecast
+    call_groups:
+    - io: http
+      action: get
+      count: 1
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: log_rejected_rows
+    call_groups:
+    - io: db
+      action: insert
+      count: 5
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upload_import_manifest
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 3
+      mode: gather
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_raw_receipts
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      mode: gather
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: post_delivery_ack
+    call_groups:
+    - io: http
+      action: post
+      count: 5
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: get_promo_feed
+    call_groups:
+    - io: http
+      action: get
+      count: 6
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+- name: import_weather_feed
+  ops:
+  - name: get_store_hours
+    call_groups:
+    - io: http
+      action: get
+      count: 2
+      mode: gather
+      max_concurrency: 3
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: download_raw_receipts
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: append_import_audit_log
+    call_groups:
+    - io: db
+      action: insert
+      count: 15
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upload_import_manifest
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 2
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_staged_receipts
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 1
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_validated_batches
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 1
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: resolve_supplier_codes
+    call_groups:
+    - io: db
+      action: query
+      count: 3
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upload_normalized_events
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 3
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: get_courier_status
+    call_groups:
+    - io: http
+      action: get
+      count: 3
+      mode: gather
+      max_concurrency: 3
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: get_supplier_prices
+    call_groups:
+    - io: http
+      action: get
+      count: 1
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: select_loyalty_members
+    call_groups:
+    - io: db
+      action: query
+      count: 2
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: store_shelf_snapshots
+    call_groups:
+    - io: db
+      action: insert
+      count: 2
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: get_weather_forecast
+    call_groups:
+    - io: http
+      action: get
+      count: 6
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: lookup_sku_catalog
+    call_groups:
+    - io: db
+      action: query
+      count: 2
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: download_supplier_csv
+    call_groups:
+    - io: gcs
+      action: download
+      count: 4
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: check_import_watermark
+    call_groups:
+    - io: db
+      action: query
+      count: 2
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: download_sensor_dump
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      mode: gather
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: get_fx_rates
+    call_groups:
+    - io: http
+      action: get
+      count: 3
+      mode: gather
+      max_concurrency: 3
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: download_loyalty_export
+    call_groups:
+    - io: gcs
+      action: download
+      count: 4
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: get_holiday_calendar
+    call_groups:
+    - io: http
+      action: get
+      count: 6
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: read_promotion_calendar
+    call_groups:
+    - io: db
+      action: query
+      count: 2
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: download_promo_index
+    call_groups:
+    - io: gcs
+      action: download
+      count: 2
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: get_promo_feed
+    call_groups:
+    - io: http
+      action: get
+      count: 4
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: record_ingest_watermark
+    call_groups:
+    - io: db
+      action: insert
+      count: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+- name: import_shelf_sensors
+  ops:
+  - name: log_rejected_rows
+    call_groups:
+    - io: db
+      action: insert
+      count: 1
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: download_supplier_csv
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      mode: gather
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: get_supplier_prices
+    call_groups:
+    - io: http
+      action: get
+      count: 2
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: upload_import_manifest
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 2
+      mode: gather
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: lookup_sku_catalog
+    call_groups:
+    - io: db
+      action: query
+      count: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: download_loyalty_export
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: get_holiday_calendar
+    call_groups:
+    - io: http
+      action: get
+      count: 1
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: get_courier_status
+    call_groups:
+    - io: http
+      action: get
+      count: 4
+      mode: gather
+      max_concurrency: 3
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: upload_normalized_events
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 3
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_sensor_dump
+    call_groups:
+    - io: gcs
+      action: download
+      count: 4
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: scan_price_history
+    call_groups:
+    - io: db
+      action: query
+      count: 2
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: get_store_hours
+    call_groups:
+    - io: http
+      action: get
+      count: 3
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: upload_staged_receipts
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_validated_batches
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 1
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: post_delivery_ack
+    call_groups:
+    - io: http
+      action: post
+      count: 1
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: download_promo_index
+    call_groups:
+    - io: gcs
+      action: download
+      count: 4
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_raw_receipts
+    call_groups:
+    - io: gcs
+      action: download
+      count: 2
+      mode: gather
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: check_import_watermark
+    call_groups:
+    - io: db
+      action: query
+      count: 3
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: post_import_heartbeat
+    call_groups:
+    - io: http
+      action: post
+      count: 3
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: get_traffic_report
+    call_groups:
+    - io: http
+      action: get
+      count: 6
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: upsert_pos_transactions
+    call_groups:
+    - io: db
+      action: insert
+      count: 3
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: get_weather_forecast
+    call_groups:
+    - io: http
+      action: get
+      count: 2
+      mode: gather
+      max_concurrency: 3
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+- name: import_ecommerce_orders
+  ops:
+  - name: get_courier_status
+    call_groups:
+    - io: http
+      action: get
+      count: 4
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: upload_validated_batches
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      mode: gather
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_raw_receipts
+    call_groups:
+    - io: gcs
+      action: download
+      count: 2
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upsert_supplier_contacts
+    call_groups:
+    - io: db
+      action: insert
+      count: 3
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: get_store_hours
+    call_groups:
+    - io: http
+      action: get
+      count: 3
+      mode: gather
+      max_concurrency: 3
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: get_weather_forecast
+    call_groups:
+    - io: http
+      action: get
+      count: 2
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: record_ingest_watermark
+    call_groups:
+    - io: db
+      action: insert
+      count: 3
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: register_batch_manifest
+    call_groups:
+    - io: db
+      action: insert
+      count: 11
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: get_holiday_calendar
+    call_groups:
+    - io: http
+      action: get
+      count: 5
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: insert_staging_receipts
+    call_groups:
+    - io: db
+      action: insert
+      count: 2
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upload_staged_receipts
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 3
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: read_promotion_calendar
+    call_groups:
+    - io: db
+      action: query
+      count: 2
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: download_promo_index
+    call_groups:
+    - io: gcs
+      action: download
+      count: 2
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_import_manifest
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: resolve_supplier_codes
+    call_groups:
+    - io: db
+      action: query
+      count: 2
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: download_supplier_csv
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: append_import_audit_log
+    call_groups:
+    - io: db
+      action: insert
+      count: 18
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upload_rejected_rows
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 1
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_loyalty_export
+    call_groups:
+    - io: gcs
+      action: download
+      count: 2
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_normalized_events
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 3
+      mode: gather
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: check_import_watermark
+    call_groups:
+    - io: db
+      action: query
+      count: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: get_traffic_report
+    call_groups:
+    - io: http
+      action: get
+      count: 3
+      mode: gather
+      max_concurrency: 3
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+- name: import_store_registry
+  ops:
+  - name: download_promo_index
+    call_groups:
+    - io: gcs
+      action: download
+      count: 2
+      mode: gather
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_raw_receipts
+    call_groups:
+    - io: gcs
+      action: download
+      count: 2
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: get_promo_feed
+    call_groups:
+    - io: http
+      action: get
+      count: 6
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: store_shelf_snapshots
+    call_groups:
+    - io: db
+      action: insert
+      count: 1
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: post_delivery_ack
+    call_groups:
+    - io: http
+      action: post
+      count: 3
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: get_traffic_report
+    call_groups:
+    - io: http
+      action: get
+      count: 2
+      mode: gather
+      max_concurrency: 3
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: read_store_registry
+    call_groups:
+    - io: db
+      action: query
+      count: 3
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: download_supplier_csv
+    call_groups:
+    - io: gcs
+      action: download
+      count: 2
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: find_open_purchase_orders
+    call_groups:
+    - io: db
+      action: query
+      count: 1
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: read_promotion_calendar
+    call_groups:
+    - io: db
+      action: query
+      count: 2
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: get_store_hours
+    call_groups:
+    - io: http
+      action: get
+      count: 6
+      mode: gather
+      max_concurrency: 3
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: record_ingest_watermark
+    call_groups:
+    - io: db
+      action: insert
+      count: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upload_staged_receipts
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 1
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: get_supplier_prices
+    call_groups:
+    - io: http
+      action: get
+      count: 2
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: upload_normalized_events
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 1
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_loyalty_export
+    call_groups:
+    - io: gcs
+      action: download
+      count: 4
+      mode: gather
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: post_import_heartbeat
+    call_groups:
+    - io: http
+      action: post
+      count: 2
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: upload_import_manifest
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 1
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upsert_pos_transactions
+    call_groups:
+    - io: db
+      action: insert
+      count: 8
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: register_batch_manifest
+    call_groups:
+    - io: db
+      action: insert
+      count: 13
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upload_validated_batches
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 3
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+- name: import_promotions
+  ops:
+  - name: get_fx_rates
+    call_groups:
+    - io: http
+      action: get
+      count: 4
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: store_shelf_snapshots
+    call_groups:
+    - io: db
+      action: insert
+      count: 3
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: lookup_sku_catalog
+    call_groups:
+    - io: db
+      action: query
+      count: 3
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: get_store_hours
+    call_groups:
+    - io: http
+      action: get
+      count: 6
+      mode: gather
+      max_concurrency: 3
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: get_holiday_calendar
+    call_groups:
+    - io: http
+      action: get
+      count: 4
+      mode: gather
+      max_concurrency: 3
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: upload_normalized_events
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 1
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upsert_supplier_contacts
+    call_groups:
+    - io: db
+      action: insert
+      count: 7
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: get_traffic_report
+    call_groups:
+    - io: http
+      action: get
+      count: 5
+      mode: gather
+      max_concurrency: 3
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: record_ingest_watermark
+    call_groups:
+    - io: db
+      action: insert
+      count: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: get_supplier_prices
+    call_groups:
+    - io: http
+      action: get
+      count: 5
+      mode: gather
+      max_concurrency: 3
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: post_delivery_ack
+    call_groups:
+    - io: http
+      action: post
+      count: 6
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: download_loyalty_export
+    call_groups:
+    - io: gcs
+      action: download
+      count: 4
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: select_loyalty_members
+    call_groups:
+    - io: db
+      action: query
+      count: 1
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: download_promo_index
+    call_groups:
+    - io: gcs
+      action: download
+      count: 2
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_sensor_dump
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: get_courier_status
+    call_groups:
+    - io: http
+      action: get
+      count: 4
+      mode: gather
+      max_concurrency: 3
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: get_promo_feed
+    call_groups:
+    - io: http
+      action: get
+      count: 5
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: find_open_purchase_orders
+    call_groups:
+    - io: db
+      action: query
+      count: 1
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: log_rejected_rows
+    call_groups:
+    - io: db
+      action: insert
+      count: 1
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: post_import_heartbeat
+    call_groups:
+    - io: http
+      action: post
+      count: 5
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: resolve_supplier_codes
+    call_groups:
+    - io: db
+      action: query
+      count: 3
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upload_staged_receipts
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 2
+      mode: gather
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: insert_staging_receipts
+    call_groups:
+    - io: db
+      action: insert
+      count: 19
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: get_weather_forecast
+    call_groups:
+    - io: http
+      action: get
+      count: 6
+      mode: gather
+      max_concurrency: 3
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: download_supplier_csv
+    call_groups:
+    - io: gcs
+      action: download
+      count: 2
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+- name: import_warehouse_stock
+  ops:
+  - name: post_delivery_ack
+    call_groups:
+    - io: http
+      action: post
+      count: 4
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: log_rejected_rows
+    call_groups:
+    - io: db
+      action: insert
+      count: 19
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: download_supplier_csv
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upsert_supplier_contacts
+    call_groups:
+    - io: db
+      action: insert
+      count: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: read_promotion_calendar
+    call_groups:
+    - io: db
+      action: query
+      count: 1
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: get_traffic_report
+    call_groups:
+    - io: http
+      action: get
+      count: 3
+      mode: gather
+      max_concurrency: 3
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: get_fx_rates
+    call_groups:
+    - io: http
+      action: get
+      count: 6
+      mode: gather
+      max_concurrency: 3
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: upload_validated_batches
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 2
+      mode: gather
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: get_promo_feed
+    call_groups:
+    - io: http
+      action: get
+      count: 6
+      mode: gather
+      max_concurrency: 3
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: get_supplier_prices
+    call_groups:
+    - io: http
+      action: get
+      count: 3
+      mode: gather
+      max_concurrency: 3
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: upload_normalized_events
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 2
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: find_open_purchase_orders
+    call_groups:
+    - io: db
+      action: query
+      count: 2
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: get_store_hours
+    call_groups:
+    - io: http
+      action: get
+      count: 4
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: download_promo_index
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      mode: gather
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_sensor_dump
+    call_groups:
+    - io: gcs
+      action: download
+      count: 4
+      mode: gather
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: lookup_sku_catalog
+    call_groups:
+    - io: db
+      action: query
+      count: 1
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upload_staged_receipts
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      mode: gather
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: get_holiday_calendar
+    call_groups:
+    - io: http
+      action: get
+      count: 4
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: download_raw_receipts
+    call_groups:
+    - io: gcs
+      action: download
+      count: 2
+      mode: gather
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: append_import_audit_log
+    call_groups:
+    - io: db
+      action: insert
+      count: 3
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: get_weather_forecast
+    call_groups:
+    - io: http
+      action: get
+      count: 4
+      mode: gather
+      max_concurrency: 3
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: get_courier_status
+    call_groups:
+    - io: http
+      action: get
+      count: 6
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: store_shelf_snapshots
+    call_groups:
+    - io: db
+      action: insert
+      count: 1
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: post_import_heartbeat
+    call_groups:
+    - io: http
+      action: post
+      count: 3
+      mode: gather
+      max_concurrency: 3
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: select_loyalty_members
+    call_groups:
+    - io: db
+      action: query
+      count: 2
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upload_import_manifest
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 2
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+- name: import_returns_log
+  ops:
+  - name: get_courier_status
+    call_groups:
+    - io: http
+      action: get
+      count: 4
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: post_import_heartbeat
+    call_groups:
+    - io: http
+      action: post
+      count: 1
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: upload_staged_receipts
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 2
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_loyalty_export
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: record_ingest_watermark
+    call_groups:
+    - io: db
+      action: insert
+      count: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: get_weather_forecast
+    call_groups:
+    - io: http
+      action: get
+      count: 4
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: get_holiday_calendar
+    call_groups:
+    - io: http
+      action: get
+      count: 3
+      mode: gather
+      max_concurrency: 3
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: upload_validated_batches
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_raw_receipts
+    call_groups:
+    - io: gcs
+      action: download
+      count: 2
+      mode: gather
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: get_supplier_prices
+    call_groups:
+    - io: http
+      action: get
+      count: 1
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: upsert_pos_transactions
+    call_groups:
+    - io: db
+      action: insert
+      count: 14
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: get_store_hours
+    call_groups:
+    - io: http
+      action: get
+      count: 6
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: download_sensor_dump
+    call_groups:
+    - io: gcs
+      action: download
+      count: 4
+      mode: gather
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: insert_staging_receipts
+    call_groups:
+    - io: db
+      action: insert
+      count: 2
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: read_store_registry
+    call_groups:
+    - io: db
+      action: query
+      count: 1
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: scan_price_history
+    call_groups:
+    - io: db
+      action: query
+      count: 2
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: find_open_purchase_orders
+    call_groups:
+    - io: db
+      action: query
+      count: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: register_batch_manifest
+    call_groups:
+    - io: db
+      action: insert
+      count: 15
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: download_supplier_csv
+    call_groups:
+    - io: gcs
+      action: download
+      count: 4
+      mode: gather
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_rejected_rows
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 3
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: get_traffic_report
+    call_groups:
+    - io: http
+      action: get
+      count: 4
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: upload_import_manifest
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 3
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: read_promotion_calendar
+    call_groups:
+    - io: db
+      action: query
+      count: 2
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: post_delivery_ack
+    call_groups:
+    - io: http
+      action: post
+      count: 2
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+  - name: download_promo_index
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: lookup_sku_catalog
+    call_groups:
+    - io: db
+      action: query
+      count: 2
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: check_import_watermark
+    call_groups:
+    - io: db
+      action: query
+      count: 3
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: get_fx_rates
+    call_groups:
+    - io: http
+      action: get
+      count: 2
+      latency:
+        dist: normal
+        mean_ms: 90
+        stddev_ms: 25
+      failure_rate: 0.01
+    retries: 3
+- name: transform_daily_basket_stats
+  depends_on:
+  - import_returns_log
+  - import_supplier_prices
+  - import_promotions
+  ops:
+  - name: upload_demand_features
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 2
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_staged_sales
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_weather_features
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_basket_stats
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_cleaned_receipts
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+- name: transform_weekly_category_rollup
+  depends_on:
+  - import_ecommerce_orders
+  - import_weather_feed
+  - import_store_registry
+  ops:
+  - name: download_staged_sales
+    call_groups:
+    - io: gcs
+      action: download
+      count: 2
+      mode: gather
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_price_history
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_loyalty_segments
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_cleaned_receipts
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      mode: gather
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+- name: transform_margin_by_sku
+  depends_on:
+  - import_warehouse_stock
+  - import_loyalty_cards
+  ops:
+  - name: download_loyalty_segments
+    call_groups:
+    - io: gcs
+      action: download
+      count: 4
+      mode: gather
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_basket_stats
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 2
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_weather_features
+    call_groups:
+    - io: gcs
+      action: download
+      count: 4
+      mode: gather
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_staged_sales
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_margin_tables
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 3
+      mode: gather
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+- name: transform_price_elasticity
+  depends_on:
+  - import_loyalty_cards
+  - import_warehouse_stock
+  ops:
+  - name: download_inventory_snapshots
+    call_groups:
+    - io: gcs
+      action: download
+      count: 4
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_price_history
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_staged_sales
+    call_groups:
+    - io: gcs
+      action: download
+      count: 4
+      mode: gather
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_basket_stats
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 1
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_loyalty_segments
+    call_groups:
+    - io: gcs
+      action: download
+      count: 2
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+- name: transform_promo_uplift
+  depends_on:
+  - import_pos_sales
+  ops:
+  - name: upload_category_rollups
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 1
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_weather_features
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      mode: gather
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_cleaned_receipts
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 3
+      mode: gather
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+- name: transform_loyalty_segments
+  depends_on:
+  - import_supplier_prices
+  - import_warehouse_stock
+  - import_store_registry
+  ops:
+  - name: download_staged_sales
+    call_groups:
+    - io: gcs
+      action: download
+      count: 4
+      mode: gather
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_cleaned_receipts
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 3
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_weather_features
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_demand_features
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 2
+      mode: gather
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+- name: transform_demand_features
+  depends_on:
+  - import_returns_log
+  - import_ecommerce_orders
+  - import_warehouse_stock
+  ops:
+  - name: upload_basket_stats
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_margin_tables
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 3
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+- name: transform_shrinkage_estimates
+  depends_on:
+  - import_ecommerce_orders
+  ops:
+  - name: upload_basket_stats
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 1
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_weather_features
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_demand_features
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 3
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_staged_sales
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      mode: gather
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_inventory_snapshots
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+- name: transform_stock_cover_days
+  depends_on:
+  - import_supplier_prices
+  ops:
+  - name: upload_basket_stats
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      mode: gather
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_cleaned_receipts
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 1
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+- name: transform_supplier_scorecard
+  depends_on:
+  - import_returns_log
+  ops:
+  - name: download_staged_sales
+    call_groups:
+    - io: gcs
+      action: download
+      count: 2
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_inventory_snapshots
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      mode: gather
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_demand_features
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 2
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_margin_tables
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 1
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_weather_features
+    call_groups:
+    - io: gcs
+      action: download
+      count: 4
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+- name: transform_store_cluster_profiles
+  depends_on:
+  - import_promotions
+  - import_supplier_prices
+  ops:
+  - name: download_weather_features
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      mode: gather
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_price_history
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      mode: gather
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+- name: transform_weather_adjusted_sales
+  depends_on:
+  - import_promotions
+  ops:
+  - name: download_price_history
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      mode: gather
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_basket_stats
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 1
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_margin_tables
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 1
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_staged_sales
+    call_groups:
+    - io: gcs
+      action: download
+      count: 2
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_demand_features
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 2
+      mode: gather
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+- name: transform_basket_affinity
+  depends_on:
+  - import_shelf_sensors
+  - import_loyalty_cards
+  - import_store_registry
+  ops:
+  - name: upload_category_rollups
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 3
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_demand_features
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 1
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_basket_stats
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 3
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_price_history
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+- name: transform_markdown_candidates
+  depends_on:
+  - import_supplier_prices
+  - import_shelf_sensors
+  ops:
+  - name: upload_margin_tables
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 3
+      mode: gather
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_price_history
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_loyalty_segments
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_inventory_snapshots
+    call_groups:
+    - io: gcs
+      action: download
+      count: 2
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_staged_sales
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+- name: transform_ecommerce_funnel
+  depends_on:
+  - import_weather_feed
+  - import_pos_sales
+  ops:
+  - name: download_price_history
+    call_groups:
+    - io: gcs
+      action: download
+      count: 4
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_weather_features
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_demand_features
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 3
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_cleaned_receipts
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 3
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+- name: transform_year_end_basket_rollup
+  depends_on:
+  - import_pos_sales
+  - import_store_registry
+  - import_promotions
+  ops:
+  - name: upload_category_rollups
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 3
+      mode: gather
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_staged_sales
+    call_groups:
+    - io: gcs
+      action: download
+      count: 2
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_demand_features
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 2
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_price_history
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_basket_stats
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 1
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_loyalty_segments
+    call_groups:
+    - io: gcs
+      action: download
+      count: 4
+      mode: gather
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_weather_features
+    call_groups:
+    - io: gcs
+      action: download
+      count: 2
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_cleaned_receipts
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 3
+      mode: gather
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_margin_tables
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 3
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_inventory_snapshots
+    call_groups:
+    - io: gcs
+      action: download
+      count: 4
+      mode: gather
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_category_rollups_2
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_staged_sales_2
+    call_groups:
+    - io: gcs
+      action: download
+      count: 4
+      mode: gather
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_demand_features_2
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 2
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_price_history_2
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_basket_stats_2
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 3
+      mode: gather
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_loyalty_segments_2
+    call_groups:
+    - io: gcs
+      action: download
+      count: 2
+      mode: gather
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_weather_features_2
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_cleaned_receipts_2
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      mode: gather
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_margin_tables_2
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 3
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_inventory_snapshots_2
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+- name: transform_full_history_price_rebuild
+  depends_on:
+  - import_ecommerce_orders
+  - import_loyalty_cards
+  - import_store_registry
+  - import_shelf_sensors
+  ops:
+  - name: upload_basket_stats
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 2
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_margin_tables
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 3
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_price_history
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      mode: gather
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_staged_sales
+    call_groups:
+    - io: gcs
+      action: download
+      count: 2
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_category_rollups
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      mode: gather
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_inventory_snapshots
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_cleaned_receipts
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 2
+      mode: gather
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_weather_features
+    call_groups:
+    - io: gcs
+      action: download
+      count: 4
+      mode: gather
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_loyalty_segments
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_demand_features
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 3
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_basket_stats_2
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 1
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_margin_tables_2
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 1
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_price_history_2
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_staged_sales_2
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_category_rollups_2
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 3
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_inventory_snapshots_2
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_cleaned_receipts_2
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 1
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_weather_features_2
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_loyalty_segments_2
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_demand_features_2
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 2
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_basket_stats_3
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 1
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_margin_tables_3
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      mode: gather
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_price_history_3
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_staged_sales_3
+    call_groups:
+    - io: gcs
+      action: download
+      count: 4
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_category_rollups_3
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 1
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_inventory_snapshots_3
+    call_groups:
+    - io: gcs
+      action: download
+      count: 4
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_cleaned_receipts_3
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 3
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_weather_features_3
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_loyalty_segments_3
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_demand_features_3
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 1
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_basket_stats_4
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 2
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_margin_tables_4
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 3
+      mode: gather
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_price_history_4
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_staged_sales_4
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      mode: gather
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_category_rollups_4
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_inventory_snapshots_4
+    call_groups:
+    - io: gcs
+      action: download
+      count: 4
+      mode: gather
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_cleaned_receipts_4
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 2
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_weather_features_4
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_loyalty_segments_4
+    call_groups:
+    - io: gcs
+      action: download
+      count: 2
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_demand_features_4
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 1
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_basket_stats_5
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_margin_tables_5
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_price_history_5
+    call_groups:
+    - io: gcs
+      action: download
+      count: 2
+      mode: gather
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_staged_sales_5
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_category_rollups_5
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 2
+      mode: gather
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_inventory_snapshots_5
+    call_groups:
+    - io: gcs
+      action: download
+      count: 2
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_cleaned_receipts_5
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 1
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_weather_features_5
+    call_groups:
+    - io: gcs
+      action: download
+      count: 4
+      mode: gather
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_loyalty_segments_5
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_demand_features_5
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 1
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+- name: load_store_dashboards
+  depends_on:
+  - transform_year_end_basket_rollup
+  ops:
+  - name: lookup_store_hierarchy
+    call_groups:
+    - io: db
+      action: query
+      count: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: insert_markdown_recommendations
+    call_groups:
+    - io: db
+      action: insert
+      count: 2
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: read_dimension_keys
+    call_groups:
+    - io: db
+      action: query
+      count: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upload_load_manifest
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 3
+      mode: gather
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_report_pdfs
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      mode: gather
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_dashboard_extracts
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 2
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_demand_features
+    call_groups:
+    - io: gcs
+      action: download
+      count: 2
+      mode: gather
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_forecast_exports
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 2
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: merge_replenishment_forecast
+    call_groups:
+    - io: db
+      action: insert
+      count: 9
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: merge_loyalty_segments
+    call_groups:
+    - io: db
+      action: insert
+      count: 14
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+- name: load_replenishment_forecast
+  depends_on:
+  - transform_promo_uplift
+  - import_ecommerce_orders
+  ops:
+  - name: merge_loyalty_segments
+    call_groups:
+    - io: db
+      action: insert
+      count: 10
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: download_category_rollups
+    call_groups:
+    - io: gcs
+      action: download
+      count: 4
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: insert_load_audit_entry
+    call_groups:
+    - io: db
+      action: insert
+      count: 2
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upload_forecast_exports
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_report_pdfs
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      mode: gather
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+- name: load_markdown_recommendations
+  depends_on:
+  - transform_full_history_price_rebuild
+  ops:
+  - name: upsert_shrinkage_report
+    call_groups:
+    - io: db
+      action: insert
+      count: 14
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upload_load_manifest
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: read_dimension_keys
+    call_groups:
+    - io: db
+      action: query
+      count: 1
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upload_forecast_exports
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 1
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+- name: load_supplier_portal
+  depends_on:
+  - transform_weather_adjusted_sales
+  ops:
+  - name: upsert_store_dashboard_rows
+    call_groups:
+    - io: db
+      action: insert
+      count: 1
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: download_basket_stats
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: select_stale_partitions
+    call_groups:
+    - io: db
+      action: query
+      count: 3
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: download_category_rollups
+    call_groups:
+    - io: gcs
+      action: download
+      count: 2
+      mode: gather
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+- name: load_loyalty_crm_sync
+  depends_on:
+  - transform_weekly_category_rollup
+  ops:
+  - name: download_margin_tables
+    call_groups:
+    - io: gcs
+      action: download
+      count: 2
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: check_target_schema_version
+    call_groups:
+    - io: db
+      action: query
+      count: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: merge_replenishment_forecast
+    call_groups:
+    - io: db
+      action: insert
+      count: 1
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: download_demand_features
+    call_groups:
+    - io: gcs
+      action: download
+      count: 2
+      mode: gather
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+- name: load_finance_margin_report
+  depends_on:
+  - transform_price_elasticity
+  - import_shelf_sensors
+  - import_ecommerce_orders
+  ops:
+  - name: select_stale_partitions
+    call_groups:
+    - io: db
+      action: query
+      count: 2
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: download_basket_stats
+    call_groups:
+    - io: gcs
+      action: download
+      count: 4
+      mode: gather
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: insert_load_audit_entry
+    call_groups:
+    - io: db
+      action: insert
+      count: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upsert_store_dashboard_rows
+    call_groups:
+    - io: db
+      action: insert
+      count: 3
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: read_dimension_keys
+    call_groups:
+    - io: db
+      action: query
+      count: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upload_forecast_exports
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 1
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: insert_markdown_recommendations
+    call_groups:
+    - io: db
+      action: insert
+      count: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upload_dashboard_extracts
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 1
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+- name: load_shrinkage_report
+  depends_on:
+  - transform_weather_adjusted_sales
+  - import_pos_sales
+  ops:
+  - name: merge_loyalty_segments
+    call_groups:
+    - io: db
+      action: insert
+      count: 14
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: download_basket_stats
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upsert_store_dashboard_rows
+    call_groups:
+    - io: db
+      action: insert
+      count: 1
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: download_category_rollups
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: insert_load_audit_entry
+    call_groups:
+    - io: db
+      action: insert
+      count: 2
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: lookup_store_hierarchy
+    call_groups:
+    - io: db
+      action: query
+      count: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upload_load_manifest
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_demand_features
+    call_groups:
+    - io: gcs
+      action: download
+      count: 4
+      mode: gather
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+- name: load_promo_performance_board
+  depends_on:
+  - transform_basket_affinity
+  - import_supplier_prices
+  ops:
+  - name: download_category_rollups
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: select_stale_partitions
+    call_groups:
+    - io: db
+      action: query
+      count: 2
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upsert_shrinkage_report
+    call_groups:
+    - io: db
+      action: insert
+      count: 5
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: download_basket_stats
+    call_groups:
+    - io: gcs
+      action: download
+      count: 4
+      mode: gather
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_margin_tables
+    call_groups:
+    - io: gcs
+      action: download
+      count: 4
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: read_dimension_keys
+    call_groups:
+    - io: db
+      action: query
+      count: 3
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upload_dashboard_extracts
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 3
+      mode: gather
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_report_pdfs
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 2
+      mode: gather
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+- name: load_category_manager_pack
+  depends_on:
+  - transform_promo_uplift
+  - import_warehouse_stock
+  ops:
+  - name: select_stale_partitions
+    call_groups:
+    - io: db
+      action: query
+      count: 3
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upload_load_manifest
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: lookup_store_hierarchy
+    call_groups:
+    - io: db
+      action: query
+      count: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: check_target_schema_version
+    call_groups:
+    - io: db
+      action: query
+      count: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: download_margin_tables
+    call_groups:
+    - io: gcs
+      action: download
+      count: 2
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_basket_stats
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+- name: load_regional_ops_summary
+  depends_on:
+  - transform_weekly_category_rollup
+  ops:
+  - name: download_category_rollups
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      mode: gather
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upsert_shrinkage_report
+    call_groups:
+    - io: db
+      action: insert
+      count: 14
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: check_target_schema_version
+    call_groups:
+    - io: db
+      action: query
+      count: 2
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: lookup_store_hierarchy
+    call_groups:
+    - io: db
+      action: query
+      count: 3
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: download_margin_tables
+    call_groups:
+    - io: gcs
+      action: download
+      count: 4
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_demand_features
+    call_groups:
+    - io: gcs
+      action: download
+      count: 2
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+- name: load_ecommerce_merch_feed
+  depends_on:
+  - transform_basket_affinity
+  ops:
+  - name: download_category_rollups
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_forecast_exports
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 3
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_margin_tables
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_basket_stats
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: check_target_schema_version
+    call_groups:
+    - io: db
+      action: query
+      count: 1
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: insert_load_audit_entry
+    call_groups:
+    - io: db
+      action: insert
+      count: 12
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+- name: load_price_change_queue
+  depends_on:
+  - transform_margin_by_sku
+  - transform_promo_uplift
+  ops:
+  - name: merge_loyalty_segments
+    call_groups:
+    - io: db
+      action: insert
+      count: 3
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upload_load_manifest
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 2
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: insert_load_audit_entry
+    call_groups:
+    - io: db
+      action: insert
+      count: 7
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: insert_markdown_recommendations
+    call_groups:
+    - io: db
+      action: insert
+      count: 10
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upload_dashboard_extracts
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 3
+      mode: gather
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: read_dimension_keys
+    call_groups:
+    - io: db
+      action: query
+      count: 1
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: check_target_schema_version
+    call_groups:
+    - io: db
+      action: query
+      count: 2
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+- name: load_stock_alert_feed
+  depends_on:
+  - transform_margin_by_sku
+  - transform_weather_adjusted_sales
+  - transform_shrinkage_estimates
+  ops:
+  - name: merge_loyalty_segments
+    call_groups:
+    - io: db
+      action: insert
+      count: 14
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upload_dashboard_extracts
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 3
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_report_pdfs
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 1
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upsert_shrinkage_report
+    call_groups:
+    - io: db
+      action: insert
+      count: 1
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: lookup_store_hierarchy
+    call_groups:
+    - io: db
+      action: query
+      count: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+- name: load_store_manager_digest
+  depends_on:
+  - transform_weather_adjusted_sales
+  - transform_demand_features
+  ops:
+  - name: merge_loyalty_segments
+    call_groups:
+    - io: db
+      action: insert
+      count: 17
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: check_target_schema_version
+    call_groups:
+    - io: db
+      action: query
+      count: 1
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: insert_load_audit_entry
+    call_groups:
+    - io: db
+      action: insert
+      count: 2
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upload_load_manifest
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 2
+      mode: gather
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: insert_markdown_recommendations
+    call_groups:
+    - io: db
+      action: insert
+      count: 1
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: merge_replenishment_forecast
+    call_groups:
+    - io: db
+      action: insert
+      count: 2
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: download_margin_tables
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_demand_features
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_forecast_exports
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      mode: gather
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+- name: load_executive_scorecard
+  depends_on:
+  - transform_full_history_price_rebuild
+  - transform_margin_by_sku
+  - transform_store_cluster_profiles
+  ops:
+  - name: download_category_rollups
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: read_dimension_keys
+    call_groups:
+    - io: db
+      action: query
+      count: 1
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: insert_markdown_recommendations
+    call_groups:
+    - io: db
+      action: insert
+      count: 3
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upsert_store_dashboard_rows
+    call_groups:
+    - io: db
+      action: insert
+      count: 8
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: download_demand_features
+    call_groups:
+    - io: gcs
+      action: download
+      count: 4
+      mode: gather
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+- name: load_weather_sales_report
+  depends_on:
+  - transform_stock_cover_days
+  - transform_margin_by_sku
+  - import_returns_log
+  ops:
+  - name: download_demand_features
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_load_manifest
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: merge_replenishment_forecast
+    call_groups:
+    - io: db
+      action: insert
+      count: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: read_dimension_keys
+    call_groups:
+    - io: db
+      action: query
+      count: 3
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: merge_loyalty_segments
+    call_groups:
+    - io: db
+      action: insert
+      count: 15
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+- name: load_delivery_planning_board
+  depends_on:
+  - transform_markdown_candidates
+  - import_pos_sales
+  ops:
+  - name: insert_load_audit_entry
+    call_groups:
+    - io: db
+      action: insert
+      count: 2
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upload_load_manifest
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_forecast_exports
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 2
+      mode: gather
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_dashboard_extracts
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 1
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: merge_loyalty_segments
+    call_groups:
+    - io: db
+      action: insert
+      count: 9
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: download_demand_features
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+- name: load_returns_analysis_mart
+  depends_on:
+  - transform_store_cluster_profiles
+  - transform_daily_basket_stats
+  ops:
+  - name: read_dimension_keys
+    call_groups:
+    - io: db
+      action: query
+      count: 3
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upsert_shrinkage_report
+    call_groups:
+    - io: db
+      action: insert
+      count: 3
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: insert_load_audit_entry
+    call_groups:
+    - io: db
+      action: insert
+      count: 8
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upload_forecast_exports
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 1
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: check_target_schema_version
+    call_groups:
+    - io: db
+      action: query
+      count: 2
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upload_dashboard_extracts
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+- name: load_labor_scheduling_input
+  depends_on:
+  - transform_demand_features
+  - transform_margin_by_sku
+  ops:
+  - name: upsert_store_dashboard_rows
+    call_groups:
+    - io: db
+      action: insert
+      count: 6
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: download_basket_stats
+    call_groups:
+    - io: gcs
+      action: download
+      count: 4
+      mode: gather
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_dashboard_extracts
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 2
+      mode: gather
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_load_manifest
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 1
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_category_rollups
+    call_groups:
+    - io: gcs
+      action: download
+      count: 2
+      mode: gather
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_demand_features
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: select_stale_partitions
+    call_groups:
+    - io: db
+      action: query
+      count: 2
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+- name: load_customer_churn_mart
+  depends_on:
+  - transform_full_history_price_rebuild
+  ops:
+  - name: merge_loyalty_segments
+    call_groups:
+    - io: db
+      action: insert
+      count: 3
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: download_basket_stats
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: select_stale_partitions
+    call_groups:
+    - io: db
+      action: query
+      count: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upload_load_manifest
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 1
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_demand_features
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      mode: gather
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: insert_load_audit_entry
+    call_groups:
+    - io: db
+      action: insert
+      count: 14
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upload_forecast_exports
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      mode: gather
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upsert_shrinkage_report
+    call_groups:
+    - io: db
+      action: insert
+      count: 12
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: check_target_schema_version
+    call_groups:
+    - io: db
+      action: query
+      count: 1
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+- name: load_full_year_data_warehouse_load
+  depends_on:
+  - transform_daily_basket_stats
+  ops:
+  - name: download_margin_tables_5
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      mode: gather
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: insert_load_audit_entry_3
+    call_groups:
+    - io: db
+      action: insert
+      count: 2
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upload_report_pdfs_5
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 3
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_demand_features_7
+    call_groups:
+    - io: gcs
+      action: download
+      count: 2
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_margin_tables_7
+    call_groups:
+    - io: gcs
+      action: download
+      count: 4
+      mode: gather
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: insert_load_audit_entry_2
+    call_groups:
+    - io: db
+      action: insert
+      count: 6
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upload_forecast_exports_6
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_load_manifest
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      mode: gather
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_demand_features
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_load_manifest_4
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 2
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: insert_load_audit_entry
+    call_groups:
+    - io: db
+      action: insert
+      count: 1
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: download_margin_tables_4
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      mode: gather
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_margin_tables_2
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upsert_shrinkage_report
+    call_groups:
+    - io: db
+      action: insert
+      count: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: read_dimension_keys
+    call_groups:
+    - io: db
+      action: query
+      count: 1
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: download_category_rollups_5
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upsert_store_dashboard_rows_2
+    call_groups:
+    - io: db
+      action: insert
+      count: 8
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upload_report_pdfs_2
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 3
+      mode: gather
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: insert_markdown_recommendations_3
+    call_groups:
+    - io: db
+      action: insert
+      count: 15
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upload_load_manifest_2
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      mode: gather
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_demand_features_4
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_category_rollups
+    call_groups:
+    - io: gcs
+      action: download
+      count: 4
+      mode: gather
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_demand_features_6
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upsert_shrinkage_report_3
+    call_groups:
+    - io: db
+      action: insert
+      count: 3
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: lookup_store_hierarchy_2
+    call_groups:
+    - io: db
+      action: query
+      count: 2
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: select_stale_partitions
+    call_groups:
+    - io: db
+      action: query
+      count: 2
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: download_category_rollups_6
+    call_groups:
+    - io: gcs
+      action: download
+      count: 2
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_dashboard_extracts_6
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 1
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_forecast_exports
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      mode: gather
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_margin_tables_6
+    call_groups:
+    - io: gcs
+      action: download
+      count: 2
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_demand_features_5
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: insert_markdown_recommendations_2
+    call_groups:
+    - io: db
+      action: insert
+      count: 17
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upload_report_pdfs_6
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_basket_stats
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_report_pdfs_4
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: select_stale_partitions_2
+    call_groups:
+    - io: db
+      action: query
+      count: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: lookup_store_hierarchy_3
+    call_groups:
+    - io: db
+      action: query
+      count: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: download_basket_stats_2
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_dashboard_extracts_2
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: insert_markdown_recommendations
+    call_groups:
+    - io: db
+      action: insert
+      count: 14
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: merge_loyalty_segments
+    call_groups:
+    - io: db
+      action: insert
+      count: 2
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upload_dashboard_extracts_5
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      mode: gather
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_forecast_exports_5
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_report_pdfs
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 1
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_forecast_exports_3
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_basket_stats_6
+    call_groups:
+    - io: gcs
+      action: download
+      count: 4
+      mode: gather
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: merge_replenishment_forecast_2
+    call_groups:
+    - io: db
+      action: insert
+      count: 1
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: download_demand_features_3
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_category_rollups_4
+    call_groups:
+    - io: gcs
+      action: download
+      count: 4
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_basket_stats_3
+    call_groups:
+    - io: gcs
+      action: download
+      count: 2
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: read_dimension_keys_2
+    call_groups:
+    - io: db
+      action: query
+      count: 2
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: lookup_store_hierarchy
+    call_groups:
+    - io: db
+      action: query
+      count: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: download_category_rollups_2
+    call_groups:
+    - io: gcs
+      action: download
+      count: 4
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_load_manifest_5
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 1
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_load_manifest_3
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 3
+      mode: gather
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: check_target_schema_version_3
+    call_groups:
+    - io: db
+      action: query
+      count: 1
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: merge_replenishment_forecast
+    call_groups:
+    - io: db
+      action: insert
+      count: 12
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upsert_store_dashboard_rows_3
+    call_groups:
+    - io: db
+      action: insert
+      count: 20
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upload_dashboard_extracts_3
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 2
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_category_rollups_3
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      mode: gather
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: read_dimension_keys_3
+    call_groups:
+    - io: db
+      action: query
+      count: 3
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upsert_store_dashboard_rows
+    call_groups:
+    - io: db
+      action: insert
+      count: 3
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: download_demand_features_2
+    call_groups:
+    - io: gcs
+      action: download
+      count: 2
+      mode: gather
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_margin_tables_3
+    call_groups:
+    - io: gcs
+      action: download
+      count: 4
+      mode: gather
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_forecast_exports_2
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 3
+      mode: gather
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: check_target_schema_version
+    call_groups:
+    - io: db
+      action: query
+      count: 2
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: merge_loyalty_segments_2
+    call_groups:
+    - io: db
+      action: insert
+      count: 1
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upload_load_manifest_6
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      mode: gather
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_margin_tables
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      mode: gather
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_basket_stats_4
+    call_groups:
+    - io: gcs
+      action: download
+      count: 4
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_basket_stats_5
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: check_target_schema_version_2
+    call_groups:
+    - io: db
+      action: query
+      count: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upload_forecast_exports_4
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 3
+      mode: gather
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_dashboard_extracts_4
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      mode: gather
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_report_pdfs_3
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 1
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: select_stale_partitions_3
+    call_groups:
+    - io: db
+      action: query
+      count: 1
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: merge_replenishment_forecast_3
+    call_groups:
+    - io: db
+      action: insert
+      count: 10
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upsert_shrinkage_report_2
+    call_groups:
+    - io: db
+      action: insert
+      count: 10
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upload_dashboard_extracts
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: merge_loyalty_segments_3
+    call_groups:
+    - io: db
+      action: insert
+      count: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+- name: load_historical_backfill_load
+  depends_on:
+  - transform_basket_affinity
+  - transform_supplier_scorecard
+  - transform_loyalty_segments
+  - import_supplier_prices
+  ops:
+  - name: download_basket_stats_2
+    call_groups:
+    - io: gcs
+      action: download
+      count: 4
+      mode: gather
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_forecast_exports_3
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 2
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_margin_tables_3
+    call_groups:
+    - io: gcs
+      action: download
+      count: 2
+      mode: gather
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_load_manifest_4
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 1
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_report_pdfs_2
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_basket_stats
+    call_groups:
+    - io: gcs
+      action: download
+      count: 4
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_report_pdfs_6
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      mode: gather
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_forecast_exports_5
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 3
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: merge_loyalty_segments_2
+    call_groups:
+    - io: db
+      action: insert
+      count: 3
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: download_basket_stats_4
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      mode: gather
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: insert_load_audit_entry
+    call_groups:
+    - io: db
+      action: insert
+      count: 3
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: download_demand_features_3
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: merge_replenishment_forecast_2
+    call_groups:
+    - io: db
+      action: insert
+      count: 12
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upload_report_pdfs_7
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 3
+      mode: gather
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_report_pdfs_4
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_dashboard_extracts_2
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 3
+      mode: gather
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_demand_features_5
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_basket_stats_3
+    call_groups:
+    - io: gcs
+      action: download
+      count: 2
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_dashboard_extracts_4
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 2
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_basket_stats_5
+    call_groups:
+    - io: gcs
+      action: download
+      count: 4
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upsert_store_dashboard_rows
+    call_groups:
+    - io: db
+      action: insert
+      count: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upsert_store_dashboard_rows_2
+    call_groups:
+    - io: db
+      action: insert
+      count: 1
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: download_category_rollups
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_category_rollups_2
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_load_manifest_5
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 2
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_margin_tables_5
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_forecast_exports_4
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 3
+      mode: gather
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: read_dimension_keys_2
+    call_groups:
+    - io: db
+      action: query
+      count: 3
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upsert_shrinkage_report_2
+    call_groups:
+    - io: db
+      action: insert
+      count: 20
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: download_margin_tables_6
+    call_groups:
+    - io: gcs
+      action: download
+      count: 4
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_demand_features_2
+    call_groups:
+    - io: gcs
+      action: download
+      count: 4
+      mode: gather
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_basket_stats_6
+    call_groups:
+    - io: gcs
+      action: download
+      count: 4
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_category_rollups_4
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_dashboard_extracts
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 1
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: insert_load_audit_entry_2
+    call_groups:
+    - io: db
+      action: insert
+      count: 11
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: insert_markdown_recommendations_2
+    call_groups:
+    - io: db
+      action: insert
+      count: 11
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upload_load_manifest_2
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 1
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_report_pdfs
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 3
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_category_rollups_6
+    call_groups:
+    - io: gcs
+      action: download
+      count: 4
+      mode: gather
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_report_pdfs_3
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upsert_shrinkage_report
+    call_groups:
+    - io: db
+      action: insert
+      count: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: merge_loyalty_segments
+    call_groups:
+    - io: db
+      action: insert
+      count: 2
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upload_forecast_exports_2
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 1
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: check_target_schema_version
+    call_groups:
+    - io: db
+      action: query
+      count: 3
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: download_margin_tables
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_dashboard_extracts_6
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 2
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_dashboard_extracts_3
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      mode: gather
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: check_target_schema_version_2
+    call_groups:
+    - io: db
+      action: query
+      count: 1
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: download_margin_tables_4
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_margin_tables_2
+    call_groups:
+    - io: gcs
+      action: download
+      count: 2
+      mode: gather
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: select_stale_partitions
+    call_groups:
+    - io: db
+      action: query
+      count: 1
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: lookup_store_hierarchy
+    call_groups:
+    - io: db
+      action: query
+      count: 1
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: download_demand_features_4
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: select_stale_partitions_2
+    call_groups:
+    - io: db
+      action: query
+      count: 1
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: read_dimension_keys
+    call_groups:
+    - io: db
+      action: query
+      count: 2
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: download_demand_features_6
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: merge_replenishment_forecast
+    call_groups:
+    - io: db
+      action: insert
+      count: 18
+      mode: gather
+      max_concurrency: 4
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upload_load_manifest_6
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 1
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_category_rollups_3
+    call_groups:
+    - io: gcs
+      action: download
+      count: 1
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: download_category_rollups_5
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_load_manifest_7
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 2
+      payload_bytes: 1048576
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: lookup_store_hierarchy_2
+    call_groups:
+    - io: db
+      action: query
+      count: 2
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: download_demand_features
+    call_groups:
+    - io: gcs
+      action: download
+      count: 3
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: insert_markdown_recommendations
+    call_groups:
+    - io: db
+      action: insert
+      count: 1
+      latency:
+        dist: lognormal
+        median_ms: 8
+        sigma: 0.5
+  - name: upload_report_pdfs_5
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 1
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_forecast_exports
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      mode: gather
+      payload_bytes: 262144
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_load_manifest
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 1
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_forecast_exports_6
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 4
+      mode: gather
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_dashboard_extracts_5
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 3
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4
+  - name: upload_load_manifest_3
+    call_groups:
+    - io: gcs
+      action: upload
+      count: 1
+      payload_bytes: 65536
+      latency:
+        dist: lognormal
+        median_ms: 50
+        sigma: 0.4

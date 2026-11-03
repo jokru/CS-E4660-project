@@ -12,7 +12,7 @@ from dagster import (
 )
 
 from mock_io_app.executor import IOResources, make_rng, run_call_group
-from mock_io_app.resources import FakeDatabase, FakeGCS, FakeHttpClient
+from mock_io_app.resources import FakeDatabase, FakeGCS, FakeHttpClient, FakeServiceClient
 from mock_io_app.scenario import ExpandedJob, OpSpec, closure
 from mock_io_app.tracing import context_from_tags, get_tracer
 
@@ -26,14 +26,19 @@ def default_resources(latency_scale: float = 1.0) -> dict[str, object]:
         "db": FakeDatabase(latency_scale=latency_scale),
         "gcs": FakeGCS(latency_scale=latency_scale),
         "http": FakeHttpClient(latency_scale=latency_scale),
+        "services": FakeServiceClient(latency_scale=latency_scale),
     }
 
 
 def build_op(job_name: str, owner: ExpandedJob, spec: OpSpec, n_after: int) -> OpDefinition:
     async def compute(
-        context: OpExecutionContext, db: FakeDatabase, gcs: FakeGCS, http: FakeHttpClient
+        context: OpExecutionContext,
+        db: FakeDatabase,
+        gcs: FakeGCS,
+        http: FakeHttpClient,
+        services: FakeServiceClient,
     ) -> int:
-        resources = IOResources(db=db, gcs=gcs, http=http)
+        resources = IOResources(db=db, gcs=gcs, http=http, services=services)
         attributes = {
             "dagster.run_id": context.run_id,
             "dagster.job": job_name,
@@ -56,6 +61,7 @@ def build_op(job_name: str, owner: ExpandedJob, spec: OpSpec, n_after: int) -> O
                     resources,
                     rng,
                     key_prefix=f"{owner.name}/{spec.name}/{index}",
+                    services=owner.services,
                 )
         context.log.info("op %s completed %d calls", spec.name, total)
         return total

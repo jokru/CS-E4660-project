@@ -2,7 +2,7 @@ description: "Small dev scenario: two jobs, a handful of calls."
 
 defaults:
   seed: 1
-  latency: {dist: lognormal, median_ms: 20, sigma: 0.4}
+  latency: {dist: lognormal, median_ms: 1000, sigma: 0.4}
   failure_rate: 0.0
 
 jobs:
@@ -10,7 +10,7 @@ jobs:
     ops:
       - name: fetch_orders
         call_groups:
-          - {io: http, action: get, count: 5, mode: gather, max_concurrency: 3}
+          - {io: http, action: get, count: 25, mode: gather, max_concurrency: 3}
       - name: store_orders
         call_groups:
           - {io: db, action: insert, count: 5}

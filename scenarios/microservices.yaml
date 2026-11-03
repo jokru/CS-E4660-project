@@ -1,0 +1,29 @@
+description: "First-party services (traced inside) and a third-party black box (client span only)."
+
+defaults:
+  seed: 7
+  latency: {dist: fixed, ms: 20}
+
+services:
+  inventory:
+    kind: first_party
+    call_groups:
+      - {io: db, action: query, count: 2}
+      - {io: service, service: pricing, action: call, count: 1}
+  pricing:
+    kind: first_party
+    call_groups:
+      - {io: db, action: query, count: 1}
+  payments:
+    kind: third_party
+
+jobs:
+  - name: checkout
+    ops:
+      - name: reserve
+        call_groups:
+          - {io: service, service: inventory, action: call, count: 3, mode: gather}
+      - name: charge
+        retries: 1
+        call_groups:
+          - {io: service, service: payments, action: call, count: 1, failure_rate: 0.1}
