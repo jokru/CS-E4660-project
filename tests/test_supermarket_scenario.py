@@ -64,6 +64,18 @@ def test_dependencies_follow_tiers() -> None:
     assert len(combos) > 20
 
 
+def test_transformers_and_loaders_call_services() -> None:
+    scenario = load_scenario(SCENARIO_PATH)
+    tiers = _by_tier()
+    kinds = set()
+    for job in tiers["transform"] + tiers["load"]:
+        called = [g.service for op in job.ops for g in op.call_groups if g.io == "service"]
+        assert called, job.name
+        kinds.update(scenario.services[s].kind for s in called)
+    assert kinds == {"first_party", "third_party"}
+    assert all(_steps(job, "service") == 0 for job in tiers["import"])
+
+
 def test_expands() -> None:
     assert len(expand_jobs("supermarket", load_scenario(SCENARIO_PATH))) == 49
 

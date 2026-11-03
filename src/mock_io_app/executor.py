@@ -54,6 +54,7 @@ def resolve_call(
     key_prefix: str,
     defaults: Defaults,
     services: Mapping[str, ServiceSpec],
+    handler_seed: int = 0,
 ) -> Call:
     match group.io, group.action:
         case "db", "query":
@@ -83,7 +84,7 @@ def resolve_call(
                             inner,
                             defaults,
                             res,
-                            make_rng(defaults.seed, key_prefix, name, p.index, i),
+                            random.Random(f"{handler_seed}:{p.index}:{i}"),
                             f"{key_prefix}/{p.index}/{name}/{i}",
                             services,
                         )
@@ -103,7 +104,9 @@ async def run_call_group(
     services: Mapping[str, ServiceSpec] | None = None,
 ) -> int:
     params = build_call_params(group, defaults, rng)
-    call = resolve_call(group, resources, key_prefix, defaults, services or {})
+    # Derived from the group's rng so a service's inner outcomes change across op retries.
+    handler_seed = rng.getrandbits(64) if group.io == "service" else 0
+    call = resolve_call(group, resources, key_prefix, defaults, services or {}, handler_seed)
     attributes = {
         "mock_io.type": group.io,
         "mock_io.action": group.action,

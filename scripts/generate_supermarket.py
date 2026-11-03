@@ -79,6 +79,29 @@ LOAD_DB = [
 PAYLOADS = [65_536, 262_144, 1_048_576]
 HTTP_RETRIES = 3
 
+# First-party services run (and are traced) inside the call; each entry is (io, action-or-service).
+FIRST_PARTY: dict[str, list[tuple[str, str]]] = {
+    "price_engine": [("db", "query"), ("db", "query"), ("gcs", "download")],
+    "product_catalog": [("db", "query"), ("db", "query"), ("http", "get")],
+    "inventory_api": [("db", "query"), ("service", "product_catalog"), ("db", "insert")],
+    "demand_forecaster": [("gcs", "download"), ("db", "query"), ("service", "weather_api")],
+    "loyalty_service": [("db", "query"), ("db", "insert")],
+    "notification_hub": [("db", "insert"), ("service", "email_provider")],
+}
+# Third-party services are black boxes: only the client call is traced.
+THIRD_PARTY = [
+    "weather_api", "address_geocoder", "fx_rate_provider", "tax_service", "email_provider",
+    "slack_webhook",
+]  # fmt: skip
+TRANSFORM_SERVICES = [
+    "price_engine", "product_catalog", "demand_forecaster", "fx_rate_provider", "weather_api",
+    "address_geocoder",
+]  # fmt: skip
+LOAD_SERVICES = [
+    "inventory_api", "loyalty_service", "notification_hub", "email_provider", "tax_service",
+    "slack_webhook", "demand_forecaster",
+]  # fmt: skip
+
 
 def _names(rng: random.Random, pool: list[tuple[str, str]], n: int) -> list[tuple[str, str]]:
     """n distinct op names; pools are cycled with a numeric suffix when n exceeds their size."""
@@ -91,7 +114,22 @@ def _names(rng: random.Random, pool: list[tuple[str, str]], n: int) -> list[tupl
 
 
 def _group(rng: random.Random, io: str, action: str) -> dict[str, Any]:
-    group: dict[str, Any] = {"io": io, "action": action}
+    if io == "service":
+        # `action` carries the service name.
+        count = rng.randint(1, 4)
+        group: dict[str, Any] = {"io": io, "service": action, "action": "call", "count": count}
+        if count > 1 and rng.random() < 0.5:
+            group.update(mode="gather", max_concurrency=3)
+        third = action in THIRD_PARTY
+        group["latency"] = (
+            {"dist": "normal", "mean_ms": 120, "stddev_ms": 40}
+            if third
+            else {"dist": "lognormal", "median_ms": 6, "sigma": 0.4}
+        )
+        if third:
+            group["failure_rate"] = 0.01
+        return group
+    group = {"io": io, "action": action}
     if io == "db":
         count = rng.randint(5, 20) if action == "insert" and rng.random() < 0.4 else rng.randint(1, 4)
         group["count"] = count
@@ -119,7 +157,7 @@ def _ops(rng: random.Random, steps: list[tuple[str, str, str]]) -> list[dict[str
     ops = []
     for name, io, action in steps:
         op: dict[str, Any] = {"name": name, "call_groups": [_group(rng, io, action)]}
-        if io == "http":
+        if io in ("http", "service"):
             op["retries"] = HTTP_RETRIES
         ops.append(op)
     return ops
@@ -141,21 +179,42 @@ def _importer(rng: random.Random, name: str) -> dict[str, Any]:
     return {"name": f"import_{name}", "ops": _ops(rng, steps)}
 
 
+def _service_steps(
+    rng: random.Random, services: list[str], n: int
+) -> list[tuple[str, str, str]]:
+    return _steps(rng, "service", [(f"call_{s}", s) for s in services], n)
+
+
 def _transformer(rng: random.Random, name: str, deps: list[str], factor: int) -> dict[str, Any]:
-    steps = _steps(rng, "gcs", TRANSFORM_GCS, rng.randint(2, 5) * factor)
+    steps = _steps(rng, "gcs", TRANSFORM_GCS, rng.randint(2, 5) * factor) + _service_steps(
+        rng, TRANSFORM_SERVICES, rng.randint(1, 3) * factor
+    )
+    rng.shuffle(steps)
     return {"name": f"transform_{name}", "depends_on": deps, "ops": _ops(rng, steps)}
 
 
 def _loader(rng: random.Random, name: str, deps: list[str], factor: int) -> dict[str, Any]:
-    steps = _steps(rng, "gcs", LOAD_GCS, rng.randint(2, 5) * factor) + _steps(
-        rng, "db", LOAD_DB, rng.randint(2, 5) * factor
+    steps = (
+        _steps(rng, "gcs", LOAD_GCS, rng.randint(2, 5) * factor)
+        + _steps(rng, "db", LOAD_DB, rng.randint(2, 5) * factor)
+        + _service_steps(rng, LOAD_SERVICES, rng.randint(1, 3) * factor)
     )
     rng.shuffle(steps)
     return {"name": f"load_{name}", "depends_on": deps, "ops": _ops(rng, steps)}
 
 
+def _services(rng: random.Random) -> dict[str, Any]:
+    services: dict[str, Any] = {
+        name: {"kind": "first_party", "call_groups": [_group(rng, io, a) for io, a in groups]}
+        for name, groups in FIRST_PARTY.items()
+    }
+    services.update({name: {"kind": "third_party"} for name in THIRD_PARTY})
+    return services
+
+
 def build() -> dict[str, Any]:
     rng = random.Random(SEED)
+    services = _services(rng)
     importers = [f"import_{n}" for n in IMPORTERS]
     jobs = [_importer(rng, n) for n in IMPORTERS]
 
@@ -177,13 +236,15 @@ def build() -> dict[str, Any]:
     return {
         "description": (
             "Supermarket chain data platform: 10 importers, 15+2 transformers, 20+2 loaders "
-            "with mixed dependencies. Generated by scripts/generate_supermarket.py."
+            "with mixed dependencies and first/third-party service calls. "
+            "Generated by scripts/generate_supermarket.py."
         ),
         "defaults": {
             "seed": 42,
             "latency": {"dist": "lognormal", "median_ms": 30, "sigma": 0.6},
             "failure_rate": 0.0,
         },
+        "services": services,
         "jobs": jobs,
     }
 
