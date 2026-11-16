@@ -1,4 +1,5 @@
 import argparse
+import os
 import sys
 import time
 from pathlib import Path
@@ -50,7 +51,11 @@ def main(argv: list[str] | None = None) -> int:
     definitions = [(expanded, build_job(expanded, by_name)) for expanded in jobs]
     failures = 0
 
-    with DagsterInstance.ephemeral() as instance:
+    # With DAGSTER_HOME set, runs are recorded there and show up in `dagster dev`.
+    instance_cm = (
+        DagsterInstance.get() if os.environ.get("DAGSTER_HOME") else DagsterInstance.ephemeral()
+    )
+    with instance_cm as instance:
         for iteration in range(args.repeat):
             for expanded, job_def in definitions:
                 attributes = {"dagster.job": expanded.name, "mock_io.iteration": iteration}

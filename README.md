@@ -57,18 +57,22 @@ Regenerate with `uv run python scripts/generate_supermarket.py`.
 
 ## Running
 
-Run jobs in-process, with no webserver (without `--job`, only leaf jobs run since they include their upstream jobs):
+Run jobs in-process, with no webserver. Runs use a throwaway Dagster instance and don't appear in the Dagster UI unless `DAGSTER_HOME` is set (use the same directory as `dagster dev`, see below). Without `--job`, only leaf jobs run since they include their upstream jobs.
 
 ```sh
 uv run mock-io-run --scenario scenarios/small.yaml
+uv run mock-io-run --scenario scenarios/supermarket.yaml --latency-scale 0.01
 uv run mock-io-run --scenario scenarios/supermarket.yaml --job load_store_dashboards --latency-scale 0.01
 ```
 
 Dagster UI (`DAGSTER_HOME` must be set to a writable directory):
 
 ```sh
-DAGSTER_HOME="$PWD/.dagster_home" uv run dagster dev
+mkdir -p .dagster_home
+DAGSTER_HOME="$PWD/.dagster_home" uv run dagster dev -p 3000
 ```
+
+The UI is at <http://127.0.0.1:3000> (code location `mock_io_app`). Jobs are named `<scenario>__<job>`; start one from the job's Launchpad ("Launch run"). To export traces to Jaeger, set the tracing variables (see [Emitted traces](#emitted-traces)) in the same shell before starting `dagster dev`, e.g. `MOCK_IO_TRACE_EXPORTER=otlp`.
 
 HTTP API and client:
 
