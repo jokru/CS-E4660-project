@@ -11,6 +11,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from mock_io_app.latency import FixedLatency, LatencySpec
 
 NAME_PATTERN = r"^[a-z0-9_]{1,64}$"
+SERVICE_NAME_PATTERN = r"^[a-z0-9_-]{1,64}$"
 MAX_COPIES = 1_000
 MAX_CALL_COUNT = 10_000
 MAX_CONCURRENCY = 1_000
@@ -96,6 +97,8 @@ class JobSpec(_Spec):
     name: str = Field(pattern=NAME_PATTERN)
     copies: int = Field(default=1, ge=1, le=MAX_COPIES)
     executor: Literal["in_process", "multiprocess"] = "in_process"
+    # Overrides the scenario's service_name for this job's op spans.
+    service_name: str | None = Field(default=None, pattern=SERVICE_NAME_PATTERN)
     # Base job names (before copies expansion). The job's Dagster run includes the ops of every
     # copy of each dependency, which must finish before this job's first op starts.
     depends_on: list[str] = Field(default_factory=list, max_length=MAX_DEPENDENCIES)
@@ -114,6 +117,8 @@ class JobSpec(_Spec):
 
 class Scenario(_Spec):
     description: str = ""
+    # `service.name` of the root job span and of ops in jobs without their own service_name.
+    service_name: str | None = Field(default=None, pattern=SERVICE_NAME_PATTERN)
     defaults: Defaults = Defaults()
     services: dict[str, ServiceSpec] = Field(default_factory=dict, max_length=MAX_SERVICES)
     jobs: list[JobSpec] = Field(min_length=1)
@@ -224,6 +229,9 @@ class ExpandedJob:
     # Expanded names of every upstream job copy whose ops run before this job's ops.
     upstream: tuple[str, ...] = ()
     services: Mapping[str, ServiceSpec] = field(default_factory=dict)
+    service_name: str | None = None
+    # The scenario-level name, used for the root `job.*` span.
+    scenario_service_name: str | None = None
 
 
 def expanded_job_names(job: JobSpec) -> list[str]:
@@ -241,6 +249,8 @@ def expand_jobs(scenario_name: str, scenario: Scenario) -> list[ExpandedJob]:
             spec=job,
             defaults=scenario.defaults,
             services=scenario.services,
+            service_name=job.service_name or scenario.service_name,
+            scenario_service_name=scenario.service_name,
             upstream=tuple(
                 f"{scenario_name}__{up}"
                 for dep in job.depends_on

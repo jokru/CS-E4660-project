@@ -14,7 +14,7 @@ from dagster import (
 from mock_io_app.executor import IOResources, make_rng, run_call_group
 from mock_io_app.resources import FakeDatabase, FakeGCS, FakeHttpClient, FakeServiceClient
 from mock_io_app.scenario import ExpandedJob, OpSpec, closure
-from mock_io_app.tracing import context_from_tags, get_tracer
+from mock_io_app.tracing import as_service, context_from_tags, get_tracer
 
 SCENARIO_TAG = "mock_io/scenario"
 
@@ -47,8 +47,13 @@ def build_op(job_name: str, owner: ExpandedJob, spec: OpSpec, n_after: int) -> O
             "mock_io.scenario": owner.scenario,
             "mock_io.source_job": owner.name,
         }
-        with get_tracer().start_as_current_span(
-            f"op.{spec.name}", context=context_from_tags(context.run.tags), attributes=attributes
+        with (
+            as_service(owner.service_name),
+            get_tracer().start_as_current_span(
+                f"op.{spec.name}",
+                context=context_from_tags(context.run.tags),
+                attributes=attributes,
+            ),
         ):
             total = 0
             for index, group in enumerate(spec.call_groups):

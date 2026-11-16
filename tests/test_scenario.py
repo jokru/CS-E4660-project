@@ -71,3 +71,12 @@ def test_load_scenarios_rejects_bad_file_name(tmp_path: Path) -> None:
     (tmp_path / "Bad-Name.yaml").write_text(yaml.safe_dump(zero_latency_scenario()))
     with pytest.raises(ValueError, match="file name"):
         load_scenarios(tmp_path, "*.yaml")
+
+
+def test_job_service_name_overrides_scenario_service_name() -> None:
+    scenario = Scenario.model_validate(
+        {"service_name": "platform", "jobs": [_job("a"), {**_job("b"), "service_name": "svc-b"}]}
+    )
+    assert [j.service_name for j in expand_jobs("s", scenario)] == ["platform", "svc-b"]
+    with pytest.raises(ValidationError):
+        Scenario.model_validate({"service_name": "Bad Name", "jobs": [_job("a")]})

@@ -5,7 +5,7 @@ from opentelemetry.trace import SpanKind
 from opentelemetry.util.types import AttributeValue
 
 from mock_io_app.resources.base import CallParams, FakeIOResource, MockIOError
-from mock_io_app.tracing import get_tracer
+from mock_io_app.tracing import as_service, get_tracer
 
 
 class FakeServiceClient(FakeIOResource):
@@ -31,11 +31,12 @@ class FakeServiceClient(FakeIOResource):
         ):
             await asyncio.sleep(params.latency_s * self.latency_scale)
             if handler is not None:
-                with tracer.start_as_current_span(
-                    f"service.{service}.handle",
-                    kind=SpanKind.SERVER,
-                    attributes={"mock_io.service": service},
-                ):
-                    await handler()
+                with as_service(service):
+                    with get_tracer().start_as_current_span(
+                        f"service.{service}.handle",
+                        kind=SpanKind.SERVER,
+                        attributes={"mock_io.service": service},
+                    ):
+                        await handler()
             if params.fail:
                 raise MockIOError(f"simulated service {service} failure (call {params.index})")

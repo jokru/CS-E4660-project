@@ -7,7 +7,7 @@ from dagster import DagsterInstance
 
 from mock_io_app.job_factory import build_job, default_resources
 from mock_io_app.scenario import expand_jobs, is_valid_name, leaf_jobs, load_scenario
-from mock_io_app.tracing import get_tracer, setup_tracing, trace_tags
+from mock_io_app.tracing import as_service, get_tracer, setup_tracing, trace_tags
 
 
 def _parse_args(argv: list[str] | None) -> argparse.Namespace:
@@ -46,7 +46,6 @@ def main(argv: list[str] | None = None) -> int:
             return 2
 
     setup_tracing("mock-io-cli")
-    tracer = get_tracer()
     resources = default_resources(args.latency_scale)
     definitions = [(expanded, build_job(expanded, by_name)) for expanded in jobs]
     failures = 0
@@ -55,7 +54,12 @@ def main(argv: list[str] | None = None) -> int:
         for iteration in range(args.repeat):
             for expanded, job_def in definitions:
                 attributes = {"dagster.job": expanded.name, "mock_io.iteration": iteration}
-                with tracer.start_as_current_span(f"job.{expanded.name}", attributes=attributes):
+                with (
+                    as_service(expanded.scenario_service_name),
+                    get_tracer().start_as_current_span(
+                        f"job.{expanded.name}", attributes=attributes
+                    ),
+                ):
                     started = time.perf_counter()
                     result = job_def.execute_in_process(
                         resources=resources,

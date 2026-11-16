@@ -1,10 +1,12 @@
 import os
-from collections.abc import Mapping
+from collections.abc import Iterator, Mapping
+from contextlib import contextmanager
+from contextvars import ContextVar
 
 from opentelemetry import propagate, trace
 from opentelemetry.context import Context
 from opentelemetry.sdk.resources import Resource
-from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace import SpanProcessor, TracerProvider
 from opentelemetry.sdk.trace.export import (
     BatchSpanProcessor,
     ConsoleSpanExporter,
@@ -18,10 +20,38 @@ TRACESTATE_TAG = "otel/tracestate"
 _CARRIER_TO_TAG = {"traceparent": TRACEPARENT_TAG, "tracestate": TRACESTATE_TAG}
 
 _configured = False
+_processors: list[SpanProcessor] = []
+_service_providers: dict[str, TracerProvider] = {}
+_current_service: ContextVar[str | None] = ContextVar("mock_io_current_service", default=None)
 
 
 def get_tracer() -> trace.Tracer:
+    service = _current_service.get()
+    if service is not None and _processors:
+        provider = _service_providers.get(service)
+        if provider is None:
+            provider = TracerProvider(resource=Resource.create({"service.name": service}))
+            for processor in _processors:
+                provider.add_span_processor(processor)
+            _service_providers[service] = provider
+        return provider.get_tracer(TRACER_NAME)
     return trace.get_tracer(TRACER_NAME)
+
+
+@contextmanager
+def as_service(name: str | None) -> Iterator[None]:
+    """Emit spans created inside this block under a different `service.name` (same exporter).
+
+    `None` keeps the current service.
+    """
+    if name is None:
+        yield
+        return
+    token = _current_service.set(name)
+    try:
+        yield
+    finally:
+        _current_service.reset(token)
 
 
 def setup_tracing(service_name: str) -> None:
@@ -41,11 +71,13 @@ def setup_tracing(service_name: str) -> None:
         )
     )
     if kind == "console":
-        provider.add_span_processor(SimpleSpanProcessor(ConsoleSpanExporter()))
+        processor: SpanProcessor = SimpleSpanProcessor(ConsoleSpanExporter())
     elif kind == "otlp":
-        provider.add_span_processor(BatchSpanProcessor(_otlp_exporter()))
+        processor = BatchSpanProcessor(_otlp_exporter())
     else:
         raise ValueError(f"unknown MOCK_IO_TRACE_EXPORTER {kind!r}")
+    _processors.append(processor)
+    provider.add_span_processor(processor)
     trace.set_tracer_provider(provider)
 
 
