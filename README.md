@@ -51,7 +51,16 @@ anomalies:
   # to_iteration: 8
 ```
 
-At least one effect is required. Several matching anomalies combine and their labels are comma-separated. Scenarios without anomalies behave exactly as before. The supermarket scenario has `slow_tax_service`, `slow_price_engine`, `huge_blob` (GCS uploads) and `email_outage` (only during iterations 5-7, e.g. `--repeat 8`).
+At least one effect is required. Several matching anomalies combine and their labels are comma-separated. Scenarios without anomalies behave exactly as before. The supermarket scenario defines (see `SERVICE_ANOMALIES` and `GROUP_ANOMALIES` in the generator):
+
+| Label | Where | Effect | When |
+| --- | --- | --- | --- |
+| `slow_tax_service`, `slow_weather_api`, `slow_price_engine` | service calls | 20-30x latency or +1.5 s | rare, random |
+| `huge_blob` | GCS uploads | 8 MiB payload, 15x latency | rare, random |
+| `http_flap` | HTTP gets | failures, triggering op retries and larger traces | iterations 3-4 |
+| `email_outage` | `email_provider` | failures with retries | iterations 6-8 |
+
+Use `--repeat 10` or more to cover the windows. Latency anomalies are only visible in span durations if `--latency-scale` is not tiny (0.01 or higher).
 
 #### Ground truth
 

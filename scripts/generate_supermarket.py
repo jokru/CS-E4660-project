@@ -79,19 +79,37 @@ LOAD_DB = [
 # Labelled anomalies (ground truth for evaluating sampling): added without touching the RNG, so
 # the rest of the scenario is unchanged. Iterations refer to `--repeat` / API `repeat`.
 SERVICE_ANOMALIES: dict[str, list[dict[str, Any]]] = {
-    "tax_service": [{"label": "slow_tax_service", "probability": 0.05, "latency_multiplier": 8}],
+    "tax_service": [{"label": "slow_tax_service", "probability": 0.05, "latency_multiplier": 30}],
+    "weather_api": [{"label": "slow_weather_api", "probability": 0.005, "latency_multiplier": 20}],
+    "price_engine": [{"label": "slow_price_engine", "probability": 0.01, "latency_add_ms": 1500}],
+    # Outage burst: retries multiply the calls, so affected traces become much larger.
     "email_provider": [
         {
             "label": "email_outage",
-            "probability": 0.5,
+            "probability": 0.8,
             "fail": True,
-            "from_iteration": 5,
-            "to_iteration": 8,
+            "from_iteration": 6,
+            "to_iteration": 9,
         }
     ],
-    "price_engine": [{"label": "slow_price_engine", "probability": 0.02, "latency_add_ms": 400}],
 }
-GCS_UPLOAD_ANOMALY = {"label": "huge_blob", "probability": 0.02, "payload_bytes": 8_388_608}
+# Applied to every call group with this (io, action).
+GROUP_ANOMALIES: dict[tuple[str, str], dict[str, Any]] = {
+    ("gcs", "upload"): {
+        "label": "huge_blob",
+        "probability": 0.002,
+        "payload_bytes": 8_388_608,
+        "latency_multiplier": 15,
+    },
+    # Flapping upstream: failures trigger op retries (HTTP_RETRIES), growing the trace.
+    ("http", "get"): {
+        "label": "http_flap",
+        "probability": 0.05,
+        "fail": True,
+        "from_iteration": 3,
+        "to_iteration": 5,
+    },
+}
 
 PAYLOADS = [65_536, 262_144, 1_048_576]
 HTTP_RETRIES = 3
@@ -249,12 +267,13 @@ def _services(rng: random.Random) -> dict[str, Any]:
     return services
 
 
-def _add_gcs_anomalies(jobs: list[dict[str, Any]]) -> None:
+def _add_group_anomalies(jobs: list[dict[str, Any]]) -> None:
     for job in jobs:
         for op in job["ops"]:
             for group in op["call_groups"]:
-                if group["io"] == "gcs" and group["action"] == "upload":
-                    group["anomalies"] = [dict(GCS_UPLOAD_ANOMALY)]
+                anomaly = GROUP_ANOMALIES.get((group["io"], group["action"]))
+                if anomaly:
+                    group["anomalies"] = [dict(anomaly)]
 
 
 def build() -> dict[str, Any]:
@@ -278,7 +297,7 @@ def build() -> dict[str, Any]:
         deps += rng.sample(extra, rng.randint(0, 3 if big else 2))
         jobs.append(_loader(rng, name, deps, BIG_FACTOR if big else 1))
 
-    _add_gcs_anomalies(jobs)
+    _add_group_anomalies(jobs)
     return {
         "description": (
             "Supermarket chain data platform: 10 importers, 15+2 transformers, 20+2 loaders "

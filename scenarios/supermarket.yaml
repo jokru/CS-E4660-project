@@ -36,8 +36,8 @@ services:
         sigma: 0.4
     anomalies:
     - label: slow_price_engine
-      probability: 0.02
-      latency_add_ms: 400
+      probability: 0.01
+      latency_add_ms: 1500
   product_catalog:
     kind: first_party
     call_groups:
@@ -164,6 +164,10 @@ services:
       failure_rate: 0.01
   weather_api:
     kind: third_party
+    anomalies:
+    - label: slow_weather_api
+      probability: 0.005
+      latency_multiplier: 20
   address_geocoder:
     kind: third_party
   fx_rate_provider:
@@ -173,15 +177,15 @@ services:
     anomalies:
     - label: slow_tax_service
       probability: 0.05
-      latency_multiplier: 8
+      latency_multiplier: 30
   email_provider:
     kind: third_party
     anomalies:
     - label: email_outage
-      probability: 0.5
+      probability: 0.8
       fail: true
-      from_iteration: 5
-      to_iteration: 8
+      from_iteration: 6
+      to_iteration: 9
   slack_webhook:
     kind: third_party
 jobs:
@@ -218,6 +222,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: record_ingest_watermark
     call_groups:
@@ -249,6 +259,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: read_promotion_calendar
     call_groups:
@@ -317,6 +333,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: get_courier_status
     call_groups:
@@ -328,6 +350,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: upload_normalized_events
     call_groups:
@@ -342,8 +370,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: post_delivery_ack
     call_groups:
     - io: http
@@ -365,6 +394,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: check_import_watermark
     call_groups:
@@ -410,6 +445,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: upload_staged_receipts
     call_groups:
@@ -423,8 +464,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: find_open_purchase_orders
     call_groups:
     - io: db
@@ -488,8 +530,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: register_batch_manifest
     call_groups:
     - io: db
@@ -529,6 +572,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: download_supplier_csv
     call_groups:
@@ -585,8 +634,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: get_store_hours
     call_groups:
     - io: http
@@ -599,6 +649,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: upload_rejected_rows
     call_groups:
@@ -613,8 +669,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: append_import_audit_log
     call_groups:
     - io: db
@@ -636,6 +693,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: upload_staged_receipts
     call_groups:
@@ -649,8 +712,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: get_fx_rates
     call_groups:
     - io: http
@@ -661,6 +725,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
 - name: import_supplier_prices
   service_name: import-supplier-prices
@@ -675,6 +745,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: upload_validated_batches
     call_groups:
@@ -688,8 +764,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: upload_normalized_events
     call_groups:
     - io: gcs
@@ -703,8 +780,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: upload_staged_receipts
     call_groups:
     - io: gcs
@@ -717,8 +795,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: upload_rejected_rows
     call_groups:
     - io: gcs
@@ -731,8 +810,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: read_promotion_calendar
     call_groups:
     - io: db
@@ -752,6 +832,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: upload_import_manifest
     call_groups:
@@ -765,8 +851,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: get_supplier_prices
     call_groups:
     - io: http
@@ -777,6 +864,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: store_shelf_snapshots
     call_groups:
@@ -819,6 +912,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: register_batch_manifest
     call_groups:
@@ -841,6 +940,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: download_sensor_dump
     call_groups:
@@ -904,6 +1009,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: select_loyalty_members
     call_groups:
@@ -966,6 +1077,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: download_loyalty_export
     call_groups:
@@ -1021,6 +1138,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: store_shelf_snapshots
     call_groups:
@@ -1083,6 +1206,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: upload_normalized_events
     call_groups:
@@ -1096,8 +1225,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: post_delivery_ack
     call_groups:
     - io: http
@@ -1121,8 +1251,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: download_raw_receipts
     call_groups:
     - io: gcs
@@ -1155,8 +1286,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: insert_staging_receipts
     call_groups:
     - io: db
@@ -1176,6 +1308,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: resolve_supplier_codes
     call_groups:
@@ -1196,6 +1334,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: append_import_audit_log
     call_groups:
@@ -1218,6 +1362,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: upload_rejected_rows
     call_groups:
@@ -1231,8 +1381,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: get_holiday_calendar
     call_groups:
     - io: http
@@ -1245,6 +1396,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: download_supplier_csv
     call_groups:
@@ -1324,8 +1481,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: get_traffic_report
     call_groups:
     - io: http
@@ -1338,6 +1496,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: lookup_sku_catalog
     call_groups:
@@ -1370,8 +1534,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: select_loyalty_members
     call_groups:
     - io: db
@@ -1404,8 +1569,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: get_store_hours
     call_groups:
     - io: http
@@ -1416,6 +1582,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: upload_import_manifest
     call_groups:
@@ -1429,8 +1601,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: upload_rejected_rows
     call_groups:
     - io: gcs
@@ -1443,8 +1616,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: get_holiday_calendar
     call_groups:
     - io: http
@@ -1457,6 +1631,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: get_promo_feed
     call_groups:
@@ -1468,6 +1648,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: scan_price_history
     call_groups:
@@ -1508,6 +1694,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: download_loyalty_export
     call_groups:
@@ -1534,8 +1726,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: download_sensor_dump
     call_groups:
     - io: gcs
@@ -1577,6 +1770,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: get_fx_rates
     call_groups:
@@ -1588,6 +1787,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: register_batch_manifest
     call_groups:
@@ -1610,8 +1815,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: store_shelf_snapshots
     call_groups:
     - io: db
@@ -1653,6 +1859,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: download_raw_receipts
     call_groups:
@@ -1676,8 +1888,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: select_loyalty_members
     call_groups:
     - io: db
@@ -1699,8 +1912,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: download_supplier_csv
     call_groups:
     - io: gcs
@@ -1724,6 +1938,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: upload_validated_batches
     call_groups:
@@ -1737,8 +1957,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: get_supplier_prices
     call_groups:
     - io: http
@@ -1751,6 +1972,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: post_import_heartbeat
     call_groups:
@@ -1782,6 +2009,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: download_promo_index
     call_groups:
@@ -1823,6 +2056,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
 - name: import_store_registry
   service_name: import-store-registry
@@ -1848,6 +2087,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: scan_price_history
     call_groups:
@@ -1870,6 +2115,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: get_weather_forecast
     call_groups:
@@ -1881,6 +2132,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: read_promotion_calendar
     call_groups:
@@ -1936,8 +2193,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: upload_normalized_events
     call_groups:
     - io: gcs
@@ -1951,8 +2209,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: upload_validated_batches
     call_groups:
     - io: gcs
@@ -1966,8 +2225,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: download_loyalty_export
     call_groups:
     - io: gcs
@@ -1988,6 +2248,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: get_fx_rates
     call_groups:
@@ -1999,6 +2265,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: find_open_purchase_orders
     call_groups:
@@ -2030,8 +2302,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: get_supplier_prices
     call_groups:
     - io: http
@@ -2044,6 +2317,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: upsert_supplier_contacts
     call_groups:
@@ -2077,6 +2356,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: read_store_registry
     call_groups:
@@ -2115,6 +2400,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
 - name: import_promotions
   service_name: import-promotions
@@ -2131,6 +2422,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: read_promotion_calendar
     call_groups:
@@ -2163,8 +2460,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: upload_import_manifest
     call_groups:
     - io: gcs
@@ -2177,8 +2475,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: download_loyalty_export
     call_groups:
     - io: gcs
@@ -2230,6 +2529,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: get_fx_rates
     call_groups:
@@ -2241,6 +2546,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: check_import_watermark
     call_groups:
@@ -2301,6 +2612,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: record_ingest_watermark
     call_groups:
@@ -2323,8 +2640,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: upload_rejected_rows
     call_groups:
     - io: gcs
@@ -2338,8 +2656,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: insert_staging_receipts
     call_groups:
     - io: db
@@ -2405,8 +2724,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: post_delivery_ack
     call_groups:
     - io: http
@@ -2432,8 +2752,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: get_holiday_calendar
     call_groups:
     - io: http
@@ -2444,6 +2765,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: get_supplier_prices
     call_groups:
@@ -2457,6 +2784,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: record_ingest_watermark
     call_groups:
@@ -2477,6 +2810,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: get_traffic_report
     call_groups:
@@ -2488,6 +2827,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: download_raw_receipts
     call_groups:
@@ -2511,8 +2856,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: get_fx_rates
     call_groups:
     - io: http
@@ -2525,6 +2871,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: download_loyalty_export
     call_groups:
@@ -2557,8 +2909,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: read_store_registry
     call_groups:
     - io: db
@@ -2578,6 +2931,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: upload_validated_batches
     call_groups:
@@ -2591,8 +2950,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: download_sensor_dump
     call_groups:
     - io: gcs
@@ -2615,6 +2975,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: post_import_heartbeat
     call_groups:
@@ -2657,6 +3023,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: read_promotion_calendar
     call_groups:
@@ -2692,8 +3064,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: download_promo_index
     call_groups:
     - io: gcs
@@ -2726,6 +3099,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: append_import_audit_log
     call_groups:
@@ -2758,8 +3137,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: upload_validated_batches
     call_groups:
     - io: gcs
@@ -2772,8 +3152,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: post_import_heartbeat
     call_groups:
     - io: http
@@ -2804,6 +3185,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: read_promotion_calendar
     call_groups:
@@ -2852,6 +3239,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
   - name: get_store_hours
     call_groups:
@@ -2863,6 +3256,12 @@ jobs:
         mean_ms: 90
         stddev_ms: 25
       failure_rate: 0.01
+      anomalies:
+      - label: http_flap
+        probability: 0.05
+        fail: true
+        from_iteration: 3
+        to_iteration: 5
     retries: 3
 - name: transform_daily_basket_stats
   service_name: transform-daily-basket-stats
@@ -2891,8 +3290,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: upload_demand_features
     call_groups:
     - io: gcs
@@ -2906,8 +3306,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: download_staged_sales
     call_groups:
     - io: gcs
@@ -2942,8 +3343,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
 - name: transform_weekly_category_rollup
   service_name: transform-weekly-category-rollup
   depends_on:
@@ -3029,8 +3431,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
 - name: transform_margin_by_sku
   service_name: transform-margin-by-sku
   depends_on:
@@ -3075,8 +3478,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: upload_basket_stats
     call_groups:
     - io: gcs
@@ -3089,8 +3493,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
 - name: transform_price_elasticity
   service_name: transform-price-elasticity
   depends_on:
@@ -3139,8 +3544,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: call_fx_rate_provider
     call_groups:
     - io: service
@@ -3181,8 +3587,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: upload_cleaned_receipts
     call_groups:
     - io: gcs
@@ -3196,8 +3603,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: upload_margin_tables
     call_groups:
     - io: gcs
@@ -3210,8 +3618,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: call_product_catalog
     call_groups:
     - io: service
@@ -3237,8 +3646,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: download_weather_features
     call_groups:
     - io: gcs
@@ -3313,8 +3723,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: download_loyalty_segments
     call_groups:
     - io: gcs
@@ -3344,8 +3755,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: call_price_engine
     call_groups:
     - io: service
@@ -3370,8 +3782,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: call_address_geocoder
     call_groups:
     - io: service
@@ -3436,8 +3849,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: call_fx_rate_provider
     call_groups:
     - io: service
@@ -3522,8 +3936,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: upload_basket_stats
     call_groups:
     - io: gcs
@@ -3536,8 +3951,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: call_address_geocoder
     call_groups:
     - io: service
@@ -3596,8 +4012,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: call_demand_forecaster
     call_groups:
     - io: service
@@ -3655,8 +4072,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: download_staged_sales
     call_groups:
     - io: gcs
@@ -3696,8 +4114,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: upload_demand_features
     call_groups:
     - io: gcs
@@ -3711,8 +4130,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: call_price_engine
     call_groups:
     - io: service
@@ -3767,8 +4187,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: upload_margin_tables
     call_groups:
     - io: gcs
@@ -3781,8 +4202,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: download_price_history
     call_groups:
     - io: gcs
@@ -3805,8 +4227,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: call_fx_rate_provider
     call_groups:
     - io: service
@@ -3893,8 +4316,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: download_loyalty_segments
     call_groups:
     - io: gcs
@@ -4029,8 +4453,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
 - name: transform_year_end_basket_rollup
   service_name: transform-year-end-basket-rollup
   depends_on:
@@ -4051,8 +4476,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: call_demand_forecaster_5
     call_groups:
     - io: service
@@ -4088,8 +4514,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: upload_demand_features_4
     call_groups:
     - io: gcs
@@ -4102,8 +4529,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: download_price_history_2
     call_groups:
     - io: gcs
@@ -4178,8 +4606,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: download_inventory_snapshots_2
     call_groups:
     - io: gcs
@@ -4234,8 +4663,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: download_loyalty_segments_2
     call_groups:
     - io: gcs
@@ -4292,8 +4722,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: call_address_geocoder_5
     call_groups:
     - io: service
@@ -4329,8 +4760,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: call_fx_rate_provider
     call_groups:
     - io: service
@@ -4357,8 +4789,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: call_price_engine
     call_groups:
     - io: service
@@ -4432,8 +4865,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: upload_basket_stats_3
     call_groups:
     - io: gcs
@@ -4446,8 +4880,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: call_fx_rate_provider_4
     call_groups:
     - io: service
@@ -4483,8 +4918,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: call_product_catalog_5
     call_groups:
     - io: service
@@ -4552,8 +4988,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: call_demand_forecaster_2
     call_groups:
     - io: service
@@ -4579,8 +5016,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: download_weather_features_2
     call_groups:
     - io: gcs
@@ -4614,8 +5052,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: download_staged_sales_3
     call_groups:
     - io: gcs
@@ -4653,8 +5092,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: call_product_catalog_2
     call_groups:
     - io: service
@@ -4717,8 +5157,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: call_price_engine_5
     call_groups:
     - io: service
@@ -4770,8 +5211,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: call_demand_forecaster
     call_groups:
     - io: service
@@ -4836,8 +5278,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: download_loyalty_segments_3
     call_groups:
     - io: gcs
@@ -4873,8 +5316,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: call_fx_rate_provider_5
     call_groups:
     - io: service
@@ -4899,8 +5343,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: call_price_engine_2
     call_groups:
     - io: service
@@ -4958,8 +5403,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: call_demand_forecaster_5
     call_groups:
     - io: service
@@ -5014,8 +5460,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: call_fx_rate_provider_4
     call_groups:
     - io: service
@@ -5106,8 +5553,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: upload_demand_features
     call_groups:
     - io: gcs
@@ -5120,8 +5568,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: call_address_geocoder_3
     call_groups:
     - io: service
@@ -5169,8 +5618,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: call_address_geocoder_4
     call_groups:
     - io: service
@@ -5195,8 +5645,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: call_weather_api_3
     call_groups:
     - io: service
@@ -5259,8 +5710,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: download_weather_features_2
     call_groups:
     - io: gcs
@@ -5381,8 +5833,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: upload_margin_tables
     call_groups:
     - io: gcs
@@ -5395,8 +5848,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: download_price_history
     call_groups:
     - io: gcs
@@ -5419,8 +5873,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: call_weather_api
     call_groups:
     - io: service
@@ -5467,8 +5922,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: call_fx_rate_provider_5
     call_groups:
     - io: service
@@ -5505,8 +5961,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: call_fx_rate_provider
     call_groups:
     - io: service
@@ -5567,8 +6024,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: call_product_catalog_4
     call_groups:
     - io: service
@@ -5592,8 +6050,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: download_price_history_3
     call_groups:
     - io: gcs
@@ -5628,8 +6087,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: call_price_engine_5
     call_groups:
     - io: service
@@ -5695,8 +6155,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: download_demand_features
     call_groups:
     - io: gcs
@@ -5777,8 +6238,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: call_inventory_api
     call_groups:
     - io: service
@@ -5902,8 +6364,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: check_target_schema_version
     call_groups:
     - io: db
@@ -5926,8 +6389,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: merge_loyalty_segments
     call_groups:
     - io: db
@@ -5974,8 +6438,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: insert_markdown_recommendations
     call_groups:
     - io: db
@@ -6011,8 +6476,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: call_loyalty_service
     call_groups:
     - io: service
@@ -6058,8 +6524,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
 - name: load_loyalty_crm_sync
   service_name: load-loyalty-crm-sync
   depends_on:
@@ -6138,8 +6605,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: download_category_rollups
     call_groups:
     - io: gcs
@@ -6197,8 +6665,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: call_demand_forecaster
     call_groups:
     - io: service
@@ -6269,8 +6738,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: call_demand_forecaster
     call_groups:
     - io: service
@@ -6305,8 +6775,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: upload_forecast_exports
     call_groups:
     - io: gcs
@@ -6320,8 +6791,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: download_demand_features
     call_groups:
     - io: gcs
@@ -6415,8 +6887,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: download_demand_features
     call_groups:
     - io: gcs
@@ -6440,8 +6913,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
 - name: load_category_manager_pack
   service_name: load-category-manager-pack
   depends_on:
@@ -6541,8 +7015,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: upload_dashboard_extracts
     call_groups:
     - io: gcs
@@ -6556,8 +7031,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
 - name: load_regional_ops_summary
   service_name: load-regional-ops-summary
   depends_on:
@@ -6597,8 +7073,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: upsert_shrinkage_report
     call_groups:
     - io: db
@@ -6646,8 +7123,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: lookup_store_hierarchy
     call_groups:
     - io: db
@@ -6706,8 +7184,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
 - name: load_ecommerce_merch_feed
   service_name: load-ecommerce-merch-feed
   depends_on:
@@ -6734,8 +7213,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: download_category_rollups
     call_groups:
     - io: gcs
@@ -6806,8 +7286,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
 - name: load_price_change_queue
   service_name: load-price-change-queue
   depends_on:
@@ -6855,8 +7336,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: download_margin_tables
     call_groups:
     - io: gcs
@@ -6900,8 +7382,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
 - name: load_stock_alert_feed
   service_name: load-stock-alert-feed
   depends_on:
@@ -6971,8 +7454,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: download_category_rollups
     call_groups:
     - io: gcs
@@ -6996,8 +7480,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: lookup_store_hierarchy
     call_groups:
     - io: db
@@ -7067,8 +7552,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: upload_report_pdfs
     call_groups:
     - io: gcs
@@ -7081,8 +7567,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: upsert_store_dashboard_rows
     call_groups:
     - io: db
@@ -7115,8 +7602,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: call_slack_webhook
     call_groups:
     - io: service
@@ -7252,8 +7740,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: upload_report_pdfs
     call_groups:
     - io: gcs
@@ -7266,8 +7755,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: download_margin_tables
     call_groups:
     - io: gcs
@@ -7408,8 +7898,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: select_stale_partitions
     call_groups:
     - io: db
@@ -7431,8 +7922,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: upsert_shrinkage_report
     call_groups:
     - io: db
@@ -7534,8 +8026,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: download_category_rollups
     call_groups:
     - io: gcs
@@ -7577,8 +8070,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: read_dimension_keys
     call_groups:
     - io: db
@@ -7750,8 +8244,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: check_target_schema_version
     call_groups:
     - io: db
@@ -7830,8 +8325,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: merge_replenishment_forecast_2
     call_groups:
     - io: db
@@ -7855,8 +8351,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: insert_markdown_recommendations_3
     call_groups:
     - io: db
@@ -7878,8 +8375,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: upsert_store_dashboard_rows_3
     call_groups:
     - io: db
@@ -7998,8 +8496,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: call_notification_hub_2
     call_groups:
     - io: service
@@ -8036,8 +8535,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: download_demand_features_3
     call_groups:
     - io: gcs
@@ -8069,8 +8569,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: call_inventory_api_2
     call_groups:
     - io: service
@@ -8170,8 +8671,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: download_category_rollups_3
     call_groups:
     - io: gcs
@@ -8255,8 +8757,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: call_inventory_api
     call_groups:
     - io: service
@@ -8292,8 +8795,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: call_notification_hub
     call_groups:
     - io: service
@@ -8320,8 +8824,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: insert_load_audit_entry_3
     call_groups:
     - io: db
@@ -8401,8 +8906,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: call_slack_webhook_3
     call_groups:
     - io: service
@@ -8437,8 +8943,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: call_demand_forecaster_2
     call_groups:
     - io: service
@@ -8483,8 +8990,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: call_email_provider_3
     call_groups:
     - io: service
@@ -8521,8 +9029,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: download_category_rollups_2
     call_groups:
     - io: gcs
@@ -8689,8 +9198,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: call_slack_webhook_2
     call_groups:
     - io: service
@@ -8738,8 +9248,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: upload_report_pdfs_2
     call_groups:
     - io: gcs
@@ -8752,8 +9263,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: download_category_rollups_3
     call_groups:
     - io: gcs
@@ -9072,8 +9584,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: read_dimension_keys_2
     call_groups:
     - io: db
@@ -9165,8 +9678,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: select_stale_partitions
     call_groups:
     - io: db
@@ -9188,8 +9702,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: upload_report_pdfs
     call_groups:
     - io: gcs
@@ -9202,8 +9717,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: call_tax_service_2
     call_groups:
     - io: service
@@ -9229,8 +9745,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: upload_dashboard_extracts
     call_groups:
     - io: gcs
@@ -9244,8 +9761,9 @@ jobs:
         sigma: 0.4
       anomalies:
       - label: huge_blob
-        probability: 0.02
+        probability: 0.002
         payload_bytes: 8388608
+        latency_multiplier: 15
   - name: call_tax_service
     call_groups:
     - io: service
