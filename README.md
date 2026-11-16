@@ -36,6 +36,30 @@ Structure of a scenario:
 - `call_groups`: `io` + `action` (`db`: query/insert, `gcs`: upload/download/list, `http`: get/post, `service`: call), plus `count`, `mode` (`sequential` or `gather`), `max_concurrency`, `latency`, `failure_rate`, `payload_bytes`.
 - YAML anchors and aliases are rejected; size limits are defined in `src/mock_io_app/scenario.py`.
 
+### Anomalies
+
+`anomalies` (on a call group, or on a service where it applies to every call of that service) injects labelled deviations into a random subset of calls, so there is ground truth for judging sampling and reduction methods:
+
+```yaml
+anomalies:
+- label: slow_tax_service      # written to the span as `mock_io.anomaly`
+  probability: 0.05            # chance per call (default 1.0)
+  latency_multiplier: 8        # and/or latency_add_ms
+  # fail: true                 # force a failure
+  # payload_bytes: 8388608     # override the payload size
+  # from_iteration: 5          # active for iterations in [from, to); `--repeat` / API `repeat` count iterations
+  # to_iteration: 8
+```
+
+At least one effect is required. Several matching anomalies combine and their labels are comma-separated. Scenarios without anomalies behave exactly as before. The supermarket scenario has `slow_tax_service`, `slow_price_engine`, `huge_blob` (GCS uploads) and `email_outage` (only during iterations 5-7, e.g. `--repeat 8`).
+
+#### Ground truth
+
+The span attribute is lost if a collector drops the span, so for evaluation write an independent log:
+
+- `MOCK_IO_GROUND_TRUTH_FILE=<path>`: appends one JSON line per anomalous call: `trace_id`, `span_id`, `span_name`, `call_index`, `anomalies`, `timestamp`. Join it to the reduced output on `trace_id` / `span_id`. Requires an enabled trace exporter (`console` or `otlp`), since the IDs come from the spans. Delete the file between experiments.
+- `MOCK_IO_ANOMALY_ATTRIBUTE=0`: stop exporting `mock_io.anomaly`, so methods under test cannot see the labels (default: exported).
+
 ### Microservices
 
 Top-level `services` declares callable services; call groups use `io: service`, `service: <name>`, `action: call`.

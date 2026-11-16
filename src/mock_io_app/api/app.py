@@ -22,7 +22,7 @@ from mock_io_app.api.models import (
     RunStatusResponse,
     ScenarioSummary,
 )
-from mock_io_app.job_factory import SCENARIO_TAG
+from mock_io_app.job_factory import ITERATION_TAG, SCENARIO_TAG
 from mock_io_app.scenario import (
     MAX_SCENARIO_FILE_BYTES,
     NAME_PATTERN,
@@ -89,10 +89,12 @@ def _launch(
         )
     tags = {**request.tags, **trace_tags()}
     launched: list[LaunchedRun] = []
-    for _ in range(request.repeat):
+    for iteration in range(request.repeat):
         for job_name, scenario_name in jobs:
             try:
-                run_id = gateway.submit(job_name, {**tags, SCENARIO_TAG: scenario_name})
+                run_id = gateway.submit(
+                    job_name, {**tags, SCENARIO_TAG: scenario_name, ITERATION_TAG: str(iteration)}
+                )
             except GatewayError as exc:
                 raise HTTPException(
                     exc.status_code,

@@ -17,6 +17,7 @@ from mock_io_app.scenario import ExpandedJob, OpSpec, closure
 from mock_io_app.tracing import as_service, context_from_tags, get_tracer
 
 SCENARIO_TAG = "mock_io/scenario"
+ITERATION_TAG = "mock_io/iteration"
 
 _EXECUTORS = {"in_process": in_process_executor, "multiprocess": multiprocess_executor}
 
@@ -39,6 +40,7 @@ def build_op(job_name: str, owner: ExpandedJob, spec: OpSpec, n_after: int) -> O
         services: FakeServiceClient,
     ) -> int:
         resources = IOResources(db=db, gcs=gcs, http=http, services=services)
+        iteration = int(context.run.tags.get(ITERATION_TAG, 0))
         attributes = {
             "dagster.run_id": context.run_id,
             "dagster.job": job_name,
@@ -46,6 +48,7 @@ def build_op(job_name: str, owner: ExpandedJob, spec: OpSpec, n_after: int) -> O
             "dagster.retry_number": context.retry_number,
             "mock_io.scenario": owner.scenario,
             "mock_io.source_job": owner.name,
+            "mock_io.iteration": iteration,
         }
         with (
             as_service(owner.service_name),
@@ -67,6 +70,7 @@ def build_op(job_name: str, owner: ExpandedJob, spec: OpSpec, n_after: int) -> O
                     rng,
                     key_prefix=f"{owner.name}/{spec.name}/{index}",
                     services=owner.services,
+                    iteration=iteration,
                 )
         context.log.info("op %s completed %d calls", spec.name, total)
         return total

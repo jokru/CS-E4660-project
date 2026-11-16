@@ -8,11 +8,12 @@ from typing import Literal
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from mock_io_app.latency import FixedLatency, LatencySpec
+from mock_io_app.latency import MAX_LATENCY_MS, FixedLatency, LatencySpec
 
 NAME_PATTERN = r"^[a-z0-9_]{1,64}$"
 SERVICE_NAME_PATTERN = r"^[a-z0-9_-]{1,64}$"
 MAX_COPIES = 1_000
+MAX_ANOMALIES = 10
 MAX_CALL_COUNT = 10_000
 MAX_CONCURRENCY = 1_000
 MAX_PAYLOAD_BYTES = 10 * 1024 * 1024
@@ -46,6 +47,40 @@ class Defaults(_Spec):
     failure_rate: float = Field(default=0.0, ge=0, le=1)
 
 
+class AnomalySpec(_Spec):
+    """A labelled deviation applied to a random subset of calls (ground truth for evaluation)."""
+
+    label: str = Field(pattern=NAME_PATTERN)
+    # Chance that a call is affected.
+    probability: float = Field(default=1.0, ge=0, le=1)
+    latency_multiplier: float = Field(default=1.0, ge=0, le=1_000)
+    latency_add_ms: float = Field(default=0.0, ge=0, le=MAX_LATENCY_MS)
+    # Overrides the group's payload size.
+    payload_bytes: int | None = Field(default=None, ge=0, le=MAX_PAYLOAD_BYTES)
+    fail: bool = False
+    # Active for run iterations in [from_iteration, to_iteration); to_iteration None = open-ended.
+    from_iteration: int = Field(default=0, ge=0)
+    to_iteration: int | None = Field(default=None, ge=0)
+
+    @model_validator(mode="after")
+    def _check(self) -> "AnomalySpec":
+        if (
+            self.latency_multiplier == 1.0
+            and self.latency_add_ms == 0
+            and self.payload_bytes is None
+            and not self.fail
+        ):
+            raise ValueError(f"anomaly {self.label!r} has no effect")
+        if self.to_iteration is not None and self.to_iteration <= self.from_iteration:
+            raise ValueError("to_iteration must be greater than from_iteration")
+        return self
+
+    def active(self, iteration: int) -> bool:
+        return iteration >= self.from_iteration and (
+            self.to_iteration is None or iteration < self.to_iteration
+        )
+
+
 class CallGroupSpec(_Spec):
     io: IOType
     action: str
@@ -58,6 +93,7 @@ class CallGroupSpec(_Spec):
     latency: LatencySpec | None = None
     failure_rate: float | None = Field(default=None, ge=0, le=1)
     payload_bytes: int = Field(default=0, ge=0, le=MAX_PAYLOAD_BYTES)
+    anomalies: list[AnomalySpec] = Field(default_factory=list, max_length=MAX_ANOMALIES)
 
     @model_validator(mode="after")
     def _check_action(self) -> "CallGroupSpec":
@@ -77,6 +113,8 @@ class ServiceSpec(_Spec):
     # third_party: a black box; only the client-side call is traced.
     kind: Literal["first_party", "third_party"]
     call_groups: list[CallGroupSpec] = Field(default_factory=list)
+    # Applied to every call of this service (in addition to the calling group's own anomalies).
+    anomalies: list[AnomalySpec] = Field(default_factory=list, max_length=MAX_ANOMALIES)
 
     @model_validator(mode="after")
     def _check_groups(self) -> "ServiceSpec":

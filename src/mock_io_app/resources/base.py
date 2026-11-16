@@ -7,6 +7,7 @@ from opentelemetry.trace import SpanKind
 from opentelemetry.util.types import AttributeValue
 from pydantic import Field
 
+from mock_io_app.ground_truth import anomaly_attributes, record_anomalies
 from mock_io_app.tracing import get_tracer
 
 
@@ -20,6 +21,8 @@ class CallParams:
     fail: bool
     payload_bytes: int
     index: int
+    # Labels of the scenario anomalies applied to this call (ground truth).
+    anomalies: tuple[str, ...] = ()
 
 
 class FakeIOResource(ConfigurableResource):
@@ -40,9 +43,12 @@ class FakeIOResource(ConfigurableResource):
             "mock_io.simulated_latency_ms": params.latency_s * self.latency_scale * 1000,
             **(attributes or {}),
         }
+        span_attributes.update(anomaly_attributes(params.anomalies))
+        span_name = f"{io_type}.{action}"
         with get_tracer().start_as_current_span(
-            f"{io_type}.{action}", kind=SpanKind.CLIENT, attributes=span_attributes
-        ):
+            span_name, kind=SpanKind.CLIENT, attributes=span_attributes
+        ) as span:
+            record_anomalies(span, span_name, params.anomalies, params.index)
             await asyncio.sleep(params.latency_s * self.latency_scale)
             if params.fail:
                 raise MockIOError(f"simulated {io_type}.{action} failure (call {params.index})")

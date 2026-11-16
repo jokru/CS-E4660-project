@@ -1,7 +1,7 @@
 import asyncio
 import random
-from collections.abc import Awaitable, Callable, Mapping
-from dataclasses import dataclass, field
+from collections.abc import Awaitable, Callable, Mapping, Sequence
+from dataclasses import dataclass, field, replace
 
 from mock_io_app.latency import sample_seconds
 from mock_io_app.resources import (
@@ -11,7 +11,7 @@ from mock_io_app.resources import (
     FakeHttpClient,
     FakeServiceClient,
 )
-from mock_io_app.scenario import CallGroupSpec, Defaults, ServiceSpec
+from mock_io_app.scenario import AnomalySpec, CallGroupSpec, Defaults, ServiceSpec
 from mock_io_app.tracing import get_tracer
 
 Call = Callable[[CallParams], Awaitable[object]]
@@ -32,20 +32,44 @@ def make_rng(seed: int | None, *parts: object) -> random.Random:
 
 
 def build_call_params(
-    group: CallGroupSpec, defaults: Defaults, rng: random.Random
+    group: CallGroupSpec,
+    defaults: Defaults,
+    rng: random.Random,
+    iteration: int = 0,
+    service_anomalies: Sequence[AnomalySpec] = (),
 ) -> list[CallParams]:
     latency = group.latency or defaults.latency
     failure_rate = defaults.failure_rate if group.failure_rate is None else group.failure_rate
+    anomalies = [a for a in (*group.anomalies, *service_anomalies) if a.active(iteration)]
+    # Drawn only when anomalies exist, so scenarios without them keep their outcomes. The
+    # iteration is mixed in so probabilistic anomalies hit different calls on each iteration.
+    anomaly_rng = random.Random(f"{rng.getrandbits(64)}:{iteration}") if anomalies else rng
     # Pre-sampled so outcomes don't depend on gather scheduling order.
-    return [
-        CallParams(
+    params = []
+    for i in range(group.count):
+        call = CallParams(
             latency_s=sample_seconds(latency, rng),
             fail=rng.random() < failure_rate,
             payload_bytes=group.payload_bytes,
             index=i,
         )
-        for i in range(group.count)
-    ]
+        for anomaly in anomalies:
+            if anomaly_rng.random() < anomaly.probability:
+                call = _apply_anomaly(call, anomaly)
+        params.append(call)
+    return params
+
+
+def _apply_anomaly(call: CallParams, anomaly: AnomalySpec) -> CallParams:
+    return replace(
+        call,
+        latency_s=call.latency_s * anomaly.latency_multiplier + anomaly.latency_add_ms / 1000,
+        fail=call.fail or anomaly.fail,
+        payload_bytes=(
+            call.payload_bytes if anomaly.payload_bytes is None else anomaly.payload_bytes
+        ),
+        anomalies=(*call.anomalies, anomaly.label),
+    )
 
 
 def resolve_call(
@@ -55,6 +79,7 @@ def resolve_call(
     defaults: Defaults,
     services: Mapping[str, ServiceSpec],
     handler_seed: int = 0,
+    iteration: int = 0,
 ) -> Call:
     match group.io, group.action:
         case "db", "query":
@@ -87,6 +112,7 @@ def resolve_call(
                             random.Random(f"{handler_seed}:{p.index}:{i}"),
                             f"{key_prefix}/{p.index}/{name}/{i}",
                             services,
+                            iteration,
                         )
 
                 return res.services.call(name, p, handler)
@@ -102,11 +128,16 @@ async def run_call_group(
     rng: random.Random,
     key_prefix: str,
     services: Mapping[str, ServiceSpec] | None = None,
+    iteration: int = 0,
 ) -> int:
-    params = build_call_params(group, defaults, rng)
+    services = services or {}
+    service_spec = services.get(group.service or "")
+    params = build_call_params(
+        group, defaults, rng, iteration, service_spec.anomalies if service_spec else ()
+    )
     # Derived from the group's rng so a service's inner outcomes change across op retries.
     handler_seed = rng.getrandbits(64) if group.io == "service" else 0
-    call = resolve_call(group, resources, key_prefix, defaults, services or {}, handler_seed)
+    call = resolve_call(group, resources, key_prefix, defaults, services, handler_seed, iteration)
     attributes = {
         "mock_io.type": group.io,
         "mock_io.action": group.action,

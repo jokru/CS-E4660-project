@@ -6,7 +6,7 @@ from pathlib import Path
 
 from dagster import DagsterInstance
 
-from mock_io_app.job_factory import build_job, default_resources
+from mock_io_app.job_factory import ITERATION_TAG, build_job, default_resources
 from mock_io_app.scenario import expand_jobs, is_valid_name, leaf_jobs, load_scenario
 from mock_io_app.tracing import as_service, get_tracer, setup_tracing, trace_tags
 
@@ -69,7 +69,7 @@ def main(argv: list[str] | None = None) -> int:
                     result = job_def.execute_in_process(
                         resources=resources,
                         instance=instance,
-                        tags=trace_tags(),
+                        tags={**trace_tags(), ITERATION_TAG: str(iteration)},
                         raise_on_error=False,
                     )
                     elapsed = time.perf_counter() - started
