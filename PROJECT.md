@@ -19,6 +19,7 @@
   - Naive
   - Sampling
   - Anomalies + sampling
+  - Statistical sampling (keep traces in proportion to how unusual they are versus a history of error rates and latencies)
   - LLM agent
   - Increasing trace resolution when an anomaly happens
   - Logic in collector vs. application
@@ -40,3 +41,10 @@
 - time based differences in sampling
 - different faults (latency, full errors)
 - different faults per component?
+- statistical sampling: per-key (service/operation) history of error rate and latency percentiles
+  - history store: in-memory counters on the hot path, periodically persisted or refreshed from a DB (SQLite/Redis); a per-trace DB lookup may not keep up at high rates
+  - cold start: keep everything for the first N traces, seed from a prior seeded run, or decay toward a prior
+  - drift: sliding window or EWMA, so a sustained outage does not become the new normal (test with the `email_outage` / `http_flap` windows)
+  - needs custom code (no stock collector policy): a small service beside the collector or a custom processor
+  - evaluation: train the history on a separate seeded run; compare a learning-during-run variant with a pre-trained one
+- make anomaly rates tunable (about 1% or less) so "do simple reducers miss rare exceptions?" is meaningful
