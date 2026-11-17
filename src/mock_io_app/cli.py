@@ -62,7 +62,7 @@ def main(argv: list[str] | None = None) -> int:
                 with (
                     as_service(expanded.scenario_service_name),
                     get_tracer().start_as_current_span(
-                        f"job.{expanded.name}", attributes=attributes
+                        f"run.{expanded.name}", attributes=attributes
                     ),
                 ):
                     started = time.perf_counter()

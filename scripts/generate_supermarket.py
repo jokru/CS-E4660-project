@@ -219,6 +219,7 @@ def _importer(rng: random.Random, name: str) -> dict[str, Any]:
     rng.shuffle(steps)
     return {
         "name": f"import_{name}",
+        "executor": "multiprocess",
         "service_name": _service_name(f"import_{name}"),
         "ops": _ops(rng, steps),
     }
@@ -235,6 +236,7 @@ def _transformer(rng: random.Random, name: str, deps: list[str], factor: int) ->
     rng.shuffle(steps)
     return {
         "name": f"transform_{name}",
+        "executor": "multiprocess",
         "service_name": _service_name(f"transform_{name}"),
         "depends_on": deps,
         "ops": _ops(rng, steps),
@@ -250,6 +252,7 @@ def _loader(rng: random.Random, name: str, deps: list[str], factor: int) -> dict
     rng.shuffle(steps)
     return {
         "name": f"load_{name}",
+        "executor": "multiprocess",
         "service_name": _service_name(f"load_{name}"),
         "depends_on": deps,
         "ops": _ops(rng, steps),

@@ -190,6 +190,7 @@ services:
     kind: third_party
 jobs:
 - name: import_pos_sales
+  executor: multiprocess
   service_name: import-pos-sales
   ops:
   - name: log_rejected_rows
@@ -477,6 +478,7 @@ jobs:
         median_ms: 8
         sigma: 0.5
 - name: import_loyalty_cards
+  executor: multiprocess
   service_name: import-loyalty-cards
   ops:
   - name: check_import_watermark
@@ -733,6 +735,7 @@ jobs:
         to_iteration: 5
     retries: 3
 - name: import_supplier_prices
+  executor: multiprocess
   service_name: import-supplier-prices
   ops:
   - name: get_holiday_calendar
@@ -1096,6 +1099,7 @@ jobs:
         median_ms: 50
         sigma: 0.4
 - name: import_weather_feed
+  executor: multiprocess
   service_name: import-weather-feed
   ops:
   - name: find_open_purchase_orders
@@ -1415,6 +1419,7 @@ jobs:
         median_ms: 50
         sigma: 0.4
 - name: import_shelf_sensors
+  executor: multiprocess
   service_name: import-shelf-sensors
   ops:
   - name: read_store_registry
@@ -1712,6 +1717,7 @@ jobs:
         median_ms: 50
         sigma: 0.4
 - name: import_ecommerce_orders
+  executor: multiprocess
   service_name: import-ecommerce-orders
   ops:
   - name: upload_normalized_events
@@ -2064,6 +2070,7 @@ jobs:
         to_iteration: 5
     retries: 3
 - name: import_store_registry
+  executor: multiprocess
   service_name: import-store-registry
   ops:
   - name: append_import_audit_log
@@ -2408,6 +2415,7 @@ jobs:
         to_iteration: 5
     retries: 3
 - name: import_promotions
+  executor: multiprocess
   service_name: import-promotions
   ops:
   - name: get_weather_forecast
@@ -2689,6 +2697,7 @@ jobs:
         median_ms: 8
         sigma: 0.5
 - name: import_warehouse_stock
+  executor: multiprocess
   service_name: import-warehouse-stock
   ops:
   - name: download_supplier_csv
@@ -3040,6 +3049,7 @@ jobs:
         median_ms: 8
         sigma: 0.5
 - name: import_returns_log
+  executor: multiprocess
   service_name: import-returns-log
   ops:
   - name: upsert_supplier_contacts
@@ -3264,6 +3274,7 @@ jobs:
         to_iteration: 5
     retries: 3
 - name: transform_daily_basket_stats
+  executor: multiprocess
   service_name: transform-daily-basket-stats
   depends_on:
   - import_warehouse_stock
@@ -3347,6 +3358,7 @@ jobs:
         payload_bytes: 8388608
         latency_multiplier: 15
 - name: transform_weekly_category_rollup
+  executor: multiprocess
   service_name: transform-weekly-category-rollup
   depends_on:
   - import_loyalty_cards
@@ -3435,6 +3447,7 @@ jobs:
         payload_bytes: 8388608
         latency_multiplier: 15
 - name: transform_margin_by_sku
+  executor: multiprocess
   service_name: transform-margin-by-sku
   depends_on:
   - import_store_registry
@@ -3497,6 +3510,7 @@ jobs:
         payload_bytes: 8388608
         latency_multiplier: 15
 - name: transform_price_elasticity
+  executor: multiprocess
   service_name: transform-price-elasticity
   depends_on:
   - import_returns_log
@@ -3571,6 +3585,7 @@ jobs:
         sigma: 0.4
     retries: 3
 - name: transform_promo_uplift
+  executor: multiprocess
   service_name: transform-promo-uplift
   depends_on:
   - import_ecommerce_orders
@@ -3660,6 +3675,7 @@ jobs:
         median_ms: 50
         sigma: 0.4
 - name: transform_loyalty_segments
+  executor: multiprocess
   service_name: transform-loyalty-segments
   depends_on:
   - import_ecommerce_orders
@@ -3738,6 +3754,7 @@ jobs:
         median_ms: 50
         sigma: 0.4
 - name: transform_demand_features
+  executor: multiprocess
   service_name: transform-demand-features
   depends_on:
   - import_loyalty_cards
@@ -3831,6 +3848,7 @@ jobs:
       failure_rate: 0.01
     retries: 3
 - name: transform_shrinkage_estimates
+  executor: multiprocess
   service_name: transform-shrinkage-estimates
   depends_on:
   - import_ecommerce_orders
@@ -3918,6 +3936,7 @@ jobs:
         median_ms: 50
         sigma: 0.4
 - name: transform_stock_cover_days
+  executor: multiprocess
   service_name: transform-stock-cover-days
   depends_on:
   - import_ecommerce_orders
@@ -3994,6 +4013,7 @@ jobs:
       failure_rate: 0.01
     retries: 3
 - name: transform_supplier_scorecard
+  executor: multiprocess
   service_name: transform-supplier-scorecard
   depends_on:
   - import_weather_feed
@@ -4086,6 +4106,7 @@ jobs:
         median_ms: 50
         sigma: 0.4
 - name: transform_store_cluster_profiles
+  executor: multiprocess
   service_name: transform-store-cluster-profiles
   depends_on:
   - import_weather_feed
@@ -4170,6 +4191,7 @@ jobs:
         sigma: 0.4
     retries: 3
 - name: transform_weather_adjusted_sales
+  executor: multiprocess
   service_name: transform-weather-adjusted-sales
   depends_on:
   - import_supplier_prices
@@ -4253,6 +4275,7 @@ jobs:
         median_ms: 50
         sigma: 0.4
 - name: transform_basket_affinity
+  executor: multiprocess
   service_name: transform-basket-affinity
   depends_on:
   - import_promotions
@@ -4330,6 +4353,7 @@ jobs:
         median_ms: 50
         sigma: 0.4
 - name: transform_markdown_candidates
+  executor: multiprocess
   service_name: transform-markdown-candidates
   depends_on:
   - import_pos_sales
@@ -4379,6 +4403,7 @@ jobs:
       failure_rate: 0.01
     retries: 3
 - name: transform_ecommerce_funnel
+  executor: multiprocess
   service_name: transform-ecommerce-funnel
   depends_on:
   - import_returns_log
@@ -4457,6 +4482,7 @@ jobs:
         payload_bytes: 8388608
         latency_multiplier: 15
 - name: transform_year_end_basket_rollup
+  executor: multiprocess
   service_name: transform-year-end-basket-rollup
   depends_on:
   - import_store_registry
@@ -5360,6 +5386,7 @@ jobs:
         sigma: 0.4
     retries: 3
 - name: transform_full_history_price_rebuild
+  executor: multiprocess
   service_name: transform-full-history-price-rebuild
   depends_on:
   - import_ecommerce_orders
@@ -6113,6 +6140,7 @@ jobs:
         sigma: 0.4
     retries: 3
 - name: load_store_dashboards
+  executor: multiprocess
   service_name: load-store-dashboards
   depends_on:
   - transform_loyalty_segments
@@ -6200,6 +6228,7 @@ jobs:
         median_ms: 8
         sigma: 0.5
 - name: load_replenishment_forecast
+  executor: multiprocess
   service_name: load-replenishment-forecast
   depends_on:
   - transform_demand_features
@@ -6299,6 +6328,7 @@ jobs:
         median_ms: 8
         sigma: 0.5
 - name: load_markdown_recommendations
+  executor: multiprocess
   service_name: load-markdown-recommendations
   depends_on:
   - transform_price_elasticity
@@ -6413,6 +6443,7 @@ jobs:
         median_ms: 50
         sigma: 0.4
 - name: load_supplier_portal
+  executor: multiprocess
   service_name: load-supplier-portal
   depends_on:
   - transform_full_history_price_rebuild
@@ -6528,6 +6559,7 @@ jobs:
         payload_bytes: 8388608
         latency_multiplier: 15
 - name: load_loyalty_crm_sync
+  executor: multiprocess
   service_name: load-loyalty-crm-sync
   depends_on:
   - transform_full_history_price_rebuild
@@ -6638,6 +6670,7 @@ jobs:
         median_ms: 8
         sigma: 0.5
 - name: load_finance_margin_report
+  executor: multiprocess
   service_name: load-finance-margin-report
   depends_on:
   - transform_demand_features
@@ -6701,6 +6734,7 @@ jobs:
         median_ms: 50
         sigma: 0.4
 - name: load_shrinkage_report
+  executor: multiprocess
   service_name: load-shrinkage-report
   depends_on:
   - transform_weather_adjusted_sales
@@ -6817,6 +6851,7 @@ jobs:
         median_ms: 50
         sigma: 0.4
 - name: load_promo_performance_board
+  executor: multiprocess
   service_name: load-promo-performance-board
   depends_on:
   - transform_supplier_scorecard
@@ -6917,6 +6952,7 @@ jobs:
         payload_bytes: 8388608
         latency_multiplier: 15
 - name: load_category_manager_pack
+  executor: multiprocess
   service_name: load-category-manager-pack
   depends_on:
   - transform_daily_basket_stats
@@ -7035,6 +7071,7 @@ jobs:
         payload_bytes: 8388608
         latency_multiplier: 15
 - name: load_regional_ops_summary
+  executor: multiprocess
   service_name: load-regional-ops-summary
   depends_on:
   - transform_shrinkage_estimates
@@ -7188,6 +7225,7 @@ jobs:
         payload_bytes: 8388608
         latency_multiplier: 15
 - name: load_ecommerce_merch_feed
+  executor: multiprocess
   service_name: load-ecommerce-merch-feed
   depends_on:
   - transform_loyalty_segments
@@ -7290,6 +7328,7 @@ jobs:
         payload_bytes: 8388608
         latency_multiplier: 15
 - name: load_price_change_queue
+  executor: multiprocess
   service_name: load-price-change-queue
   depends_on:
   - transform_year_end_basket_rollup
@@ -7386,6 +7425,7 @@ jobs:
         payload_bytes: 8388608
         latency_multiplier: 15
 - name: load_stock_alert_feed
+  executor: multiprocess
   service_name: load-stock-alert-feed
   depends_on:
   - transform_markdown_candidates
@@ -7523,6 +7563,7 @@ jobs:
         median_ms: 8
         sigma: 0.5
 - name: load_store_manager_digest
+  executor: multiprocess
   service_name: load-store-manager-digest
   depends_on:
   - transform_basket_affinity
@@ -7667,6 +7708,7 @@ jobs:
       failure_rate: 0.01
     retries: 3
 - name: load_executive_scorecard
+  executor: multiprocess
   service_name: load-executive-scorecard
   depends_on:
   - transform_price_elasticity
@@ -7779,6 +7821,7 @@ jobs:
         median_ms: 50
         sigma: 0.4
 - name: load_weather_sales_report
+  executor: multiprocess
   service_name: load-weather-sales-report
   depends_on:
   - transform_loyalty_segments
@@ -7848,6 +7891,7 @@ jobs:
         median_ms: 50
         sigma: 0.4
 - name: load_delivery_planning_board
+  executor: multiprocess
   service_name: load-delivery-planning-board
   depends_on:
   - transform_price_elasticity
@@ -7946,6 +7990,7 @@ jobs:
         median_ms: 8
         sigma: 0.5
 - name: load_returns_analysis_mart
+  executor: multiprocess
   service_name: load-returns-analysis-mart
   depends_on:
   - transform_stock_cover_days
@@ -8040,6 +8085,7 @@ jobs:
         median_ms: 50
         sigma: 0.4
 - name: load_labor_scheduling_input
+  executor: multiprocess
   service_name: load-labor-scheduling-input
   depends_on:
   - transform_daily_basket_stats
@@ -8138,6 +8184,7 @@ jobs:
         sigma: 0.4
     retries: 3
 - name: load_customer_churn_mart
+  executor: multiprocess
   service_name: load-customer-churn-mart
   depends_on:
   - transform_basket_affinity
@@ -8225,6 +8272,7 @@ jobs:
         median_ms: 8
         sigma: 0.5
 - name: load_full_year_data_warehouse_load
+  executor: multiprocess
   service_name: load-full-year-data-warehouse-load
   depends_on:
   - transform_daily_basket_stats
@@ -9140,6 +9188,7 @@ jobs:
         median_ms: 8
         sigma: 0.5
 - name: load_historical_backfill_load
+  executor: multiprocess
   service_name: load-historical-backfill-load
   depends_on:
   - transform_price_elasticity

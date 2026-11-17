@@ -38,10 +38,14 @@ def test_ops_continue_trace_from_run_tags(spans: InMemorySpanExporter) -> None:
         tags = trace_tags()
     assert job_def.execute_in_process(resources=default_resources(), tags=tags).success
 
-    op_span = next(s for s in spans.get_finished_spans() if s.name == "op.only")
-    assert op_span.context.trace_id == parent.get_span_context().trace_id
+    finished = spans.get_finished_spans()
+    job_span = next(s for s in finished if s.name == "job.demo__beta")
+    op_span = next(s for s in finished if s.name == "op.only")
+    assert job_span.context.trace_id == parent.get_span_context().trace_id
+    assert job_span.parent is not None
+    assert job_span.parent.span_id == parent.get_span_context().span_id
     assert op_span.parent is not None
-    assert op_span.parent.span_id == parent.get_span_context().span_id
+    assert op_span.parent.span_id == job_span.context.span_id
 
 
 def test_failure_rate_one_fails_run() -> None:
@@ -57,3 +61,18 @@ def test_build_definitions_from_directory(tmp_path: Path) -> None:
     defs = build_definitions(tmp_path, "*.yaml")
     names = sorted(job.name for job in defs.resolve_all_job_defs())
     assert names == ["demo__alpha_0", "demo__alpha_1", "demo__beta"]
+
+
+def test_op_retries_rerun_inside_the_job_span(spans: InMemorySpanExporter) -> None:
+    raw = zero_latency_scenario()
+    raw["defaults"]["failure_rate"] = 1.0
+    raw["jobs"][1]["ops"][0]["retries"] = 2
+    job_def = _jobs(raw)[-1]
+    assert not job_def.execute_in_process(
+        resources=default_resources(), raise_on_error=False
+    ).success
+
+    finished = spans.get_finished_spans()
+    attempts = sorted(s.attributes["dagster.retry_number"] for s in finished if s.name == "op.only")
+    assert attempts == [0, 1, 2]
+    assert sum(s.name == "job.demo__beta" for s in finished) == 1

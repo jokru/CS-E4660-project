@@ -73,7 +73,9 @@ def test_dependent_job_runs_upstream_ops_first(spans: InMemorySpanExporter) -> N
 
     ops = sorted((s for s in finished if s.name == "op.op"), key=lambda s: s.start_time)
     assert ops[-1].attributes["mock_io.source_job"] == "demo__b"
-    assert {s.attributes["dagster.job"] for s in ops} == {"demo__b"}
+    job_spans = [s for s in finished if s.name.startswith("job.")]
+    assert {s.attributes["dagster.job"] for s in job_spans} == {"demo__b"}
+    assert sorted(s.name for s in job_spans) == ["job.demo__a_0", "job.demo__a_1", "job.demo__b"]
     assert max(s.end_time for s in ops[:2]) <= ops[2].start_time
 
 

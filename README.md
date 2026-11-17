@@ -141,7 +141,7 @@ uv run mock-io-run --scenario scenarios/small.yaml
 
 To use OTLP over HTTP instead, set `OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf` and `OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:4318`. Browse traces at <http://127.0.0.1:16686>.
 
-Span layout: `op.<name>` > `call_group.<io>.<action>` > `<io>.<action>` (client span per call). Service calls produce `service.<name>.call` (client) and, for first-party services, a nested `service.<name>.handle` (server). The handle span and everything under it are exported with `service.name` set to the first-party service's name, so Jaeger shows them as separate services; third-party calls only appear as client spans of the caller.
+Span layout: `run.<job>` (CLI only; scenario `service_name`) > `job.<job>` (one per job in the run, in that job's service; upstream jobs get their own) > `op.<name>` > `call_group.<io>.<action>` > `<io>.<action>` (client span per call). Each job is one Dagster op (so the Dagster graph mirrors the job DAG, and independent jobs can run in parallel with the multiprocess executor); its scenario ops run in order inside the job, and `retries` re-run an op inside the job span (one `op.<name>` span per attempt, `dagster.retry_number`). Service calls produce `service.<name>.call` (client) and, for first-party services, a nested `service.<name>.handle` (server). The handle span and everything under it are exported with `service.name` set to the first-party service's name, so Jaeger shows them as separate services; third-party calls only appear as client spans of the caller.
 
 ## Layout
 
