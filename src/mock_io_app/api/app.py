@@ -22,11 +22,12 @@ from mock_io_app.api.models import (
     RunStatusResponse,
     ScenarioSummary,
 )
-from mock_io_app.job_factory import ITERATION_TAG, SCENARIO_TAG
+from mock_io_app.job_factory import ITERATION_TAG, SCENARIO_TAG, SEED_TAG
 from mock_io_app.scenario import (
     MAX_SCENARIO_FILE_BYTES,
     NAME_PATTERN,
     SCENARIO_SUFFIX,
+    ExpandedJob,
     Scenario,
     ScenarioSyntaxError,
     expand_jobs,
@@ -36,7 +37,7 @@ from mock_io_app.scenario import (
     scenario_dir,
     scenario_glob,
 )
-from mock_io_app.tracing import setup_tracing, trace_tags
+from mock_io_app.tracing import as_service, get_tracer, setup_tracing, trace_tags
 
 logger = logging.getLogger(__name__)
 
@@ -80,27 +81,42 @@ def _summary(name: str, scenario: Scenario) -> ScenarioSummary:
 
 
 def _launch(
-    gateway: DagsterGateway, jobs: list[tuple[str, str]], request: LaunchRequest
+    gateway: DagsterGateway, jobs: list[ExpandedJob], request: LaunchRequest
 ) -> LaunchResponse:
     if len(jobs) * request.repeat > MAX_RUNS_PER_REQUEST:
         raise HTTPException(
             status.HTTP_422_UNPROCESSABLE_CONTENT,
             f"request would launch more than {MAX_RUNS_PER_REQUEST} runs",
         )
-    tags = {**request.tags, **trace_tags()}
     launched: list[LaunchedRun] = []
     for iteration in range(request.repeat):
-        for job_name, scenario_name in jobs:
-            try:
-                run_id = gateway.submit(
-                    job_name, {**tags, SCENARIO_TAG: scenario_name, ITERATION_TAG: str(iteration)}
-                )
-            except GatewayError as exc:
-                raise HTTPException(
-                    exc.status_code,
-                    {"message": exc.message, "launched": [r.model_dump() for r in launched]},
-                ) from exc
-            launched.append(LaunchedRun(job=job_name, run_id=run_id))
+        for job in jobs:
+            # Same as the CLI: a `run.*` span per run under the request span, so everything this
+            # request launches is part of the request's trace.
+            attributes = {
+                "dagster.job": job.name,
+                "mock_io.scenario": job.scenario,
+                "mock_io.iteration": iteration,
+            }
+            with (
+                as_service(job.scenario_service_name),
+                get_tracer().start_as_current_span(f"run.{job.name}", attributes=attributes),
+            ):
+                tags = {
+                    **request.tags,
+                    **trace_tags(),
+                    SCENARIO_TAG: job.scenario,
+                    ITERATION_TAG: str(iteration),
+                    **({} if request.seed is None else {SEED_TAG: str(request.seed)}),
+                }
+                try:
+                    run_id = gateway.submit(job.name, tags)
+                except GatewayError as exc:
+                    raise HTTPException(
+                        exc.status_code,
+                        {"message": exc.message, "launched": [r.model_dump() for r in launched]},
+                    ) from exc
+            launched.append(LaunchedRun(job=job.name, run_id=run_id))
     return LaunchResponse(runs=launched)
 
 
@@ -159,8 +175,9 @@ def create_app() -> FastAPI:
         body: LaunchRequest | None = None,
     ) -> LaunchResponse:
         for name, scenario in _load(directory).items():
-            if any(job.name == job_name for job in expand_jobs(name, scenario)):
-                return _launch(gateway, [(job_name, name)], body or LaunchRequest())
+            for job in expand_jobs(name, scenario):
+                if job.name == job_name:
+                    return _launch(gateway, [job], body or LaunchRequest())
         raise HTTPException(status.HTTP_404_NOT_FOUND, "job not found")
 
     @app.post("/scenarios/{scenario}/runs")
@@ -174,7 +191,7 @@ def create_app() -> FastAPI:
         if loaded is None:
             raise HTTPException(status.HTTP_404_NOT_FOUND, "scenario not found")
         # Leaf jobs already include their upstream jobs' ops; launching the rest would repeat work.
-        jobs = [(job.name, scenario) for job in leaf_jobs(expand_jobs(scenario, loaded))]
+        jobs = leaf_jobs(expand_jobs(scenario, loaded))
         return _launch(gateway, jobs, body or LaunchRequest())
 
     @app.get("/runs/{run_id}")

@@ -21,6 +21,7 @@ dependencies = [
 mock-io-run = "mock_io_app.cli:main"
 mock-io-api = "mock_io_app.api.app:main"
 mock-io-ctl = "mock_io_app.api.client_cli:main"
+mock-io-eval = "mock_io_app.evaluation:main"
 
 [dependency-groups]
 dev = [

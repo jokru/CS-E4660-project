@@ -8,6 +8,7 @@ RESERVED_TAG_PREFIXES = ("dagster/", "otel/", "mock_io/")
 
 class LaunchRequest(BaseModel):
     repeat: int = Field(default=1, ge=1, le=MAX_REPEAT)
+    seed: int | None = Field(default=None, ge=0, le=2**63 - 1)
     tags: dict[str, str] = Field(default_factory=dict, max_length=MAX_EXTRA_TAGS)
 
     @field_validator("tags")

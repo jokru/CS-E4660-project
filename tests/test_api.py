@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 import yaml
 from fastapi.testclient import TestClient
+from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 
 from mock_io_app.api.app import app, get_gateway, get_scenario_dir
 from mock_io_app.api.gateway import GatewayError
@@ -150,3 +151,28 @@ def test_traceparent_is_propagated_into_run_tags(client: TestClient, gateway: Fa
     assert client.post("/jobs/demo__beta/runs", json={}, headers=headers).status_code == 200
     traceparent = gateway.submitted[0][1][TRACEPARENT_TAG]
     assert traceparent.split("-")[1] == trace_id
+
+
+def test_each_launched_run_has_a_run_span_in_the_request_trace(
+    client: TestClient, gateway: FakeGateway, spans: InMemorySpanExporter
+) -> None:
+    trace_id = "4bf92f3577b34da6a3ce929d0e0e4736"
+    headers = {"traceparent": f"00-{trace_id}-00f067aa0ba902b7-01"}
+    response = client.post("/scenarios/demo/runs", json={"repeat": 2}, headers=headers)
+    assert response.status_code == 200
+
+    run_spans = [s for s in spans.get_finished_spans() if s.name.startswith("run.")]
+    assert len(run_spans) == len(gateway.submitted) == 6  # (alpha_0, alpha_1, beta) x 2
+    assert {f"{s.context.trace_id:032x}" for s in run_spans} == {trace_id}
+    assert sorted(s.attributes["mock_io.iteration"] for s in run_spans) == [0, 0, 0, 1, 1, 1]
+    # Each run's tags point at its own run span, which is what the job spans parent to.
+    submitted_parents = [tags[TRACEPARENT_TAG].split("-")[2] for _, tags in gateway.submitted]
+    assert sorted(submitted_parents) == sorted(f"{s.context.span_id:016x}" for s in run_spans)
+
+
+def test_seed_is_passed_as_run_tag(client: TestClient, gateway: FakeGateway) -> None:
+    assert client.post("/scenarios/demo/runs", json={"seed": 7}).status_code == 200
+    assert {tags["mock_io/seed"] for _, tags in gateway.submitted} == {"7"}
+    gateway.submitted.clear()
+    assert client.post("/scenarios/demo/runs", json={}).status_code == 200
+    assert all("mock_io/seed" not in tags for _, tags in gateway.submitted)

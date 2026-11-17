@@ -72,6 +72,7 @@ def _build_parser() -> argparse.ArgumentParser:
         cmd = sub.add_parser(name, help=f"launch a {target}")
         cmd.add_argument(target)
         cmd.add_argument("--repeat", type=int, default=1)
+        cmd.add_argument("--seed", type=int, help="run seed (overrides the scenario seed)")
         cmd.add_argument("--tag", action="append", default=[], metavar="KEY=VALUE")
         cmd.add_argument("--wait", action="store_true", help="poll until runs finish")
         cmd.add_argument("--poll-interval", type=float, default=1.0)
@@ -96,7 +97,9 @@ def _dispatch(args: argparse.Namespace, client: httpx.Client) -> int:
                 )
         case "run-job" | "run-scenario":
             kind = "jobs" if args.command == "run-job" else "scenarios"
-            body = {"repeat": args.repeat, "tags": _parse_tags(args.tag)}
+            body: dict[str, Any] = {"repeat": args.repeat, "tags": _parse_tags(args.tag)}
+            if args.seed is not None:
+                body["seed"] = args.seed
             result = _request(client, "POST", f"/{kind}/{getattr(args, kind[:-1])}/runs", json=body)
             return _print_launch(client, result, args.wait, args.poll_interval)
         case "status":

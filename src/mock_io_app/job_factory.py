@@ -23,6 +23,7 @@ from mock_io_app.tracing import as_service, context_from_tags, get_tracer
 
 SCENARIO_TAG = "mock_io/scenario"
 ITERATION_TAG = "mock_io/iteration"
+SEED_TAG = "mock_io/seed"  # run-level seed; overrides the scenario's defaults.seed
 
 _EXECUTORS = {"in_process": in_process_executor, "multiprocess": multiprocess_executor}
 
@@ -48,6 +49,8 @@ def build_op(job_name: str, owner: ExpandedJob) -> OpDefinition:
     ) -> int:
         resources = IOResources(db=db, gcs=gcs, http=http, services=services)
         iteration = int(context.run.tags.get(ITERATION_TAG, 0))
+        run_seed = context.run.tags.get(SEED_TAG)
+        seed = int(run_seed) if run_seed is not None else owner.defaults.seed
         attributes = {
             "dagster.run_id": context.run_id,
             "dagster.job": job_name,
@@ -64,7 +67,7 @@ def build_op(job_name: str, owner: ExpandedJob) -> OpDefinition:
             ),
         ):
             for spec in owner.spec.ops:
-                total += await _run_scenario_op(owner, spec, resources, iteration, context)
+                total += await _run_scenario_op(owner, spec, resources, iteration, seed, context)
         context.log.info("job %s completed %d calls", owner.name, total)
         return total
 
@@ -80,6 +83,7 @@ async def _run_scenario_op(
     spec: OpSpec,
     resources: IOResources,
     iteration: int,
+    seed: int | None,
     context: OpExecutionContext,
 ) -> int:
     for attempt in range(spec.retries + 1):
@@ -92,7 +96,7 @@ async def _run_scenario_op(
             with get_tracer().start_as_current_span(f"op.{spec.name}", attributes=attributes):
                 total = 0
                 for index, group in enumerate(spec.call_groups):
-                    rng = make_rng(owner.defaults.seed, owner.name, spec.name, index, attempt)
+                    rng = make_rng(seed, owner.name, spec.name, index, attempt, iteration)
                     total += await run_call_group(
                         group,
                         owner.defaults,

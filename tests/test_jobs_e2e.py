@@ -76,3 +76,35 @@ def test_op_retries_rerun_inside_the_job_span(spans: InMemorySpanExporter) -> No
     attempts = sorted(s.attributes["dagster.retry_number"] for s in finished if s.name == "op.only")
     assert attempts == [0, 1, 2]
     assert sum(s.name == "job.demo__beta" for s in finished) == 1
+
+
+def test_iterations_draw_different_latencies(spans: InMemorySpanExporter) -> None:
+    raw = zero_latency_scenario()
+    raw["defaults"]["latency"] = {"dist": "uniform", "min_ms": 1, "max_ms": 100}
+    job_def = _jobs(raw)[-1]
+    for iteration in (0, 1):
+        tags = {"mock_io/iteration": str(iteration)}
+        assert job_def.execute_in_process(resources=default_resources(), tags=tags).success
+
+    latencies = [
+        s.attributes["mock_io.simulated_latency_ms"]
+        for s in spans.get_finished_spans()
+        if s.name == "db.insert"
+    ]
+    assert len(latencies) == 2 and latencies[0] != latencies[1]
+
+
+def test_run_seed_overrides_scenario_seed(spans: InMemorySpanExporter) -> None:
+    raw = zero_latency_scenario()
+    raw["defaults"]["latency"] = {"dist": "uniform", "min_ms": 1, "max_ms": 1000}
+    job_def = _jobs(raw)[-1]
+    for seed in ("5", "5", "6"):
+        tags = {"mock_io/seed": seed}
+        assert job_def.execute_in_process(resources=default_resources(), tags=tags).success
+
+    latencies = [
+        s.attributes["mock_io.simulated_latency_ms"]
+        for s in spans.get_finished_spans()
+        if s.name == "db.insert"
+    ]
+    assert latencies[0] == latencies[1] != latencies[2]
