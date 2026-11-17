@@ -6,3 +6,4 @@ __pycache__/
 .dagster_home/
 .tmp_dagster*/
 tmp*/
+.DS_Store
