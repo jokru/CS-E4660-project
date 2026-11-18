@@ -88,3 +88,4 @@ Next:
   - needs custom code (no stock collector policy): a small service beside the collector or a custom processor
   - evaluation: train the history on a separate seeded run; compare a learning-during-run variant with a pre-trained one
 - make anomaly rates tunable (about 1% or less) so "do simple reducers miss rare exceptions?" is meaningful
+- track resource usage of different collectors
