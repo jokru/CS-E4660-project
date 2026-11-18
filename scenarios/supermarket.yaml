@@ -64,7 +64,7 @@ services:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
   inventory_api:
     kind: first_party
     call_groups:
@@ -121,7 +121,7 @@ services:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
   loyalty_service:
     kind: first_party
     call_groups:
@@ -161,7 +161,7 @@ services:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
   weather_api:
     kind: third_party
     anomalies:
@@ -184,7 +184,7 @@ services:
     - label: email_outage
       probability: 0.8
       fail: true
-      from_iteration: 6
+      from_iteration: 7
       to_iteration: 9
   slack_webhook:
     kind: third_party
@@ -222,10 +222,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -259,10 +259,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -333,10 +333,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -350,10 +350,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -383,7 +383,7 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: get_store_hours
     call_groups:
@@ -394,10 +394,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -432,7 +432,7 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: get_fx_rates
     call_groups:
@@ -445,10 +445,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -517,7 +517,7 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: upload_normalized_events
     call_groups:
@@ -573,10 +573,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -600,7 +600,7 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: record_ingest_watermark
     call_groups:
@@ -650,10 +650,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -694,10 +694,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -726,10 +726,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -747,10 +747,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -834,10 +834,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -866,10 +866,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -914,10 +914,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -942,10 +942,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -971,7 +971,7 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: lookup_sku_catalog
     call_groups:
@@ -1000,7 +1000,7 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: get_courier_status
     call_groups:
@@ -1011,10 +1011,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -1079,10 +1079,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -1141,10 +1141,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -1169,7 +1169,7 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: register_batch_manifest
     call_groups:
@@ -1209,10 +1209,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -1241,7 +1241,7 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: upload_staged_receipts
     call_groups:
@@ -1311,10 +1311,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -1337,10 +1337,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -1365,10 +1365,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -1399,10 +1399,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -1500,10 +1500,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -1586,10 +1586,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -1635,10 +1635,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -1652,10 +1652,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -1698,10 +1698,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -1755,7 +1755,7 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: lookup_sku_catalog
     call_groups:
@@ -1775,10 +1775,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -1792,10 +1792,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -1864,10 +1864,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -1943,10 +1943,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -1977,10 +1977,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -1994,7 +1994,7 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: scan_price_history
     call_groups:
@@ -2014,10 +2014,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -2061,10 +2061,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -2093,10 +2093,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -2121,10 +2121,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -2138,10 +2138,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -2164,7 +2164,7 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: record_ingest_watermark
     call_groups:
@@ -2254,10 +2254,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -2271,10 +2271,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -2323,10 +2323,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -2351,7 +2351,7 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: get_holiday_calendar
     call_groups:
@@ -2362,10 +2362,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -2406,10 +2406,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -2429,10 +2429,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -2516,7 +2516,7 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: scan_price_history
     call_groups:
@@ -2536,10 +2536,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -2553,10 +2553,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -2619,10 +2619,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -2747,7 +2747,7 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: upload_staged_receipts
     call_groups:
@@ -2773,10 +2773,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -2792,10 +2792,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -2818,10 +2818,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -2835,10 +2835,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -2879,10 +2879,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -2939,10 +2939,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -2983,10 +2983,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -3000,7 +3000,7 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: select_loyalty_members
     call_groups:
@@ -3031,10 +3031,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -3108,10 +3108,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -3174,7 +3174,7 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: read_store_registry
     call_groups:
@@ -3194,10 +3194,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -3248,10 +3248,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -3265,10 +3265,10 @@ jobs:
         dist: normal
         mean_ms: 90
         stddev_ms: 25
-      failure_rate: 0.01
+      failure_rate: 0.0002
       anomalies:
       - label: http_flap
-        probability: 0.05
+        probability: 0.003
         fail: true
         from_iteration: 3
         to_iteration: 5
@@ -3340,7 +3340,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: upload_basket_stats
     call_groups:
@@ -3375,7 +3375,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: download_price_history
     call_groups:
@@ -3465,7 +3465,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: download_price_history
     call_groups:
@@ -3571,7 +3571,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: call_price_engine
     call_groups:
@@ -3725,7 +3725,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: upload_margin_tables
     call_groups:
@@ -3812,7 +3812,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: download_price_history
     call_groups:
@@ -3845,7 +3845,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
 - name: transform_shrinkage_estimates
   executor: multiprocess
@@ -3880,7 +3880,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: call_address_geocoder
     call_groups:
@@ -3892,7 +3892,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: download_loyalty_segments
     call_groups:
@@ -3985,7 +3985,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: call_demand_forecaster
     call_groups:
@@ -4010,7 +4010,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
 - name: transform_supplier_scorecard
   executor: multiprocess
@@ -4078,7 +4078,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: upload_cleaned_receipts
     call_groups:
@@ -4175,7 +4175,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: call_demand_forecaster
     call_groups:
@@ -4262,7 +4262,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: download_weather_features
     call_groups:
@@ -4313,7 +4313,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: call_weather_api
     call_groups:
@@ -4325,7 +4325,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: upload_basket_stats
     call_groups:
@@ -4400,7 +4400,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
 - name: transform_ecommerce_funnel
   executor: multiprocess
@@ -4441,7 +4441,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: download_loyalty_segments
     call_groups:
@@ -4464,7 +4464,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: upload_cleaned_receipts
     call_groups:
@@ -4526,7 +4526,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: upload_cleaned_receipts_4
     call_groups:
@@ -4579,7 +4579,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: call_product_catalog
     call_groups:
@@ -4604,7 +4604,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: call_weather_api_5
     call_groups:
@@ -4618,7 +4618,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: upload_margin_tables_4
     call_groups:
@@ -4761,7 +4761,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: download_staged_sales_4
     call_groups:
@@ -4801,7 +4801,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: upload_cleaned_receipts_2
     call_groups:
@@ -4841,7 +4841,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: call_price_engine_3
     call_groups:
@@ -4877,7 +4877,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: upload_category_rollups
     call_groups:
@@ -4919,7 +4919,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: download_weather_features_4
     call_groups:
@@ -5104,7 +5104,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: upload_basket_stats_2
     call_groups:
@@ -5157,7 +5157,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: call_address_geocoder
     call_groups:
@@ -5169,7 +5169,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: upload_margin_tables
     call_groups:
@@ -5211,7 +5211,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: call_product_catalog_4
     call_groups:
@@ -5278,7 +5278,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: download_inventory_snapshots_4
     call_groups:
@@ -5355,7 +5355,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: upload_margin_tables_2
     call_groups:
@@ -5415,7 +5415,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: upload_basket_stats_2
     call_groups:
@@ -5502,7 +5502,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: download_weather_features
     call_groups:
@@ -5555,7 +5555,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: call_price_engine_3
     call_groups:
@@ -5608,7 +5608,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: call_address_geocoder
     call_groups:
@@ -5620,7 +5620,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: download_loyalty_segments_2
     call_groups:
@@ -5658,7 +5658,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: upload_basket_stats_3
     call_groups:
@@ -5687,7 +5687,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: call_price_engine_2
     call_groups:
@@ -5771,7 +5771,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: call_price_engine
     call_groups:
@@ -5807,7 +5807,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: call_address_geocoder_2
     call_groups:
@@ -5821,7 +5821,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: call_product_catalog
     call_groups:
@@ -5913,7 +5913,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: call_product_catalog_2
     call_groups:
@@ -5964,7 +5964,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: download_weather_features_3
     call_groups:
@@ -6001,7 +6001,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: call_fx_rate_provider_2
     call_groups:
@@ -6013,7 +6013,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: call_weather_api_2
     call_groups:
@@ -6027,7 +6027,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: download_staged_sales
     call_groups:
@@ -6156,7 +6156,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: call_notification_hub
     call_groups:
@@ -6493,7 +6493,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: upload_forecast_exports
     call_groups:
@@ -6576,7 +6576,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: merge_replenishment_forecast
     call_groups:
@@ -7136,7 +7136,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: download_basket_stats
     call_groups:
@@ -7184,7 +7184,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: insert_markdown_recommendations
     call_groups:
@@ -7309,7 +7309,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: upload_forecast_exports
     call_groups:
@@ -7462,7 +7462,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: check_target_schema_version
     call_groups:
@@ -7656,7 +7656,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: call_email_provider
     call_groups:
@@ -7670,7 +7670,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: download_demand_features
     call_groups:
@@ -7705,7 +7705,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
 - name: load_executive_scorecard
   executor: multiprocess
@@ -7768,7 +7768,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: upload_forecast_exports
     call_groups:
@@ -7928,7 +7928,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: upload_dashboard_extracts
     call_groups:
@@ -8102,7 +8102,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: upload_report_pdfs
     call_groups:
@@ -8149,7 +8149,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: check_target_schema_version
     call_groups:
@@ -8212,7 +8212,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: merge_replenishment_forecast
     call_groups:
@@ -8323,7 +8323,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: lookup_store_hierarchy_2
     call_groups:
@@ -8568,7 +8568,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: upload_report_pdfs_3
     call_groups:
@@ -8663,7 +8663,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: download_margin_tables_2
     call_groups:
@@ -8896,7 +8896,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: download_demand_features_2
     call_groups:
@@ -8929,7 +8929,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: download_margin_tables
     call_groups:
@@ -8967,7 +8967,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: download_margin_tables_4
     call_groups:
@@ -9015,7 +9015,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: merge_loyalty_segments_3
     call_groups:
@@ -9053,7 +9053,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: download_category_rollups
     call_groups:
@@ -9128,7 +9128,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: upsert_shrinkage_report_3
     call_groups:
@@ -9262,7 +9262,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: upsert_shrinkage_report_2
     call_groups:
@@ -9355,7 +9355,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: upsert_shrinkage_report
     call_groups:
@@ -9410,7 +9410,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: lookup_store_hierarchy_2
     call_groups:
@@ -9444,7 +9444,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: call_demand_forecaster_2
     call_groups:
@@ -9532,7 +9532,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: call_notification_hub
     call_groups:
@@ -9555,7 +9555,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: insert_load_audit_entry
     call_groups:
@@ -9655,7 +9655,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: insert_markdown_recommendations
     call_groups:
@@ -9779,7 +9779,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: upload_forecast_exports
     call_groups:
@@ -9823,7 +9823,7 @@ jobs:
         dist: normal
         mean_ms: 120
         stddev_ms: 40
-      failure_rate: 0.01
+      failure_rate: 0.0002
     retries: 3
   - name: upsert_store_dashboard_rows_2
     call_groups:

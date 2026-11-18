@@ -88,7 +88,7 @@ SERVICE_ANOMALIES: dict[str, list[dict[str, Any]]] = {
             "label": "email_outage",
             "probability": 0.8,
             "fail": True,
-            "from_iteration": 6,
+            "from_iteration": 7,
             "to_iteration": 9,
         }
     ],
@@ -104,13 +104,16 @@ GROUP_ANOMALIES: dict[tuple[str, str], dict[str, Any]] = {
     # Flapping upstream: failures trigger op retries (HTTP_RETRIES), growing the trace.
     ("http", "get"): {
         "label": "http_flap",
-        "probability": 0.05,
+        "probability": 0.003,
         "fail": True,
         "from_iteration": 3,
         "to_iteration": 5,
     },
 }
 
+# Per HTTP / third-party call. Traces have hundreds of calls, so 1% made most traces contain an
+# error; keep background errors rare so labelled anomalies are what stands out.
+BACKGROUND_FAILURE_RATE = 0.0002
 PAYLOADS = [65_536, 262_144, 1_048_576]
 HTTP_RETRIES = 3
 
@@ -162,7 +165,7 @@ def _group(rng: random.Random, io: str, action: str) -> dict[str, Any]:
             else {"dist": "lognormal", "median_ms": 6, "sigma": 0.4}
         )
         if third:
-            group["failure_rate"] = 0.01
+            group["failure_rate"] = BACKGROUND_FAILURE_RATE
         return group
     group = {"io": io, "action": action}
     if io == "db":
@@ -179,7 +182,7 @@ def _group(rng: random.Random, io: str, action: str) -> dict[str, Any]:
         if count > 1 and rng.random() < 0.5:
             group.update(mode="gather", max_concurrency=3)
         group["latency"] = {"dist": "normal", "mean_ms": 90, "stddev_ms": 25}
-        group["failure_rate"] = 0.01
+        group["failure_rate"] = BACKGROUND_FAILURE_RATE
     else:
         count = rng.randint(1, 4)
         group["count"] = count

@@ -1,3 +1,5 @@
+import multiprocessing
+
 from dagster import (
     In,
     JobDefinition,
@@ -19,7 +21,7 @@ from mock_io_app.resources import (
     MockIOError,
 )
 from mock_io_app.scenario import ExpandedJob, OpSpec, closure
-from mock_io_app.tracing import as_service, context_from_tags, get_tracer
+from mock_io_app.tracing import as_service, context_from_tags, flush, get_tracer
 
 SCENARIO_TAG = "mock_io/scenario"
 ITERATION_TAG = "mock_io/iteration"
@@ -68,6 +70,9 @@ def build_op(job_name: str, owner: ExpandedJob) -> OpDefinition:
         ):
             for spec in owner.spec.ops:
                 total += await _run_scenario_op(owner, spec, resources, iteration, seed, context)
+        if multiprocessing.parent_process() is not None:
+            # Multiprocess executor child: export before the process exits.
+            flush()
         context.log.info("job %s completed %d calls", owner.name, total)
         return total
 
@@ -114,13 +119,16 @@ async def _run_scenario_op(
     raise AssertionError("unreachable")
 
 
-def build_job(expanded: ExpandedJob, all_jobs: dict[str, ExpandedJob]) -> JobDefinition:
+def build_job(
+    expanded: ExpandedJob, all_jobs: dict[str, ExpandedJob], executor: str | None = None
+) -> JobDefinition:
+    """`executor` overrides the scenario's executor (`in_process` or `multiprocess`)."""
     members = closure(expanded, all_jobs)
     op_defs = {owner.name: build_op(expanded.name, owner) for owner in members}
 
     @job(
         name=expanded.name,
-        executor_def=_EXECUTORS[expanded.spec.executor],
+        executor_def=_EXECUTORS[executor or expanded.spec.executor],
         tags={SCENARIO_TAG: expanded.scenario},
     )
     def _job() -> None:

@@ -7,3 +7,5 @@ __pycache__/
 .tmp_dagster*/
 tmp*/
 .DS_Store
+out/
+ground_truth.jsonl

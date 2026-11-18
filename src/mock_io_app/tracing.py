@@ -38,6 +38,11 @@ def get_tracer() -> trace.Tracer:
     return trace.get_tracer(TRACER_NAME)
 
 
+def flush() -> None:
+    for processor in _processors:
+        processor.force_flush()
+
+
 @contextmanager
 def as_service(name: str | None) -> Iterator[None]:
     """Emit spans created inside this block under a different `service.name` (same exporter).

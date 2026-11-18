@@ -3,7 +3,7 @@
 The goal of this project is to test and compare different adaptive tracing and trace reduction methods (for example sampling strategies and per-component tracing parameters). To get realistic, repeatable trace data, it is built on `mock-io-app`: a Dagster app whose jobs perform mocked I/O (database, GCS, HTTP and microservice calls) described by YAML scenarios. Every call emits OpenTelemetry spans, so the same workload can be replayed against different collectors and reduction methods.
 
 - [Mock I/O app](#mock-io-app): the workload generator (implemented).
-- [Collectors and reduction methods](#collectors-and-reduction-methods): the systems under test (`baseline_naive` and the evaluation harness exist; reduction methods pending).
+- [Collectors and reduction methods](#collectors-and-reduction-methods): the systems under test (`baseline_naive`, `sampling`, `anomalies_sampling` and the evaluation harness exist; further methods pending).
 
 # AI Usage
 
@@ -62,7 +62,7 @@ At least one effect is required. Several matching anomalies combine and their la
 | `slow_tax_service`, `slow_weather_api`, `slow_price_engine` | service calls | 20-30x latency or +1.5 s | rare, random |
 | `huge_blob` | GCS uploads | 8 MiB payload, 15x latency | rare, random |
 | `http_flap` | HTTP gets | failures, triggering op retries and larger traces | iterations 3-4 |
-| `email_outage` | `email_provider` | failures with retries | iterations 6-8 |
+| `email_outage` | `email_provider` | failures with retries | iterations 7-8 |
 
 Use `--repeat 10` or more to cover the windows. Latency anomalies are only visible in span durations if `--latency-scale` is not tiny (0.01 or higher).
 
@@ -94,7 +94,7 @@ Regenerate with `uv run python scripts/generate_supermarket.py`.
 
 ## Running
 
-Run jobs in-process, with no webserver. Runs use a throwaway Dagster instance and don't appear in the Dagster UI unless `DAGSTER_HOME` is set (use the same directory as `dagster dev`, see below). Without `--job`, only leaf jobs run since they include their upstream jobs.
+Run jobs from the command line, with no webserver. Runs use a throwaway Dagster instance and don't appear in the Dagster UI unless `DAGSTER_HOME` is set (use the same directory as `dagster dev`, see below). Without `--job`, only leaf jobs run since they include their upstream jobs.
 
 ```sh
 uv run mock-io-run --scenario scenarios/small.yaml
@@ -104,6 +104,26 @@ uv run mock-io-run --scenario scenarios/supermarket.yaml --job load_store_dashbo
 
 `--seed N` overrides the scenario's `defaults.seed` for this run (the API takes `seed` in the launch body, `mock-io-ctl run-scenario --seed N`), so the same workload can be replayed exactly; see [Experiments](#experiments).
 
+### Parallelism
+
+Work overlaps at three levels:
+
+| Level | What runs in parallel | Controlled by |
+| --- | --- | --- |
+| Calls in a call group | the calls of a `mode: gather` group (asyncio) | `mode`, `max_concurrency` in the scenario |
+| Jobs in a run | independent jobs (e.g. the importers under a loader) in separate processes | the job's `executor: multiprocess`, or `mock-io-run --executor` |
+| Runs | whole runs | `mock-io-run` load mode (`--rate`, `--workers`), or `dagster dev` / the API |
+
+`--executor` is `scenario` by default (each job's own `executor`; all supermarket jobs use `multiprocess`), or `in_process` / `multiprocess` for every job. The multiprocess executor starts each job in its own process, at most the CPU count at once (`DAGSTER_MULTIPROCESS_EXECUTOR_MAX_CONCURRENT` changes it). Use `--executor in_process` for a single process: faster to start, but jobs in a run execute one after another. Without `DAGSTER_HOME`, multiprocess runs use a temporary on-disk instance, since child processes cannot share an in-memory one. Under `dagster dev`, at most 10 runs execute at once (Dagster's default `max_concurrent_runs`).
+
+Check what actually overlapped in a capture:
+
+```sh
+uv run python scripts/check_parallelism.py out/baseline_naive.jsonl
+```
+
+It prints the maximum number of runs at once, how many runs had overlapping jobs, and how many call groups had overlapping calls. A sequential capture shows `max running at once: 1` and `with overlapping jobs: 0`.
+
 Repeated runs (`--repeat`) draw fresh latencies and failures each iteration; with a seed they are still reproducible (the iteration is part of the random key).
 
 Load mode starts runs of randomly chosen jobs at Poisson arrival times instead of back to back, so runs and their traces overlap in time:
@@ -112,7 +132,7 @@ Load mode starts runs of randomly chosen jobs at Poisson arrival times instead o
 uv run mock-io-run --scenario scenarios/supermarket.yaml --rate 0.5 --runs 100 --workers 4 --latency-scale 0.05
 ```
 
-`--rate` is the mean arrivals per second (enables load mode), `--runs` the total, `--workers` the maximum concurrent runs (arrivals queue when all are busy), `--seed` the seed for arrivals and job choice. Jobs are chosen from `--job` if given, otherwise from the leaf jobs. The run number acts as the iteration for anomaly windows.
+`--rate` is the mean arrivals per second (enables load mode), `--runs` the total, `--workers` the maximum concurrent runs (arrivals queue when all are busy), `--seed` the seed for arrivals and job choice. Jobs are chosen from `--job` if given, otherwise from the leaf jobs. Every block of as many runs as there are candidate jobs counts as one iteration for anomaly windows, so `--runs` = iterations x jobs matches `--repeat` (supermarket has 26 leaf jobs: `--runs 260` covers iterations 0-9, like `--repeat 10`).
 
 Dagster UI (`DAGSTER_HOME` must be set to a writable directory):
 
@@ -157,7 +177,7 @@ export OTEL_EXPORTER_OTLP_PROTOCOL=grpc
 uv run mock-io-run --scenario scenarios/small.yaml
 ```
 
-To use OTLP over HTTP instead, set `OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf` and `OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:4318`. Browse traces at <http://127.0.0.1:16686>.
+To run Jaeger together with the experiment collectors (which also need 4317/4318), see [Jaeger next to the collectors](#experiments). To use OTLP over HTTP instead, set `OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf` and `OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:4318`. Browse traces at <http://127.0.0.1:16686>.
 
 Span layout: `run.<job>` (one per run, created by the CLI or by the API when it launches a run; scenario `service_name`) > `job.<job>` (one per job in the run, in that job's service; upstream jobs get their own) > `op.<name>` > `call_group.<io>.<action>` > `<io>.<action>` (client span per call). Each job is one Dagster op (so the Dagster graph mirrors the job DAG, and independent jobs can run in parallel with the multiprocess executor); its scenario ops run in order inside the job, and `retries` re-run an op inside the job span (one `op.<name>` span per attempt, `dagster.retry_number`). Service calls produce `service.<name>.call` (client) and, for first-party services, a nested `service.<name>.handle` (server). The handle span and everything under it are exported with `service.name` set to the first-party service's name, so Jaeger shows them as separate services; third-party calls only appear as client spans of the caller.
 
@@ -172,41 +192,56 @@ src/mock_io_app/
   tracing.py        OpenTelemetry setup and context propagation
   api/              FastAPI app, Dagster gateway, mock-io-ctl client
   evaluation.py     mock-io-eval: scores collector output against the baseline capture
-collectors/         collector configs (baseline_naive)
+collectors/         collector configs (baseline_naive, sampling, anomalies_sampling)
 scenarios/          bundled scenarios
-scripts/            scenario generators
+scripts/            scenario generator, collector runner, parallelism check
 tests/
 ```
 
 # Collectors and reduction methods
 
-Reduction methods are pending. What exists is the evaluation loop they will be measured with.
+Implemented so far: the baseline, fixed sampling and tail sampling collectors, and the evaluation loop they are measured with. Statistical sampling, the LLM agent and adaptive resolution are pending.
 
 ## Experiments
 
 An experiment runs one fixed workload through a collector and scores what the collector kept.
 
-1. **Fixed workload.** Outcomes (latencies, failures, anomalies) are fixed by the seed, either the scenario's `defaults.seed` or the run-level `--seed` (CLI) / `seed` (API). Trace and span IDs and timings are still new every run, so compare collectors by replaying the same seed, with identical CLI arguments (`--repeat`, or `--rate/--runs/--seed` in load mode), and score each against its own run's reference.
+1. **Fixed workload.** Outcomes (latencies, failures, anomalies) are fixed by the seed, either the scenario's `defaults.seed` or the run-level `--seed` (CLI) / `seed` (API). Trace and span IDs and timings are new every run, so methods are never compared across runs: run all collectors side by side on one workload run, and repeat with other seeds for more samples.
 2. **Reference: `baseline_naive`** ([collectors/baseline_naive/config.yaml](collectors/baseline_naive/config.yaml)). An OpenTelemetry Collector that keeps every span and writes it to `out/baseline_naive.jsonl` (OTLP JSON lines). It is the "no reduction" baseline and the reference capture for scoring.
 3. **Ground truth.** `MOCK_IO_GROUND_TRUTH_FILE` records every injected anomaly (see [Ground truth](#ground-truth)). `mock-io-eval` turns it into per-trace labels: anomalous (with the label names), error (any span with error status in the reference), and slow (duration at or above the reference's 95th percentile, `--slow-percentile`).
 4. **Score.** `mock-io-eval --reference out/baseline_naive.jsonl --output out/<method>.jsonl --ground-truth ground_truth.jsonl` prints:
    - reduction: traces, spans and bytes kept relative to the reference, and mean trace completeness (share of a kept trace's spans that survived);
    - recall for anomalous, error, slow and normal traces, plus recall per anomaly label;
    - precision: the share of kept traces that are anomalous.
-   Add `--json` for machine-readable output. Output traces that are not in the reference are ignored.
+   With several `--output` flags, or `--output-dir out` (every `*.jsonl` there except the reference and the ground-truth file), it prints a recall matrix instead: one row per method, columns for traces/bytes kept and the recall of each trace type (anomalous, error, slow, normal, each anomaly label). Add `--json` for machine-readable output. Output traces that are not in the reference are ignored.
 
-A new method is a new collector config (for example `collectors/<method>/config.yaml`) that writes `out/<method>.jsonl`. Run it on the same workload and score it against the baseline capture.
+A new method is a new `collectors/<method>/config.yaml` with its own `file/<method>` exporter (path `/out/<method>.jsonl`) and `traces/<method>` pipeline, so it can be merged with the others. Add it to the script's arguments and score it against the baseline capture.
 
 Run the baseline (ports 4317/4318 must be free, so stop local Jaeger first or point Jaeger elsewhere):
 
 ```sh
-mkdir -p out
-docker run --rm --name otelcol --user "$(id -u):$(id -g)" \
-  -p 4317:4317 -p 4318:4318 \
-  -v "$PWD/collectors/baseline_naive/config.yaml:/etc/otelcol-contrib/config.yaml:ro" \
-  -v "$PWD/out:/out" \
-  otel/opentelemetry-collector-contrib:latest
+bash scripts/run_collector.sh baseline_naive sampling anomalies_sampling   # or: all
 ```
+
+The script runs the named `collectors/<name>/config.yaml` files in one OpenTelemetry Collector (contrib) Docker image. The configs are merged, so a single workload feeds every collector and each writes `out/<name>.jsonl`. This is what makes scoring valid: all methods and the baseline see exactly the same traces, since trace IDs differ between runs. Always include `baseline_naive`.
+
+| Collector | Behaviour |
+| --- | --- |
+| `baseline_naive` | keeps every span (the reference) |
+| `sampling` | `probabilistic_sampler`: keeps 10% of traces by trace ID, blind to errors and latency |
+| `jaeger` | forwards every trace to Jaeger on host port 14317 (browsing only, writes no file) |
+| `anomalies_sampling` | `tail_sampling`: keeps a trace if it has an error, lasts over 1000 ms, or wins a 5% random sample; uses only observable signals, never the `mock_io.anomaly` label |
+
+Tail sampling decides `decision_wait` (120 s; supermarket runs at `--latency-scale 1` take up to about 40 s) after a trace's first span, so it must exceed the longest run, and the collector must keep running for that long after the workload ends. Thresholds and rates are starting points to tune per experiment.
+
+**Jaeger alongside the collectors.** The `jaeger` collector forwards every trace to a local Jaeger, so you can browse traces while the experiment runs. The app sends to the collector on 4317, so move Jaeger's OTLP port to 14317:
+
+```sh
+docker run --rm --name jaeger -p 16686:16686 -p 14317:4317 jaegertracing/jaeger:latest
+bash scripts/run_collector.sh all   # includes jaeger; leave it out if Jaeger is not running
+```
+
+The app settings stay the same (`OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:4317`); UI at <http://127.0.0.1:16686>. The collector container reaches Jaeger through `host.docker.internal`.
 
 Stop the collector (Ctrl-C) before scoring so the final batch is flushed. Delete `out/*.jsonl` and the ground-truth file between experiments. The collector config and docker command are untested in the development sandbox, which has no Docker.
 
@@ -220,8 +255,9 @@ All commands run from the repository root.
 uv sync
 uv run pytest
 
-# Local Jaeger (UI http://127.0.0.1:16686)
-docker run --rm --name jaeger -p 16686:16686 -p 4317:4317 -p 4318:4318 jaegertracing/jaeger:latest
+# Local Jaeger (UI http://127.0.0.1:16686). Standalone: use -p 4317:4317 -p 4318:4318 instead of 14317.
+# Next to the collectors it must use 14317, as here, because the collectors own 4317.
+docker run --rm --name jaeger -p 16686:16686 -p 14317:4317 jaegertracing/jaeger:latest
 
 # Export traces to it (set in every shell that runs the app, including `dagster dev`)
 export MOCK_IO_TRACE_EXPORTER=otlp OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:4317 OTEL_EXPORTER_OTLP_PROTOCOL=grpc
@@ -237,13 +273,17 @@ uv run python scripts/generate_supermarket.py
 ## Ways to run
 
 ```sh
-# 1. CLI, in-process (no webserver)
+# 1. CLI (no webserver); jobs use the scenario's executor (supermarket: multiprocess)
 uv run mock-io-run --scenario scenarios/small.yaml
+uv run mock-io-run --scenario scenarios/supermarket.yaml --executor in_process   # single process
 uv run mock-io-run --scenario scenarios/supermarket.yaml --latency-scale 0.01 --repeat 10
 uv run mock-io-run --scenario scenarios/supermarket.yaml --job load_store_dashboards --latency-scale 0.01
 
 # 2. CLI load mode (Poisson arrivals, overlapping runs)
 uv run mock-io-run --scenario scenarios/supermarket.yaml --rate 0.5 --runs 100 --workers 4 --latency-scale 0.05
+
+# Check what ran in parallel in a capture
+uv run python scripts/check_parallelism.py out/baseline_naive.jsonl
 
 # 3. Dagster UI (http://127.0.0.1:3000); launch runs from the Launchpad
 mkdir -p .dagster_home
@@ -262,19 +302,31 @@ uv run mock-io-ctl upload my_scenario my_scenario.yaml
 ## Experiment
 
 ```sh
-# 1. Baseline collector (see Experiments); leave running in its own terminal
-mkdir -p out
-docker run --rm --user "$(id -u):$(id -g)" -p 4317:4317 -p 4318:4318 \
-  -v "$PWD/collectors/baseline_naive/config.yaml:/etc/otelcol-contrib/config.yaml:ro" \
-  -v "$PWD/out:/out" otel/opentelemetry-collector-contrib:latest
+# Terminal 1: collectors (baseline plus methods, see Experiments); leave running
+rm -rf out ground_truth.jsonl
+bash scripts/run_collector.sh baseline_naive sampling anomalies_sampling   # or: all (needs Jaeger on 14317)
 
-# 2. Fixed workload, with ground truth
-rm -f ground_truth.jsonl
-MOCK_IO_TRACE_EXPORTER=otlp MOCK_IO_GROUND_TRUTH_FILE=ground_truth.jsonl \
-  uv run mock-io-run --scenario scenarios/supermarket.yaml --latency-scale 0.01 --repeat 10 --seed 42
+# Optional, terminal 2: Dagster UI to watch the runs (http://127.0.0.1:3000)
+mkdir -p .dagster_home
+DAGSTER_HOME="$PWD/.dagster_home" uv run dagster dev -p 3000
 
-# 3. Stop the collector (Ctrl-C), then score. Scoring the baseline against itself is a sanity
-#    check (100% retention); use another method's output file for --output.
-uv run mock-io-eval --reference out/baseline_naive.jsonl --output out/baseline_naive.jsonl \
+# Terminal 3: fixed workload, with ground truth. Load mode: overlapping runs (--workers at once),
+# each with parallel jobs (multiprocess). 260 runs = 10 iterations of the 26 leaf jobs, so all
+# anomaly windows are covered. DAGSTER_HOME makes the runs show up in the Dagster UI; omit it to
+# use a temporary instance instead.
+DAGSTER_HOME="$PWD/.dagster_home" MOCK_IO_TRACE_EXPORTER=otlp MOCK_IO_GROUND_TRUTH_FILE=ground_truth.jsonl \
+  uv run mock-io-run --scenario scenarios/supermarket.yaml --latency-scale 1 \
+  --rate 0.5 --runs 260 --workers 8 --seed 42
+
+# Wait about 2 minutes after the workload ends (anomalies_sampling's decision_wait), then stop the
+# collector in terminal 1 (Ctrl-C) so the final batch is flushed.
+
+# Check that runs and jobs overlapped
+uv run python scripts/check_parallelism.py out/baseline_naive.jsonl
+
+# Score all methods at once as a recall matrix
+uv run mock-io-eval --reference out/baseline_naive.jsonl --output-dir out --ground-truth ground_truth.jsonl
+# One method in detail (--output out/sampling.jsonl etc.); the baseline against itself is a sanity check (100%)
+uv run mock-io-eval --reference out/baseline_naive.jsonl --output out/anomalies_sampling.jsonl \
   --ground-truth ground_truth.jsonl
 ```
