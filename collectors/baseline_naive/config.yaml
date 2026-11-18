@@ -1,3 +1,5 @@
+# Several collector configs can run in one process (see scripts/run_collector.sh): their pipelines
+# merge, so one workload feeds all of them and every method sees the same traces.
 # baseline_naive: keeps every span. It is the reference capture other collectors are scored against.
 receivers:
   otlp:
@@ -11,12 +13,12 @@ processors:
   batch: {}
 
 exporters:
-  file:
+  file/baseline_naive:
     path: /out/baseline_naive.jsonl
 
 service:
   pipelines:
-    traces:
+    traces/baseline_naive:
       receivers: [otlp]
       processors: [batch]
-      exporters: [file]
+      exporters: [file/baseline_naive]

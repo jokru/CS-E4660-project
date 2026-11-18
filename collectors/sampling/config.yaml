@@ -1,0 +1,25 @@
+# sampling: keeps a fixed share of traces, chosen by trace ID (the whole trace or nothing).
+# Blind to errors and latency, so rare exceptions are kept only at the sampling rate.
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  probabilistic_sampler:
+    sampling_percentage: 10
+  batch: {}
+
+exporters:
+  file/sampling:
+    path: /out/sampling.jsonl
+
+service:
+  pipelines:
+    traces/sampling:
+      receivers: [otlp]
+      processors: [probabilistic_sampler, batch]
+      exporters: [file/sampling]

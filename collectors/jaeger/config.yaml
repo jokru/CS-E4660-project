@@ -1,0 +1,26 @@
+# jaeger: forwards every trace to a local Jaeger (not a reduction method; for browsing the traces).
+# Start Jaeger with host port 14317 mapped to its OTLP gRPC port, so it does not clash with the
+# collector's 4317 (see README). Leave this collector out when Jaeger is not running.
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch: {}
+
+exporters:
+  otlp/jaeger:
+    endpoint: host.docker.internal:14317
+    tls:
+      insecure: true
+
+service:
+  pipelines:
+    traces/jaeger:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp/jaeger]

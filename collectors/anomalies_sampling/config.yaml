@@ -1,0 +1,41 @@
+# anomalies_sampling: tail sampling. A trace is kept if ANY policy matches: it contains an error,
+# it is slower than the threshold, or it wins the random baseline sample.
+# Uses only observable signals (status, duration), never the mock_io.anomaly label.
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  tail_sampling:
+    # Traces are decided this long after their first span; must exceed the longest run.
+    decision_wait: 120s
+    num_traces: 100000
+    policies:
+      - name: errors
+        type: status_code
+        status_code:
+          status_codes: [ERROR]
+      - name: slow
+        type: latency
+        latency:
+          threshold_ms: 1000
+      - name: baseline
+        type: probabilistic
+        probabilistic:
+          sampling_percentage: 5
+  batch: {}
+
+exporters:
+  file/anomalies_sampling:
+    path: /out/anomalies_sampling.jsonl
+
+service:
+  pipelines:
+    traces/anomalies_sampling:
+      receivers: [otlp]
+      processors: [tail_sampling, batch]
+      exporters: [file/anomalies_sampling]
