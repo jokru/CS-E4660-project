@@ -80,3 +80,17 @@ def test_cli_prints_json(tmp_path: Path, capsys) -> None:
     args = ["--reference", str(reference), "--output", str(output), "--ground-truth", str(truth)]
     assert main([*args, "--json"]) == 0
     assert json.loads(capsys.readouterr().out)["output"]["traces"] == 3
+
+
+def test_cli_prints_matrix_for_several_outputs(tmp_path: Path, capsys) -> None:
+    reference, output, truth = _fixture(tmp_path)
+    nothing = tmp_path / "nothing.jsonl"
+    _write(nothing, [_span("zzz", "z1", 0, 1)])
+    base = ["--reference", str(reference), "--ground-truth", str(truth)]
+    assert main([*base, "--output", str(output), "--output", str(nothing)]) == 0
+
+    lines = capsys.readouterr().out.splitlines()
+    assert lines[0].split()[:4] == ["method", "traces", "bytes", "anomalous"]
+    rows = {line.split()[0]: line.split() for line in lines[1:3]}
+    assert rows["output"][1] == "60.0%"
+    assert rows["nothing"][1] == "0.0%"

@@ -182,12 +182,46 @@ def format_report(report: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def format_matrix(reports: dict[str, dict[str, Any]]) -> str:
+    """Methods as rows, trace types as columns: reduction first, then recall per type."""
+    types = list(next(iter(reports.values()))["recall"])
+    anomaly_labels = sorted({n for r in reports.values() for n in r["recall_by_anomaly"]})
+    headers = ["traces", "bytes", *types, *anomaly_labels]
+    width = max(len(h) for h in headers) + 2
+    name_width = max(len(n) for n in reports) + 2
+    lines = ["".join([f"{'method':<{name_width}}", *(f"{h:>{width}}" for h in headers)])]
+    for name, report in reports.items():
+        by_anomaly = report["recall_by_anomaly"]
+        cells = [
+            _fmt(report["reduction"]["traces_kept"]),
+            _fmt(report["reduction"]["bytes_kept"]),
+            *(_fmt(report["recall"][t]["recall"]) for t in types),
+            *(_fmt(by_anomaly[a]["recall"]) if a in by_anomaly else "n/a" for a in anomaly_labels),
+        ]
+        lines.append("".join([f"{name:<{name_width}}", *(f"{c:>{width}}" for c in cells)]))
+    lines.append(
+        "\ntraces/bytes: share kept of the reference; other columns: recall of that trace type."
+    )
+    return "\n".join(lines)
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="mock-io-eval", description="Score collector output against a baseline capture."
     )
     parser.add_argument("--reference", type=Path, required=True, help="baseline_naive output")
-    parser.add_argument("--output", type=Path, required=True, help="collector output to score")
+    parser.add_argument(
+        "--output",
+        type=Path,
+        action="append",
+        default=[],
+        help="collector output to score; repeat to print a method x trace-type recall matrix",
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        help="score every *.jsonl in this directory except the reference (prints the matrix)",
+    )
     parser.add_argument(
         "--ground-truth", type=Path, required=True, help="MOCK_IO_GROUND_TRUTH_FILE"
     )
@@ -195,20 +229,37 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--json", action="store_true", help="print the report as JSON")
     args = parser.parse_args(argv)
 
+    outputs = list(args.output)
+    if args.output_dir:
+        excluded = {args.reference.resolve(), args.ground_truth.resolve()}
+        outputs += sorted(p for p in args.output_dir.glob("*.jsonl") if p.resolve() not in excluded)
+    if not outputs:
+        parser.error("give at least one --output or an --output-dir with collector outputs")
+
     reference = load_traces(args.reference)
     ground_truth = load_ground_truth(args.ground_truth)
     labels = label_traces(reference, ground_truth, args.slow_percentile)
-    report = evaluate(
-        reference,
-        load_traces(args.output),
-        labels,
-        args.reference.stat().st_size,
-        args.output.stat().st_size,
-    )
+    reports = {
+        path.stem: evaluate(
+            reference,
+            load_traces(path),
+            labels,
+            args.reference.stat().st_size,
+            path.stat().st_size,
+        )
+        for path in outputs
+    }
     unknown = len(set(ground_truth) - set(reference))
     if unknown:
         print(f"warning: {unknown} ground-truth traces are not in the reference", file=sys.stderr)
-    print(json.dumps(report, indent=2) if args.json else format_report(report))
+
+    single = len(reports) == 1 and not args.output_dir
+    if args.json:
+        print(json.dumps(next(iter(reports.values())) if single else reports, indent=2))
+    elif single:
+        print(format_report(next(iter(reports.values()))))
+    else:
+        print(format_matrix(reports))
     return 0
 
 
