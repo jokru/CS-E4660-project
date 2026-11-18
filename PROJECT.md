@@ -76,10 +76,11 @@ Next:
 ## Notes/ideas
 
 - per component tracing parameters
+- - consider how we could achieve a different "hold duration" for traces per job?
 - agent for configuration
 - time based differences in sampling
-- different faults (latency, full errors)
-- different faults per component?
+- different faults (latency, full errors) (done: latency multiplier/add, failures, payload size, iteration windows)
+- different faults per component? (done: per call group and per service, e.g. `slow_tax_service`, `huge_blob`)
 - statistical sampling: per-key (service/operation) history of error rate and latency percentiles
   - history store: in-memory counters on the hot path, periodically persisted or refreshed from a DB (SQLite/Redis); a per-trace DB lookup may not keep up at high rates
   - cold start: keep everything for the first N traces, seed from a prior seeded run, or decay toward a prior
