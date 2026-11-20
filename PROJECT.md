@@ -49,9 +49,13 @@ Done:
   - Naive (`baseline_naive`): keeps everything, the reference
   - Sampling (`sampling`): 10% probabilistic
   - Anomalies + sampling (`anomalies_sampling`): tail sampling on errors, latency > 1 s, or 5% random
+  - Memory pressure (`anomalies_sampling_limited`): the same with at most 30 traces held at once; the oldest are dropped without a decision
   - Optional forwarding to Jaeger for browsing
 - Evaluation (`mock-io-eval`): traces/spans/bytes kept, trace completeness, recall for anomalous, error, slow and normal traces and per anomaly label, precision; a recall matrix across all methods
 - `scripts/check_parallelism.py` checks a capture for overlapping runs, jobs and calls
+- Benchmark load generators that skip the app (which Dagster limits to a few runs/s):
+  - `mock-io-replay`: resends a recorded capture at any rate with fresh IDs and matching ground truth, so recall can be measured versus traces/s
+  - telemetrygen: synthetic traces for raw collector throughput
 - First experiment: supermarket, 260 runs, `--rate 0.5 --workers 8 --seed 42 --latency-scale 1`
 
 | method             | traces | bytes | anomalous | error  | slow  | normal | email_outage | huge_blob | slow_price_engine | slow_tax_service | slow_weather_api |
@@ -67,7 +71,7 @@ Next:
 
 - Tune `anomalies_sampling` (latency threshold above normal run durations, e.g. per job) and rerun
 - Tunable anomaly rate (about 1% or less) and rare versus bursty scenario variants
-- Increase traces/s and see where each reducer degrades
+- Increase traces/s with `mock-io-replay` and see where each reducer degrades
 - Statistical sampling reducer (custom code, see notes)
 - LLM agent reducer or configuration agent, and its cost
 - Increasing trace resolution on anomalies, and application-level versus collector-level logic

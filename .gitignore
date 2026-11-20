@@ -9,3 +9,5 @@ tmp*/
 .DS_Store
 out/
 ground_truth.jsonl
+captures/
+bench/

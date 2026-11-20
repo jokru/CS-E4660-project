@@ -3,13 +3,13 @@
 The goal of this project is to test and compare different adaptive tracing and trace reduction methods (for example sampling strategies and per-component tracing parameters). To get realistic, repeatable trace data, it is built on `mock-io-app`: a Dagster app whose jobs perform mocked I/O (database, GCS, HTTP and microservice calls) described by YAML scenarios. Every call emits OpenTelemetry spans, so the same workload can be replayed against different collectors and reduction methods.
 
 - [Mock I/O app](#mock-io-app): the workload generator (implemented).
-- [Collectors and reduction methods](#collectors-and-reduction-methods): the systems under test (`baseline_naive`, `sampling`, `anomalies_sampling` and the evaluation harness exist; further methods pending).
+- [Collectors and reduction methods](#collectors-and-reduction-methods): the systems under test (`baseline_naive`, `sampling`, `anomalies_sampling`, `anomalies_sampling_limited` and the evaluation harness exist; further methods pending).
 
 # AI Usage
 
 AI coding assistants (GitHub Copilot, using Claude models) were used extensively to implement this project's code, including the scenario model and validation, the executor and job factory, the API and clients, the scenario generator, the tests and this README. The author directed the work (requirements, design decisions and review of the results), and the generated code was checked with the automated test suite and sample runs.
 
-# Mock I/O app
+# Case study app: Mock I/O app
 
 ## Setup
 
@@ -192,7 +192,8 @@ src/mock_io_app/
   tracing.py        OpenTelemetry setup and context propagation
   api/              FastAPI app, Dagster gateway, mock-io-ctl client
   evaluation.py     mock-io-eval: scores collector output against the baseline capture
-collectors/         collector configs (baseline_naive, sampling, anomalies_sampling)
+  replay.py         mock-io-replay: resends a recorded capture at high rates (benchmark)
+collectors/         collector configs (baseline_naive, sampling, anomalies_sampling, anomalies_sampling_limited)
 scenarios/          bundled scenarios
 scripts/            scenario generator, collector runner, parallelism check
 tests/
@@ -220,7 +221,7 @@ A new method is a new `collectors/<method>/config.yaml` with its own `file/<meth
 Run the baseline (ports 4317/4318 must be free, so stop local Jaeger first or point Jaeger elsewhere):
 
 ```sh
-bash scripts/run_collector.sh baseline_naive sampling anomalies_sampling   # or: all
+bash scripts/run_collector.sh baseline_naive sampling anomalies_sampling anomalies_sampling_limited   # or: all
 ```
 
 The script runs the named `collectors/<name>/config.yaml` files in one OpenTelemetry Collector (contrib) Docker image. The configs are merged, so a single workload feeds every collector and each writes `out/<name>.jsonl`. This is what makes scoring valid: all methods and the baseline see exactly the same traces, since trace IDs differ between runs. Always include `baseline_naive`.
@@ -231,8 +232,11 @@ The script runs the named `collectors/<name>/config.yaml` files in one OpenTelem
 | `sampling` | `probabilistic_sampler`: keeps 10% of traces by trace ID, blind to errors and latency |
 | `jaeger` | forwards every trace to Jaeger on host port 14317 (browsing only, writes no file) |
 | `anomalies_sampling` | `tail_sampling`: keeps a trace if it has an error, lasts over 1000 ms, or wins a 5% random sample; uses only observable signals, never the `mock_io.anomaly` label |
+| `anomalies_sampling_limited` | `anomalies_sampling` with `num_traces: 30`: simulates memory pressure. When more traces are waiting for a decision than that, the oldest is dropped without one |
 
 Tail sampling decides `decision_wait` (120 s; supermarket runs at `--latency-scale 1` take up to about 40 s) after a trace's first span, so it must exceed the longest run, and the collector must keep running for that long after the workload ends. Thresholds and rates are starting points to tune per experiment.
+
+**Memory pressure.** Tail sampling holds every span of a trace in memory until its decision, so it holds about runs/s × `decision_wait` traces at once (0.5 × 120 = 60 in the default experiment). `anomalies_sampling_limited` caps that at 30 traces, so it drops traces at that rate; raise `--rate` to see recall fall further. The cap is per processor, so the other collectors in the same container are unaffected. This depends only on the trace count, unlike the collector's `memory_limiter`, which refuses data for the whole process (the baseline included) based on measured memory. Processors are merged by name across configs, so each collector's tail sampler has its own name (`tail_sampling/<name>`).
 
 **Jaeger alongside the collectors.** The `jaeger` collector forwards every trace to a local Jaeger, so you can browse traces while the experiment runs. The app sends to the collector on 4317, so move Jaeger's OTLP port to 14317:
 
@@ -244,6 +248,19 @@ bash scripts/run_collector.sh all   # includes jaeger; leave it out if Jaeger is
 The app settings stay the same (`OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:4317`); UI at <http://127.0.0.1:16686>. The collector container reaches Jaeger through `host.docker.internal`.
 
 Stop the collector (Ctrl-C) before scoring so the final batch is flushed. Delete `out/*.jsonl` and the ground-truth file between experiments. The collector config and docker command are untested in the development sandbox, which has no Docker.
+
+## Benchmark: high trace rates
+
+The app cannot test how reducers hold up at high rates: each run goes through Dagster, and starting the job processes alone takes seconds, so the app is the bottleneck long before the collector. Two load generators skip the app:
+
+- **`mock-io-replay`** resends a recorded capture (a `baseline_naive.jsonl` and its ground truth) over OTLP gRPC at a target rate. Each copy of a trace gets new trace and span IDs and is shifted to end at send time, so structure, latencies, errors and anomaly labels are kept. With `--ground-truth-out` it writes the ground truth under the new IDs, so `mock-io-eval` scores a replayed workload like a recorded one, against the `baseline_naive` capture of the replay. It cycles through the capture's traces in recorded order (`--shuffle --seed N` for a random order) until `--traces` are sent. `--rate` is traces/s overall (default: as fast as possible), `--workers` concurrent senders and `--batch` traces per request. It prints the achieved traces/s and spans/s, and counts requests the collector refused (for example under `memory_limiter`); those are not retried and not written to the ground truth. Generating copies runs at about 300k spans/s on a laptop, so the collector should be the limit; loading a large capture takes a while (about 35 s for 450k spans).
+- **[telemetrygen](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/cmd/telemetrygen)**, the OpenTelemetry Collector's load generator, sends identical synthetic traces (`--child-spans` per trace, `--rate` traces/s per worker). It has no errors, anomalies or ground truth, so it only measures raw throughput: where a collector starts refusing or dropping data.
+
+Copy the recorded capture out of `out/` first: the replay's collectors write to `out/` again. Supermarket traces are large (about 900 spans each), so a few hundred traces/s is already hundreds of thousands of spans/s. Watch the collector's memory with `docker stats otelcol`.
+
+Tail sampling holds every span until its decision, about spans/s × `decision_wait`. At 20 traces/s (about 17,500 spans/s) with the default 120 s, that is about 2 million spans, and Docker kills the collector (exit code 137): its output stops, the replay reports `UNAVAILABLE`, and the tail samplers write nothing. Replayed traces arrive whole in one request, so start the collectors with a short wait for replays: `DECISION_WAIT=5s bash scripts/run_collector.sh ...` (`run_collector.sh` passes `DECISION_WAIT`, default `120s`, to both tail samplers). Keep the default for app runs, whose spans arrive over the length of the run.
+
+**One collector at a time.** All merged collectors share one process, so one method running out of memory or CPU takes the others (and the baseline) down with it, and `docker stats` cannot tell their costs apart. With `--seed`, a replay's trace and span IDs depend only on the seed and the trace's position, so replays with the same arguments send identical traces and ground truth. Capture `baseline_naive` once, then replay the same command against each method alone and score each output against that one baseline. Only arrival timing differs between replays; trace durations come from the recording. App runs (`mock-io-run`) cannot do this, since their IDs are random, so they need the merged collector. The file exporter appends, so delete a method's `out/<method>.jsonl` before replaying it again.
 
 # Command reference
 
@@ -304,7 +321,7 @@ uv run mock-io-ctl upload my_scenario my_scenario.yaml
 ```sh
 # Terminal 1: collectors (baseline plus methods, see Experiments); leave running
 rm -rf out ground_truth.jsonl
-bash scripts/run_collector.sh baseline_naive sampling anomalies_sampling   # or: all (needs Jaeger on 14317)
+bash scripts/run_collector.sh baseline_naive sampling anomalies_sampling anomalies_sampling_limited   # or: all (needs Jaeger on 14317)
 
 # Optional, terminal 2: Dagster UI to watch the runs (http://127.0.0.1:3000)
 mkdir -p .dagster_home
@@ -329,4 +346,56 @@ uv run mock-io-eval --reference out/baseline_naive.jsonl --output-dir out --grou
 # One method in detail (--output out/sampling.jsonl etc.); the baseline against itself is a sanity check (100%)
 uv run mock-io-eval --reference out/baseline_naive.jsonl --output out/anomalies_sampling.jsonl \
   --ground-truth ground_truth.jsonl
+```
+
+## Benchmark: increasing rates
+
+`scripts/benchmark_rates.py` runs each collector alone in Docker at each rate, replaying one seeded capture (see [Benchmark: high trace rates](#benchmark-high-trace-rates)). `baseline_naive` runs first at every rate and is the reference for that rate. Tail sampling uses a 5 s `decision_wait` (`--decision-wait`), since replayed traces arrive whole. Collectors are stopped with SIGTERM so the final batch is flushed. Per run it prints the achieved traces/s, refused requests, peak container memory (`docker stats`), whether Docker killed the collector (OOM), traces kept and recall by trace type, and writes everything to `bench/results.json`.
+
+```sh
+uv run python scripts/benchmark_rates.py \
+  --capture captures/supermarket_seed42/baseline_naive.jsonl \
+  --ground-truth captures/supermarket_seed42/ground_truth.jsonl \
+  --rates 5,10,20,40 --duration 30
+# Options: --collectors NAME... (default: baseline_naive sampling anomalies_sampling anomalies_sampling_limited),
+#          --memory 512m (Docker memory limit per collector, to reach OOM at lower rates),
+#          --traces N (fixed size instead of rate x duration), --keep (keep the large outputs in bench/)
+```
+
+Ports 4317 must be free (stop other collectors). Each run sends `rate × duration` traces of about 900 spans, so the baseline output is about 1 MB per trace; outputs are deleted after scoring unless `--keep`. Loading the capture takes about 35 s.
+
+## Benchmark
+
+```sh
+# Keep a recorded capture (from the Experiment above) as the replay source
+mkdir -p captures/supermarket_seed42
+cp out/baseline_naive.jsonl ground_truth.jsonl captures/supermarket_seed42/
+
+# Terminal 1: fresh collectors. Replayed traces arrive whole, so a short decision_wait is enough;
+# with the default 120s, tail sampling holds 120s of spans and the collector runs out of memory.
+rm -rf out
+DECISION_WAIT=5s bash scripts/run_collector.sh baseline_naive sampling anomalies_sampling anomalies_sampling_limited
+
+# Terminal 2: replay 2000 traces at 20 traces/s, then score as in the Experiment
+uv run mock-io-replay --capture captures/supermarket_seed42/baseline_naive.jsonl \
+  --ground-truth captures/supermarket_seed42/ground_truth.jsonl --ground-truth-out out/replay_ground_truth.jsonl \
+  --traces 2000 --rate 20 --workers 8 --batch 5
+# Wait for decision_wait (a few seconds), stop the collector (Ctrl-C), then:
+uv run mock-io-eval --reference out/baseline_naive.jsonl --output-dir out --ground-truth out/replay_ground_truth.jsonl
+
+# Or one collector at a time (isolated memory/CPU, docker stats per method): same --seed every time
+REPLAY="uv run mock-io-replay --capture captures/supermarket_seed42/baseline_naive.jsonl \
+  --ground-truth captures/supermarket_seed42/ground_truth.jsonl --traces 2000 --rate 20 --workers 8 --batch 5 --seed 1"
+rm -rf out
+DECISION_WAIT=5s bash scripts/run_collector.sh baseline_naive   # terminal 1; Ctrl-C after the replay
+$REPLAY --ground-truth-out out/replay_ground_truth.jsonl        # terminal 2
+DECISION_WAIT=5s bash scripts/run_collector.sh anomalies_sampling   # then each method in turn
+$REPLAY
+uv run mock-io-eval --reference out/baseline_naive.jsonl --output-dir out --ground-truth out/replay_ground_truth.jsonl
+
+# Raw throughput with synthetic traces (no ground truth): 4 workers x 250 traces/s, 10 spans each
+docker run --rm --add-host=host.docker.internal:host-gateway \
+  ghcr.io/open-telemetry/opentelemetry-collector-contrib/telemetrygen:latest \
+  traces --otlp-insecure --otlp-endpoint host.docker.internal:4317 \
+  --workers 4 --rate 250 --child-spans 9 --duration 60s
 ```

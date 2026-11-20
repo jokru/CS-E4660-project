@@ -19,6 +19,15 @@ def test_collector_writes_to_out_named_after_its_directory(config: Path) -> None
     assert set(pipeline["processors"]) <= set(raw["processors"])
 
 
+def test_shared_processor_names_have_identical_settings() -> None:
+    # A merged config keeps one definition per processor name, so differing ones would clash.
+    seen: dict[str, tuple[str, object]] = {}
+    for config in ALL_CONFIGS:
+        for name, settings in (yaml.safe_load(config.read_text()).get("processors") or {}).items():
+            first = seen.setdefault(name, (config.parent.name, settings))
+            assert first[1] == settings, f"{name} differs in {first[0]} and {config.parent.name}"
+
+
 def test_expected_collectors_exist() -> None:
     names = {c.parent.name for c in ALL_CONFIGS}
     assert {"baseline_naive", "sampling", "anomalies_sampling", "jaeger"} <= names
