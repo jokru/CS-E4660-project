@@ -1,0 +1,43 @@
+# anomalies_sampling_limited: anomalies_sampling with a small trace buffer, to simulate memory
+# pressure. Tail sampling holds every span of a trace until decision_wait passes; when more than
+# num_traces traces are held, the oldest is dropped without a decision (and not exported).
+# Traces held at once is about runs/s x decision_wait (0.5 x 120 = 60 for the default experiment),
+# so 30 drops traces at that rate; raise --rate to see recall fall further.
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  # Named per collector: processors with the same name are merged across configs.
+  tail_sampling/anomalies_sampling_limited:
+    decision_wait: ${env:DECISION_WAIT:-120s}
+    num_traces: 30
+    policies:
+      - name: errors
+        type: status_code
+        status_code:
+          status_codes: [ERROR]
+      - name: slow
+        type: latency
+        latency:
+          threshold_ms: 1000
+      - name: baseline
+        type: probabilistic
+        probabilistic:
+          sampling_percentage: 5
+  batch: {}
+
+exporters:
+  file/anomalies_sampling_limited:
+    path: /out/anomalies_sampling_limited.jsonl
+
+service:
+  pipelines:
+    traces/anomalies_sampling_limited:
+      receivers: [otlp]
+      processors: [tail_sampling/anomalies_sampling_limited, batch]
+      exporters: [file/anomalies_sampling_limited]

@@ -12,7 +12,8 @@ receivers:
 processors:
   tail_sampling:
     # Traces are decided this long after their first span; must exceed the longest run.
-    decision_wait: 120s
+    # DECISION_WAIT overrides it (run_collector.sh passes it on), e.g. 5s for mock-io-replay.
+    decision_wait: ${env:DECISION_WAIT:-120s}
     num_traces: 100000
     policies:
       - name: errors
