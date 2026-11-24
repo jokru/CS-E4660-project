@@ -3,7 +3,7 @@
 The goal of this project is to test and compare different adaptive tracing and trace reduction methods (for example sampling strategies and per-component tracing parameters). To get realistic, repeatable trace data, it is built on `mock-io-app`: a Dagster app whose jobs perform mocked I/O (database, GCS, HTTP and microservice calls) described by YAML scenarios. Every call emits OpenTelemetry spans, so the same workload can be replayed against different collectors and reduction methods.
 
 - [Mock I/O app](#mock-io-app): the workload generator (implemented).
-- [Collectors and reduction methods](#collectors-and-reduction-methods): the systems under test (`baseline_naive`, `sampling`, `anomalies_sampling`, `anomalies_sampling_limited` and the evaluation harness exist; further methods pending).
+- [Collectors and reduction methods](#collectors-and-reduction-methods): the systems under test (baseline, fixed and tail sampling, span filtering, per-job routed tail sampling, app-side job buffering and adaptive resolution, and the evaluation harness exist; the LLM agent is pending).
 
 # AI Usage
 
