@@ -1,0 +1,21 @@
+# app_resolution: receives the app's own reduced stream (MOCK_IO_APP_REDUCERS=resolution sends it to port
+# 4320 next to the full export) and writes it unchanged. See src/mock_io_app/app_reducers.py.
+receivers:
+  otlp/app_resolution:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4320
+
+processors:
+  batch: {}
+
+exporters:
+  file/app_resolution:
+    path: /out/app_resolution.jsonl
+
+service:
+  pipelines:
+    traces/app_resolution:
+      receivers: [otlp/app_resolution]
+      processors: [batch]
+      exporters: [file/app_resolution]

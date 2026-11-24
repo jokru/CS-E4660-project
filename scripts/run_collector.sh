@@ -18,6 +18,10 @@ for name in "${names[@]}"; do
   [ -f "$root/collectors/$name/config.yaml" ] || { echo "unknown collector: $name" >&2; exit 2; }
   args+=(-v "$root/collectors/$name/config.yaml:/etc/otelcol/$name.yaml:ro")
   configs+=("--config=/etc/otelcol/$name.yaml")
+  # Extra receivers (e.g. the app_* collectors' own ports) are published as well.
+  for port in $(grep -oE 'endpoint: 0\.0\.0\.0:[0-9]+' "$root/collectors/$name/config.yaml" | grep -oE '[0-9]+$'); do
+    case " ${args[*]} " in *" $port:$port "*) ;; *) args+=(-p "$port:$port") ;; esac
+  done
 done
 mkdir -p "$root/out"
 exec docker run "${args[@]}" otel/opentelemetry-collector-contrib:latest "${configs[@]}"

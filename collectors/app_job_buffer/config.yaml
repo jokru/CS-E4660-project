@@ -1,0 +1,21 @@
+# app_job_buffer: receives the app's own reduced stream (MOCK_IO_APP_REDUCERS=job_buffer sends it to port
+# 4319 next to the full export) and writes it unchanged. See src/mock_io_app/app_reducers.py.
+receivers:
+  otlp/app_job_buffer:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4319
+
+processors:
+  batch: {}
+
+exporters:
+  file/app_job_buffer:
+    path: /out/app_job_buffer.jsonl
+
+service:
+  pipelines:
+    traces/app_job_buffer:
+      receivers: [otlp/app_job_buffer]
+      processors: [batch]
+      exporters: [file/app_job_buffer]

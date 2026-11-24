@@ -1,0 +1,3569 @@
+{
+ "factor": 5.0,
+ "min_samples": 20,
+ "job_factor": 1.5,
+ "skeleton_prefixes": [
+  "run.",
+  "job.",
+  "op."
+ ],
+ "spans": [
+  {
+   "service": "demand_forecaster",
+   "name": "call_group.db.query",
+   "samples": 3950,
+   "p50_ms": 40.789,
+   "threshold_ms": 203.945
+  },
+  {
+   "service": "demand_forecaster",
+   "name": "call_group.gcs.download",
+   "samples": 3950,
+   "p50_ms": 76.257,
+   "threshold_ms": 381.285
+  },
+  {
+   "service": "demand_forecaster",
+   "name": "call_group.service.call",
+   "samples": 3950,
+   "p50_ms": 156.506,
+   "threshold_ms": 782.532
+  },
+  {
+   "service": "demand_forecaster",
+   "name": "db.query",
+   "samples": 15800,
+   "p50_ms": 9.313,
+   "threshold_ms": 46.565
+  },
+  {
+   "service": "demand_forecaster",
+   "name": "gcs.download",
+   "samples": 15800,
+   "p50_ms": 51.964,
+   "threshold_ms": 259.817
+  },
+  {
+   "service": "demand_forecaster",
+   "name": "service.demand_forecaster.handle",
+   "samples": 3950,
+   "p50_ms": 280.873,
+   "threshold_ms": 1404.367
+  },
+  {
+   "service": "demand_forecaster",
+   "name": "service.weather_api.call",
+   "samples": 11850,
+   "p50_ms": 121.609,
+   "threshold_ms": 608.043
+  },
+  {
+   "service": "import-ecommerce-orders",
+   "name": "call_group.db.insert",
+   "samples": 840,
+   "p50_ms": 26.825,
+   "threshold_ms": 134.123
+  },
+  {
+   "service": "import-ecommerce-orders",
+   "name": "call_group.db.query",
+   "samples": 840,
+   "p50_ms": 29.87,
+   "threshold_ms": 149.352
+  },
+  {
+   "service": "import-ecommerce-orders",
+   "name": "call_group.gcs.download",
+   "samples": 1050,
+   "p50_ms": 92.822,
+   "threshold_ms": 464.108
+  },
+  {
+   "service": "import-ecommerce-orders",
+   "name": "call_group.gcs.upload",
+   "samples": 1050,
+   "p50_ms": 161.112,
+   "threshold_ms": 805.56
+  },
+  {
+   "service": "import-ecommerce-orders",
+   "name": "call_group.http.get",
+   "samples": 1470,
+   "p50_ms": 234.411,
+   "threshold_ms": 1172.053
+  },
+  {
+   "service": "import-ecommerce-orders",
+   "name": "call_group.http.post",
+   "samples": 420,
+   "p50_ms": 251.733,
+   "threshold_ms": 1258.665
+  },
+  {
+   "service": "import-ecommerce-orders",
+   "name": "db.insert",
+   "samples": 3150,
+   "p50_ms": 9.442,
+   "threshold_ms": 47.21
+  },
+  {
+   "service": "import-ecommerce-orders",
+   "name": "db.query",
+   "samples": 2310,
+   "p50_ms": 10.241,
+   "threshold_ms": 51.203
+  },
+  {
+   "service": "import-ecommerce-orders",
+   "name": "gcs.download",
+   "samples": 3360,
+   "p50_ms": 52.152,
+   "threshold_ms": 260.76
+  },
+  {
+   "service": "import-ecommerce-orders",
+   "name": "gcs.upload",
+   "samples": 2940,
+   "p50_ms": 52.592,
+   "threshold_ms": 262.96
+  },
+  {
+   "service": "import-ecommerce-orders",
+   "name": "http.get",
+   "samples": 6720,
+   "p50_ms": 91.882,
+   "threshold_ms": 459.41
+  },
+  {
+   "service": "import-ecommerce-orders",
+   "name": "http.post",
+   "samples": 1260,
+   "p50_ms": 91.032,
+   "threshold_ms": 455.163
+  },
+  {
+   "service": "import-loyalty-cards",
+   "name": "call_group.db.insert",
+   "samples": 366,
+   "p50_ms": 31.872,
+   "threshold_ms": 159.362
+  },
+  {
+   "service": "import-loyalty-cards",
+   "name": "call_group.db.query",
+   "samples": 366,
+   "p50_ms": 12.065,
+   "threshold_ms": 60.325
+  },
+  {
+   "service": "import-loyalty-cards",
+   "name": "call_group.gcs.download",
+   "samples": 488,
+   "p50_ms": 112.611,
+   "threshold_ms": 563.053
+  },
+  {
+   "service": "import-loyalty-cards",
+   "name": "call_group.gcs.upload",
+   "samples": 488,
+   "p50_ms": 121.832,
+   "threshold_ms": 609.163
+  },
+  {
+   "service": "import-loyalty-cards",
+   "name": "call_group.http.get",
+   "samples": 488,
+   "p50_ms": 103.677,
+   "threshold_ms": 518.385
+  },
+  {
+   "service": "import-loyalty-cards",
+   "name": "call_group.http.post",
+   "samples": 244,
+   "p50_ms": 349.99,
+   "threshold_ms": 1749.948
+  },
+  {
+   "service": "import-loyalty-cards",
+   "name": "db.insert",
+   "samples": 1830,
+   "p50_ms": 9.637,
+   "threshold_ms": 48.188
+  },
+  {
+   "service": "import-loyalty-cards",
+   "name": "db.query",
+   "samples": 732,
+   "p50_ms": 9.639,
+   "threshold_ms": 48.197
+  },
+  {
+   "service": "import-loyalty-cards",
+   "name": "gcs.download",
+   "samples": 1464,
+   "p50_ms": 50.215,
+   "threshold_ms": 251.075
+  },
+  {
+   "service": "import-loyalty-cards",
+   "name": "gcs.upload",
+   "samples": 1342,
+   "p50_ms": 51.255,
+   "threshold_ms": 256.277
+  },
+  {
+   "service": "import-loyalty-cards",
+   "name": "http.get",
+   "samples": 976,
+   "p50_ms": 87.861,
+   "threshold_ms": 439.303
+  },
+  {
+   "service": "import-loyalty-cards",
+   "name": "http.post",
+   "samples": 854,
+   "p50_ms": 94.54,
+   "threshold_ms": 472.702
+  },
+  {
+   "service": "import-pos-sales",
+   "name": "call_group.db.insert",
+   "samples": 208,
+   "p50_ms": 38.578,
+   "threshold_ms": 192.89
+  },
+  {
+   "service": "import-pos-sales",
+   "name": "call_group.db.query",
+   "samples": 260,
+   "p50_ms": 24.139,
+   "threshold_ms": 120.692
+  },
+  {
+   "service": "import-pos-sales",
+   "name": "call_group.gcs.download",
+   "samples": 208,
+   "p50_ms": 162.309,
+   "threshold_ms": 811.545
+  },
+  {
+   "service": "import-pos-sales",
+   "name": "call_group.gcs.upload",
+   "samples": 104,
+   "p50_ms": 116.157,
+   "threshold_ms": 580.785
+  },
+  {
+   "service": "import-pos-sales",
+   "name": "call_group.http.get",
+   "samples": 312,
+   "p50_ms": 108.638,
+   "threshold_ms": 543.192
+  },
+  {
+   "service": "import-pos-sales",
+   "name": "call_group.http.post",
+   "samples": 104,
+   "p50_ms": 107.195,
+   "threshold_ms": 535.977
+  },
+  {
+   "service": "import-pos-sales",
+   "name": "db.insert",
+   "samples": 676,
+   "p50_ms": 8.996,
+   "threshold_ms": 44.982
+  },
+  {
+   "service": "import-pos-sales",
+   "name": "db.query",
+   "samples": 624,
+   "p50_ms": 9.922,
+   "threshold_ms": 49.61
+  },
+  {
+   "service": "import-pos-sales",
+   "name": "gcs.download",
+   "samples": 572,
+   "p50_ms": 53.164,
+   "threshold_ms": 265.822
+  },
+  {
+   "service": "import-pos-sales",
+   "name": "gcs.upload",
+   "samples": 364,
+   "p50_ms": 52.427,
+   "threshold_ms": 262.135
+  },
+  {
+   "service": "import-pos-sales",
+   "name": "http.get",
+   "samples": 728,
+   "p50_ms": 91.383,
+   "threshold_ms": 456.918
+  },
+  {
+   "service": "import-pos-sales",
+   "name": "http.post",
+   "samples": 156,
+   "p50_ms": 87.565,
+   "threshold_ms": 437.825
+  },
+  {
+   "service": "import-promotions",
+   "name": "call_group.db.insert",
+   "samples": 530,
+   "p50_ms": 34.71,
+   "threshold_ms": 173.55
+  },
+  {
+   "service": "import-promotions",
+   "name": "call_group.db.query",
+   "samples": 424,
+   "p50_ms": 23.77,
+   "threshold_ms": 118.852
+  },
+  {
+   "service": "import-promotions",
+   "name": "call_group.gcs.download",
+   "samples": 530,
+   "p50_ms": 80.267,
+   "threshold_ms": 401.337
+  },
+  {
+   "service": "import-promotions",
+   "name": "call_group.gcs.upload",
+   "samples": 424,
+   "p50_ms": 152.864,
+   "threshold_ms": 764.32
+  },
+  {
+   "service": "import-promotions",
+   "name": "call_group.http.get",
+   "samples": 424,
+   "p50_ms": 225.246,
+   "threshold_ms": 1126.233
+  },
+  {
+   "service": "import-promotions",
+   "name": "call_group.http.post",
+   "samples": 106,
+   "p50_ms": 165.653,
+   "threshold_ms": 828.263
+  },
+  {
+   "service": "import-promotions",
+   "name": "db.insert",
+   "samples": 3816,
+   "p50_ms": 9.258,
+   "threshold_ms": 46.292
+  },
+  {
+   "service": "import-promotions",
+   "name": "db.query",
+   "samples": 954,
+   "p50_ms": 9.926,
+   "threshold_ms": 49.63
+  },
+  {
+   "service": "import-promotions",
+   "name": "gcs.download",
+   "samples": 1060,
+   "p50_ms": 53.014,
+   "threshold_ms": 265.067
+  },
+  {
+   "service": "import-promotions",
+   "name": "gcs.upload",
+   "samples": 1166,
+   "p50_ms": 50.877,
+   "threshold_ms": 254.385
+  },
+  {
+   "service": "import-promotions",
+   "name": "http.get",
+   "samples": 1590,
+   "p50_ms": 92.553,
+   "threshold_ms": 462.765
+  },
+  {
+   "service": "import-promotions",
+   "name": "http.post",
+   "samples": 212,
+   "p50_ms": 83.7,
+   "threshold_ms": 418.5
+  },
+  {
+   "service": "import-returns-log",
+   "name": "call_group.db.insert",
+   "samples": 828,
+   "p50_ms": 40.453,
+   "threshold_ms": 202.262
+  },
+  {
+   "service": "import-returns-log",
+   "name": "call_group.db.query",
+   "samples": 828,
+   "p50_ms": 30.959,
+   "threshold_ms": 154.797
+  },
+  {
+   "service": "import-returns-log",
+   "name": "call_group.gcs.download",
+   "samples": 1104,
+   "p50_ms": 132.95,
+   "threshold_ms": 664.747
+  },
+  {
+   "service": "import-returns-log",
+   "name": "call_group.gcs.upload",
+   "samples": 828,
+   "p50_ms": 127.191,
+   "threshold_ms": 635.952
+  },
+  {
+   "service": "import-returns-log",
+   "name": "call_group.http.get",
+   "samples": 1104,
+   "p50_ms": 430.055,
+   "threshold_ms": 2150.278
+  },
+  {
+   "service": "import-returns-log",
+   "name": "call_group.http.post",
+   "samples": 276,
+   "p50_ms": 185.143,
+   "threshold_ms": 925.713
+  },
+  {
+   "service": "import-returns-log",
+   "name": "db.insert",
+   "samples": 3036,
+   "p50_ms": 9.06,
+   "threshold_ms": 45.302
+  },
+  {
+   "service": "import-returns-log",
+   "name": "db.query",
+   "samples": 2484,
+   "p50_ms": 9.268,
+   "threshold_ms": 46.34
+  },
+  {
+   "service": "import-returns-log",
+   "name": "gcs.download",
+   "samples": 3588,
+   "p50_ms": 52.244,
+   "threshold_ms": 261.22
+  },
+  {
+   "service": "import-returns-log",
+   "name": "gcs.upload",
+   "samples": 2760,
+   "p50_ms": 50.615,
+   "threshold_ms": 253.077
+  },
+  {
+   "service": "import-returns-log",
+   "name": "http.get",
+   "samples": 5244,
+   "p50_ms": 87.918,
+   "threshold_ms": 439.588
+  },
+  {
+   "service": "import-returns-log",
+   "name": "http.post",
+   "samples": 552,
+   "p50_ms": 90.62,
+   "threshold_ms": 453.1
+  },
+  {
+   "service": "import-shelf-sensors",
+   "name": "call_group.db.insert",
+   "samples": 132,
+   "p50_ms": 41.443,
+   "threshold_ms": 207.213
+  },
+  {
+   "service": "import-shelf-sensors",
+   "name": "call_group.db.query",
+   "samples": 264,
+   "p50_ms": 20.939,
+   "threshold_ms": 104.695
+  },
+  {
+   "service": "import-shelf-sensors",
+   "name": "call_group.gcs.download",
+   "samples": 176,
+   "p50_ms": 79.5,
+   "threshold_ms": 397.5
+  },
+  {
+   "service": "import-shelf-sensors",
+   "name": "call_group.gcs.upload",
+   "samples": 220,
+   "p50_ms": 126.606,
+   "threshold_ms": 633.033
+  },
+  {
+   "service": "import-shelf-sensors",
+   "name": "call_group.http.get",
+   "samples": 220,
+   "p50_ms": 120.197,
+   "threshold_ms": 600.985
+  },
+  {
+   "service": "import-shelf-sensors",
+   "name": "db.insert",
+   "samples": 1496,
+   "p50_ms": 8.966,
+   "threshold_ms": 44.828
+  },
+  {
+   "service": "import-shelf-sensors",
+   "name": "db.query",
+   "samples": 616,
+   "p50_ms": 10.161,
+   "threshold_ms": 50.803
+  },
+  {
+   "service": "import-shelf-sensors",
+   "name": "gcs.download",
+   "samples": 616,
+   "p50_ms": 52.319,
+   "threshold_ms": 261.592
+  },
+  {
+   "service": "import-shelf-sensors",
+   "name": "gcs.upload",
+   "samples": 660,
+   "p50_ms": 48.486,
+   "threshold_ms": 242.43
+  },
+  {
+   "service": "import-shelf-sensors",
+   "name": "http.get",
+   "samples": 616,
+   "p50_ms": 95.677,
+   "threshold_ms": 478.383
+  },
+  {
+   "service": "import-store-registry",
+   "name": "call_group.db.insert",
+   "samples": 1090,
+   "p50_ms": 39.065,
+   "threshold_ms": 195.325
+  },
+  {
+   "service": "import-store-registry",
+   "name": "call_group.db.query",
+   "samples": 1090,
+   "p50_ms": 33.748,
+   "threshold_ms": 168.74
+  },
+  {
+   "service": "import-store-registry",
+   "name": "call_group.gcs.download",
+   "samples": 436,
+   "p50_ms": 66.861,
+   "threshold_ms": 334.303
+  },
+  {
+   "service": "import-store-registry",
+   "name": "call_group.gcs.upload",
+   "samples": 872,
+   "p50_ms": 63.684,
+   "threshold_ms": 318.42
+  },
+  {
+   "service": "import-store-registry",
+   "name": "call_group.http.get",
+   "samples": 1744,
+   "p50_ms": 223.427,
+   "threshold_ms": 1117.132
+  },
+  {
+   "service": "import-store-registry",
+   "name": "call_group.http.post",
+   "samples": 436,
+   "p50_ms": 406.993,
+   "threshold_ms": 2034.967
+  },
+  {
+   "service": "import-store-registry",
+   "name": "db.insert",
+   "samples": 8284,
+   "p50_ms": 8.935,
+   "threshold_ms": 44.677
+  },
+  {
+   "service": "import-store-registry",
+   "name": "db.query",
+   "samples": 3488,
+   "p50_ms": 9.226,
+   "threshold_ms": 46.127
+  },
+  {
+   "service": "import-store-registry",
+   "name": "gcs.download",
+   "samples": 654,
+   "p50_ms": 58.967,
+   "threshold_ms": 294.833
+  },
+  {
+   "service": "import-store-registry",
+   "name": "gcs.upload",
+   "samples": 2180,
+   "p50_ms": 50.974,
+   "threshold_ms": 254.87
+  },
+  {
+   "service": "import-store-registry",
+   "name": "http.get",
+   "samples": 7194,
+   "p50_ms": 92.1,
+   "threshold_ms": 460.502
+  },
+  {
+   "service": "import-store-registry",
+   "name": "http.post",
+   "samples": 1962,
+   "p50_ms": 93.585,
+   "threshold_ms": 467.923
+  },
+  {
+   "service": "import-supplier-prices",
+   "name": "call_group.db.insert",
+   "samples": 472,
+   "p50_ms": 44.37,
+   "threshold_ms": 221.848
+  },
+  {
+   "service": "import-supplier-prices",
+   "name": "call_group.db.query",
+   "samples": 590,
+   "p50_ms": 26.255,
+   "threshold_ms": 131.273
+  },
+  {
+   "service": "import-supplier-prices",
+   "name": "call_group.gcs.download",
+   "samples": 590,
+   "p50_ms": 59.403,
+   "threshold_ms": 297.013
+  },
+  {
+   "service": "import-supplier-prices",
+   "name": "call_group.gcs.upload",
+   "samples": 590,
+   "p50_ms": 66.085,
+   "threshold_ms": 330.425
+  },
+  {
+   "service": "import-supplier-prices",
+   "name": "call_group.http.get",
+   "samples": 826,
+   "p50_ms": 278.475,
+   "threshold_ms": 1392.375
+  },
+  {
+   "service": "import-supplier-prices",
+   "name": "call_group.http.post",
+   "samples": 236,
+   "p50_ms": 184.589,
+   "threshold_ms": 922.943
+  },
+  {
+   "service": "import-supplier-prices",
+   "name": "db.insert",
+   "samples": 6136,
+   "p50_ms": 8.771,
+   "threshold_ms": 43.852
+  },
+  {
+   "service": "import-supplier-prices",
+   "name": "db.query",
+   "samples": 1534,
+   "p50_ms": 8.846,
+   "threshold_ms": 44.23
+  },
+  {
+   "service": "import-supplier-prices",
+   "name": "gcs.download",
+   "samples": 1180,
+   "p50_ms": 51.694,
+   "threshold_ms": 258.47
+  },
+  {
+   "service": "import-supplier-prices",
+   "name": "gcs.upload",
+   "samples": 1062,
+   "p50_ms": 56.376,
+   "threshold_ms": 281.877
+  },
+  {
+   "service": "import-supplier-prices",
+   "name": "http.get",
+   "samples": 2360,
+   "p50_ms": 95.476,
+   "threshold_ms": 477.38
+  },
+  {
+   "service": "import-supplier-prices",
+   "name": "http.post",
+   "samples": 708,
+   "p50_ms": 90.582,
+   "threshold_ms": 452.908
+  },
+  {
+   "service": "import-warehouse-stock",
+   "name": "call_group.db.insert",
+   "samples": 624,
+   "p50_ms": 29.771,
+   "threshold_ms": 148.855
+  },
+  {
+   "service": "import-warehouse-stock",
+   "name": "call_group.db.query",
+   "samples": 624,
+   "p50_ms": 28.491,
+   "threshold_ms": 142.455
+  },
+  {
+   "service": "import-warehouse-stock",
+   "name": "call_group.gcs.download",
+   "samples": 1040,
+   "p50_ms": 76.865,
+   "threshold_ms": 384.327
+  },
+  {
+   "service": "import-warehouse-stock",
+   "name": "call_group.gcs.upload",
+   "samples": 1040,
+   "p50_ms": 97.137,
+   "threshold_ms": 485.685
+  },
+  {
+   "service": "import-warehouse-stock",
+   "name": "call_group.http.get",
+   "samples": 1664,
+   "p50_ms": 181.033,
+   "threshold_ms": 905.165
+  },
+  {
+   "service": "import-warehouse-stock",
+   "name": "call_group.http.post",
+   "samples": 416,
+   "p50_ms": 147.636,
+   "threshold_ms": 738.178
+  },
+  {
+   "service": "import-warehouse-stock",
+   "name": "db.insert",
+   "samples": 3120,
+   "p50_ms": 9.12,
+   "threshold_ms": 45.598
+  },
+  {
+   "service": "import-warehouse-stock",
+   "name": "db.query",
+   "samples": 1664,
+   "p50_ms": 8.877,
+   "threshold_ms": 44.383
+  },
+  {
+   "service": "import-warehouse-stock",
+   "name": "gcs.download",
+   "samples": 2288,
+   "p50_ms": 50.273,
+   "threshold_ms": 251.368
+  },
+  {
+   "service": "import-warehouse-stock",
+   "name": "gcs.upload",
+   "samples": 1872,
+   "p50_ms": 53.806,
+   "threshold_ms": 269.028
+  },
+  {
+   "service": "import-warehouse-stock",
+   "name": "http.get",
+   "samples": 6032,
+   "p50_ms": 88.784,
+   "threshold_ms": 443.922
+  },
+  {
+   "service": "import-warehouse-stock",
+   "name": "http.post",
+   "samples": 832,
+   "p50_ms": 97.249,
+   "threshold_ms": 486.245
+  },
+  {
+   "service": "import-weather-feed",
+   "name": "call_group.db.insert",
+   "samples": 1476,
+   "p50_ms": 34.234,
+   "threshold_ms": 171.17
+  },
+  {
+   "service": "import-weather-feed",
+   "name": "call_group.db.query",
+   "samples": 984,
+   "p50_ms": 27.244,
+   "threshold_ms": 136.222
+  },
+  {
+   "service": "import-weather-feed",
+   "name": "call_group.gcs.download",
+   "samples": 738,
+   "p50_ms": 58.599,
+   "threshold_ms": 292.993
+  },
+  {
+   "service": "import-weather-feed",
+   "name": "call_group.gcs.upload",
+   "samples": 984,
+   "p50_ms": 102.228,
+   "threshold_ms": 511.138
+  },
+  {
+   "service": "import-weather-feed",
+   "name": "call_group.http.get",
+   "samples": 1476,
+   "p50_ms": 161.085,
+   "threshold_ms": 805.425
+  },
+  {
+   "service": "import-weather-feed",
+   "name": "call_group.http.post",
+   "samples": 492,
+   "p50_ms": 139.39,
+   "threshold_ms": 696.95
+  },
+  {
+   "service": "import-weather-feed",
+   "name": "db.insert",
+   "samples": 7872,
+   "p50_ms": 9.051,
+   "threshold_ms": 45.255
+  },
+  {
+   "service": "import-weather-feed",
+   "name": "db.query",
+   "samples": 2706,
+   "p50_ms": 9.352,
+   "threshold_ms": 46.762
+  },
+  {
+   "service": "import-weather-feed",
+   "name": "gcs.download",
+   "samples": 1476,
+   "p50_ms": 49.508,
+   "threshold_ms": 247.537
+  },
+  {
+   "service": "import-weather-feed",
+   "name": "gcs.upload",
+   "samples": 1968,
+   "p50_ms": 48.075,
+   "threshold_ms": 240.377
+  },
+  {
+   "service": "import-weather-feed",
+   "name": "http.get",
+   "samples": 4920,
+   "p50_ms": 90.942,
+   "threshold_ms": 454.71
+  },
+  {
+   "service": "import-weather-feed",
+   "name": "http.post",
+   "samples": 738,
+   "p50_ms": 89.672,
+   "threshold_ms": 448.363
+  },
+  {
+   "service": "inventory_api",
+   "name": "call_group.db.insert",
+   "samples": 320,
+   "p50_ms": 25.544,
+   "threshold_ms": 127.722
+  },
+  {
+   "service": "inventory_api",
+   "name": "call_group.db.query",
+   "samples": 320,
+   "p50_ms": 8.61,
+   "threshold_ms": 43.05
+  },
+  {
+   "service": "inventory_api",
+   "name": "call_group.service.call",
+   "samples": 320,
+   "p50_ms": 284.776,
+   "threshold_ms": 1423.882
+  },
+  {
+   "service": "inventory_api",
+   "name": "db.insert",
+   "samples": 2560,
+   "p50_ms": 8.659,
+   "threshold_ms": 43.293
+  },
+  {
+   "service": "inventory_api",
+   "name": "db.query",
+   "samples": 320,
+   "p50_ms": 8.557,
+   "threshold_ms": 42.787
+  },
+  {
+   "service": "inventory_api",
+   "name": "service.inventory_api.handle",
+   "samples": 320,
+   "p50_ms": 320.322,
+   "threshold_ms": 1601.61
+  },
+  {
+   "service": "inventory_api",
+   "name": "service.product_catalog.call",
+   "samples": 320,
+   "p50_ms": 284.709,
+   "threshold_ms": 1423.543
+  },
+  {
+   "service": "load-category-manager-pack",
+   "name": "call_group.db.insert",
+   "samples": 40,
+   "p50_ms": 15.632,
+   "threshold_ms": 78.16
+  },
+  {
+   "service": "load-category-manager-pack",
+   "name": "call_group.db.query",
+   "samples": 40,
+   "p50_ms": 19.646,
+   "threshold_ms": 98.23
+  },
+  {
+   "service": "load-category-manager-pack",
+   "name": "call_group.gcs.download",
+   "samples": 60,
+   "p50_ms": 156.731,
+   "threshold_ms": 783.655
+  },
+  {
+   "service": "load-category-manager-pack",
+   "name": "call_group.gcs.upload",
+   "samples": 40,
+   "p50_ms": 75.927,
+   "threshold_ms": 379.635
+  },
+  {
+   "service": "load-category-manager-pack",
+   "name": "call_group.service.call",
+   "samples": 28,
+   "p50_ms": 201.353,
+   "threshold_ms": 1006.765
+  },
+  {
+   "service": "load-category-manager-pack",
+   "name": "db.insert",
+   "samples": 60,
+   "p50_ms": 9.479,
+   "threshold_ms": 47.392
+  },
+  {
+   "service": "load-category-manager-pack",
+   "name": "db.query",
+   "samples": 80,
+   "p50_ms": 8.279,
+   "threshold_ms": 41.395
+  },
+  {
+   "service": "load-category-manager-pack",
+   "name": "gcs.download",
+   "samples": 220,
+   "p50_ms": 54.992,
+   "threshold_ms": 274.957
+  },
+  {
+   "service": "load-category-manager-pack",
+   "name": "gcs.upload",
+   "samples": 100,
+   "p50_ms": 55.389,
+   "threshold_ms": 276.942
+  },
+  {
+   "service": "load-category-manager-pack",
+   "name": "service.notification_hub.call",
+   "samples": 84,
+   "p50_ms": 176.724,
+   "threshold_ms": 883.618
+  },
+  {
+   "service": "load-customer-churn-mart",
+   "name": "call_group.db.insert",
+   "samples": 84,
+   "p50_ms": 35.589,
+   "threshold_ms": 177.943
+  },
+  {
+   "service": "load-customer-churn-mart",
+   "name": "call_group.db.query",
+   "samples": 56,
+   "p50_ms": 26.189,
+   "threshold_ms": 130.947
+  },
+  {
+   "service": "load-customer-churn-mart",
+   "name": "call_group.gcs.download",
+   "samples": 56,
+   "p50_ms": 145.399,
+   "threshold_ms": 726.993
+  },
+  {
+   "service": "load-customer-churn-mart",
+   "name": "call_group.service.call",
+   "samples": 28,
+   "p50_ms": 166.913,
+   "threshold_ms": 834.567
+  },
+  {
+   "service": "load-customer-churn-mart",
+   "name": "db.insert",
+   "samples": 560,
+   "p50_ms": 9.345,
+   "threshold_ms": 46.725
+  },
+  {
+   "service": "load-customer-churn-mart",
+   "name": "db.query",
+   "samples": 140,
+   "p50_ms": 9.043,
+   "threshold_ms": 45.215
+  },
+  {
+   "service": "load-customer-churn-mart",
+   "name": "gcs.download",
+   "samples": 140,
+   "p50_ms": 53.165,
+   "threshold_ms": 265.825
+  },
+  {
+   "service": "load-customer-churn-mart",
+   "name": "service.slack_webhook.call",
+   "samples": 84,
+   "p50_ms": 118.419,
+   "threshold_ms": 592.095
+  },
+  {
+   "service": "load-delivery-planning-board",
+   "name": "call_group.db.insert",
+   "samples": 46,
+   "p50_ms": 27.935,
+   "threshold_ms": 139.675
+  },
+  {
+   "service": "load-delivery-planning-board",
+   "name": "call_group.db.query",
+   "samples": 44,
+   "p50_ms": 19.442,
+   "threshold_ms": 97.212
+  },
+  {
+   "service": "load-delivery-planning-board",
+   "name": "call_group.gcs.upload",
+   "samples": 44,
+   "p50_ms": 50.857,
+   "threshold_ms": 254.285
+  },
+  {
+   "service": "load-delivery-planning-board",
+   "name": "call_group.service.call",
+   "samples": 52,
+   "p50_ms": 218.282,
+   "threshold_ms": 1091.41
+  },
+  {
+   "service": "load-delivery-planning-board",
+   "name": "db.insert",
+   "samples": 334,
+   "p50_ms": 7.875,
+   "threshold_ms": 39.375
+  },
+  {
+   "service": "load-delivery-planning-board",
+   "name": "db.query",
+   "samples": 110,
+   "p50_ms": 9.221,
+   "threshold_ms": 46.105
+  },
+  {
+   "service": "load-delivery-planning-board",
+   "name": "gcs.upload",
+   "samples": 44,
+   "p50_ms": 50.741,
+   "threshold_ms": 253.705
+  },
+  {
+   "service": "load-delivery-planning-board",
+   "name": "service.notification_hub.call",
+   "samples": 90,
+   "p50_ms": 145.956,
+   "threshold_ms": 729.778
+  },
+  {
+   "service": "load-delivery-planning-board",
+   "name": "service.tax_service.call",
+   "samples": 66,
+   "p50_ms": 153.077,
+   "threshold_ms": 765.385
+  },
+  {
+   "service": "load-ecommerce-merch-feed",
+   "name": "call_group.db.insert",
+   "samples": 36,
+   "p50_ms": 37.225,
+   "threshold_ms": 186.125
+  },
+  {
+   "service": "load-ecommerce-merch-feed",
+   "name": "call_group.gcs.download",
+   "samples": 36,
+   "p50_ms": 59.952,
+   "threshold_ms": 299.76
+  },
+  {
+   "service": "load-ecommerce-merch-feed",
+   "name": "call_group.gcs.upload",
+   "samples": 36,
+   "p50_ms": 89.037,
+   "threshold_ms": 445.185
+  },
+  {
+   "service": "load-ecommerce-merch-feed",
+   "name": "call_group.service.call",
+   "samples": 38,
+   "p50_ms": 230.723,
+   "threshold_ms": 1153.615
+  },
+  {
+   "service": "load-ecommerce-merch-feed",
+   "name": "db.insert",
+   "samples": 252,
+   "p50_ms": 9.579,
+   "threshold_ms": 47.895
+  },
+  {
+   "service": "load-ecommerce-merch-feed",
+   "name": "gcs.download",
+   "samples": 54,
+   "p50_ms": 57.404,
+   "threshold_ms": 287.02
+  },
+  {
+   "service": "load-ecommerce-merch-feed",
+   "name": "gcs.upload",
+   "samples": 108,
+   "p50_ms": 48.905,
+   "threshold_ms": 244.525
+  },
+  {
+   "service": "load-ecommerce-merch-feed",
+   "name": "service.email_provider.call",
+   "samples": 40,
+   "p50_ms": 130.446,
+   "threshold_ms": 652.23
+  },
+  {
+   "service": "load-ecommerce-merch-feed",
+   "name": "service.loyalty_service.call",
+   "samples": 72,
+   "p50_ms": 89.556,
+   "threshold_ms": 447.783
+  },
+  {
+   "service": "load-executive-scorecard",
+   "name": "call_group.db.query",
+   "samples": 36,
+   "p50_ms": 16.285,
+   "threshold_ms": 81.427
+  },
+  {
+   "service": "load-executive-scorecard",
+   "name": "call_group.gcs.download",
+   "samples": 36,
+   "p50_ms": 150.525,
+   "threshold_ms": 752.627
+  },
+  {
+   "service": "load-executive-scorecard",
+   "name": "call_group.gcs.upload",
+   "samples": 36,
+   "p50_ms": 94.495,
+   "threshold_ms": 472.475
+  },
+  {
+   "service": "load-executive-scorecard",
+   "name": "call_group.service.call",
+   "samples": 54,
+   "p50_ms": 216.249,
+   "threshold_ms": 1081.243
+  },
+  {
+   "service": "load-executive-scorecard",
+   "name": "db.query",
+   "samples": 54,
+   "p50_ms": 10.713,
+   "threshold_ms": 53.565
+  },
+  {
+   "service": "load-executive-scorecard",
+   "name": "gcs.download",
+   "samples": 90,
+   "p50_ms": 61.98,
+   "threshold_ms": 309.898
+  },
+  {
+   "service": "load-executive-scorecard",
+   "name": "gcs.upload",
+   "samples": 72,
+   "p50_ms": 47.809,
+   "threshold_ms": 239.043
+  },
+  {
+   "service": "load-executive-scorecard",
+   "name": "service.demand_forecaster.call",
+   "samples": 72,
+   "p50_ms": 300.072,
+   "threshold_ms": 1500.362
+  },
+  {
+   "service": "load-executive-scorecard",
+   "name": "service.loyalty_service.call",
+   "samples": 36,
+   "p50_ms": 89.816,
+   "threshold_ms": 449.08
+  },
+  {
+   "service": "load-executive-scorecard",
+   "name": "service.slack_webhook.call",
+   "samples": 36,
+   "p50_ms": 132.542,
+   "threshold_ms": 662.71
+  },
+  {
+   "service": "load-finance-margin-report",
+   "name": "call_group.db.insert",
+   "samples": 36,
+   "p50_ms": 29.487,
+   "threshold_ms": 147.435
+  },
+  {
+   "service": "load-finance-margin-report",
+   "name": "db.insert",
+   "samples": 180,
+   "p50_ms": 8.68,
+   "threshold_ms": 43.4
+  },
+  {
+   "service": "load-finance-margin-report",
+   "name": "gcs.upload",
+   "samples": 36,
+   "p50_ms": 43.859,
+   "threshold_ms": 219.297
+  },
+  {
+   "service": "load-full-year-data-warehouse-load",
+   "name": "call_group.db.insert",
+   "samples": 316,
+   "p50_ms": 33.827,
+   "threshold_ms": 169.135
+  },
+  {
+   "service": "load-full-year-data-warehouse-load",
+   "name": "call_group.db.query",
+   "samples": 216,
+   "p50_ms": 22.776,
+   "threshold_ms": 113.88
+  },
+  {
+   "service": "load-full-year-data-warehouse-load",
+   "name": "call_group.gcs.download",
+   "samples": 248,
+   "p50_ms": 135.938,
+   "threshold_ms": 679.69
+  },
+  {
+   "service": "load-full-year-data-warehouse-load",
+   "name": "call_group.gcs.upload",
+   "samples": 260,
+   "p50_ms": 87.892,
+   "threshold_ms": 439.462
+  },
+  {
+   "service": "load-full-year-data-warehouse-load",
+   "name": "call_group.service.call",
+   "samples": 352,
+   "p50_ms": 188.718,
+   "threshold_ms": 943.59
+  },
+  {
+   "service": "load-full-year-data-warehouse-load",
+   "name": "db.insert",
+   "samples": 2188,
+   "p50_ms": 9.018,
+   "threshold_ms": 45.093
+  },
+  {
+   "service": "load-full-year-data-warehouse-load",
+   "name": "db.query",
+   "samples": 472,
+   "p50_ms": 9.792,
+   "threshold_ms": 48.96
+  },
+  {
+   "service": "load-full-year-data-warehouse-load",
+   "name": "gcs.download",
+   "samples": 668,
+   "p50_ms": 50.524,
+   "threshold_ms": 252.62
+  },
+  {
+   "service": "load-full-year-data-warehouse-load",
+   "name": "gcs.upload",
+   "samples": 616,
+   "p50_ms": 49.488,
+   "threshold_ms": 247.44
+  },
+  {
+   "service": "load-full-year-data-warehouse-load",
+   "name": "service.demand_forecaster.call",
+   "samples": 68,
+   "p50_ms": 311.577,
+   "threshold_ms": 1557.887
+  },
+  {
+   "service": "load-full-year-data-warehouse-load",
+   "name": "service.email_provider.call",
+   "samples": 112,
+   "p50_ms": 102.841,
+   "threshold_ms": 514.202
+  },
+  {
+   "service": "load-full-year-data-warehouse-load",
+   "name": "service.inventory_api.call",
+   "samples": 136,
+   "p50_ms": 321.659,
+   "threshold_ms": 1608.295
+  },
+  {
+   "service": "load-full-year-data-warehouse-load",
+   "name": "service.loyalty_service.call",
+   "samples": 52,
+   "p50_ms": 81.249,
+   "threshold_ms": 406.243
+  },
+  {
+   "service": "load-full-year-data-warehouse-load",
+   "name": "service.notification_hub.call",
+   "samples": 128,
+   "p50_ms": 166.798,
+   "threshold_ms": 833.992
+  },
+  {
+   "service": "load-full-year-data-warehouse-load",
+   "name": "service.slack_webhook.call",
+   "samples": 52,
+   "p50_ms": 113.186,
+   "threshold_ms": 565.93
+  },
+  {
+   "service": "load-full-year-data-warehouse-load",
+   "name": "service.tax_service.call",
+   "samples": 112,
+   "p50_ms": 120.473,
+   "threshold_ms": 602.365
+  },
+  {
+   "service": "load-historical-backfill-load",
+   "name": "call_group.db.insert",
+   "samples": 192,
+   "p50_ms": 21.988,
+   "threshold_ms": 109.94
+  },
+  {
+   "service": "load-historical-backfill-load",
+   "name": "call_group.db.query",
+   "samples": 124,
+   "p50_ms": 29.866,
+   "threshold_ms": 149.332
+  },
+  {
+   "service": "load-historical-backfill-load",
+   "name": "call_group.gcs.download",
+   "samples": 214,
+   "p50_ms": 95.637,
+   "threshold_ms": 478.185
+  },
+  {
+   "service": "load-historical-backfill-load",
+   "name": "call_group.gcs.upload",
+   "samples": 162,
+   "p50_ms": 86.275,
+   "threshold_ms": 431.373
+  },
+  {
+   "service": "load-historical-backfill-load",
+   "name": "call_group.service.call",
+   "samples": 352,
+   "p50_ms": 323.738,
+   "threshold_ms": 1618.688
+  },
+  {
+   "service": "load-historical-backfill-load",
+   "name": "db.insert",
+   "samples": 696,
+   "p50_ms": 8.95,
+   "threshold_ms": 44.748
+  },
+  {
+   "service": "load-historical-backfill-load",
+   "name": "db.query",
+   "samples": 342,
+   "p50_ms": 9.508,
+   "threshold_ms": 47.538
+  },
+  {
+   "service": "load-historical-backfill-load",
+   "name": "gcs.download",
+   "samples": 586,
+   "p50_ms": 53.231,
+   "threshold_ms": 266.157
+  },
+  {
+   "service": "load-historical-backfill-load",
+   "name": "gcs.upload",
+   "samples": 394,
+   "p50_ms": 53.581,
+   "threshold_ms": 267.905
+  },
+  {
+   "service": "load-historical-backfill-load",
+   "name": "service.demand_forecaster.call",
+   "samples": 140,
+   "p50_ms": 296.709,
+   "threshold_ms": 1483.545
+  },
+  {
+   "service": "load-historical-backfill-load",
+   "name": "service.email_provider.call",
+   "samples": 178,
+   "p50_ms": 124.605,
+   "threshold_ms": 623.025
+  },
+  {
+   "service": "load-historical-backfill-load",
+   "name": "service.inventory_api.call",
+   "samples": 70,
+   "p50_ms": 323.164,
+   "threshold_ms": 1615.822
+  },
+  {
+   "service": "load-historical-backfill-load",
+   "name": "service.loyalty_service.call",
+   "samples": 146,
+   "p50_ms": 84.622,
+   "threshold_ms": 423.11
+  },
+  {
+   "service": "load-historical-backfill-load",
+   "name": "service.notification_hub.call",
+   "samples": 42,
+   "p50_ms": 174.162,
+   "threshold_ms": 870.812
+  },
+  {
+   "service": "load-historical-backfill-load",
+   "name": "service.slack_webhook.call",
+   "samples": 162,
+   "p50_ms": 123.108,
+   "threshold_ms": 615.54
+  },
+  {
+   "service": "load-historical-backfill-load",
+   "name": "service.tax_service.call",
+   "samples": 112,
+   "p50_ms": 118.196,
+   "threshold_ms": 590.98
+  },
+  {
+   "service": "load-labor-scheduling-input",
+   "name": "call_group.db.query",
+   "samples": 32,
+   "p50_ms": 16.999,
+   "threshold_ms": 84.995
+  },
+  {
+   "service": "load-labor-scheduling-input",
+   "name": "call_group.gcs.download",
+   "samples": 32,
+   "p50_ms": 124.376,
+   "threshold_ms": 621.878
+  },
+  {
+   "service": "load-labor-scheduling-input",
+   "name": "call_group.service.call",
+   "samples": 60,
+   "p50_ms": 141.871,
+   "threshold_ms": 709.355
+  },
+  {
+   "service": "load-labor-scheduling-input",
+   "name": "db.query",
+   "samples": 48,
+   "p50_ms": 12.174,
+   "threshold_ms": 60.87
+  },
+  {
+   "service": "load-labor-scheduling-input",
+   "name": "gcs.download",
+   "samples": 128,
+   "p50_ms": 49.853,
+   "threshold_ms": 249.267
+  },
+  {
+   "service": "load-labor-scheduling-input",
+   "name": "service.notification_hub.call",
+   "samples": 56,
+   "p50_ms": 131.708,
+   "threshold_ms": 658.542
+  },
+  {
+   "service": "load-labor-scheduling-input",
+   "name": "service.slack_webhook.call",
+   "samples": 32,
+   "p50_ms": 136.201,
+   "threshold_ms": 681.003
+  },
+  {
+   "service": "load-loyalty-crm-sync",
+   "name": "call_group.db.insert",
+   "samples": 66,
+   "p50_ms": 45.707,
+   "threshold_ms": 228.535
+  },
+  {
+   "service": "load-loyalty-crm-sync",
+   "name": "call_group.db.query",
+   "samples": 22,
+   "p50_ms": 16.816,
+   "threshold_ms": 84.078
+  },
+  {
+   "service": "load-loyalty-crm-sync",
+   "name": "call_group.gcs.download",
+   "samples": 44,
+   "p50_ms": 123.147,
+   "threshold_ms": 615.735
+  },
+  {
+   "service": "load-loyalty-crm-sync",
+   "name": "call_group.gcs.upload",
+   "samples": 22,
+   "p50_ms": 69.01,
+   "threshold_ms": 345.05
+  },
+  {
+   "service": "load-loyalty-crm-sync",
+   "name": "call_group.service.call",
+   "samples": 44,
+   "p50_ms": 304.589,
+   "threshold_ms": 1522.945
+  },
+  {
+   "service": "load-loyalty-crm-sync",
+   "name": "db.insert",
+   "samples": 924,
+   "p50_ms": 8.531,
+   "threshold_ms": 42.657
+  },
+  {
+   "service": "load-loyalty-crm-sync",
+   "name": "db.query",
+   "samples": 44,
+   "p50_ms": 7.787,
+   "threshold_ms": 38.933
+  },
+  {
+   "service": "load-loyalty-crm-sync",
+   "name": "gcs.download",
+   "samples": 88,
+   "p50_ms": 50.416,
+   "threshold_ms": 252.078
+  },
+  {
+   "service": "load-loyalty-crm-sync",
+   "name": "gcs.upload",
+   "samples": 66,
+   "p50_ms": 43.081,
+   "threshold_ms": 215.407
+  },
+  {
+   "service": "load-loyalty-crm-sync",
+   "name": "service.demand_forecaster.call",
+   "samples": 66,
+   "p50_ms": 282.315,
+   "threshold_ms": 1411.572
+  },
+  {
+   "service": "load-loyalty-crm-sync",
+   "name": "service.slack_webhook.call",
+   "samples": 88,
+   "p50_ms": 118.877,
+   "threshold_ms": 594.385
+  },
+  {
+   "service": "load-markdown-recommendations",
+   "name": "call_group.db.insert",
+   "samples": 66,
+   "p50_ms": 33.593,
+   "threshold_ms": 167.968
+  },
+  {
+   "service": "load-markdown-recommendations",
+   "name": "call_group.db.query",
+   "samples": 44,
+   "p50_ms": 28.631,
+   "threshold_ms": 143.157
+  },
+  {
+   "service": "load-markdown-recommendations",
+   "name": "call_group.gcs.download",
+   "samples": 44,
+   "p50_ms": 112.666,
+   "threshold_ms": 563.33
+  },
+  {
+   "service": "load-markdown-recommendations",
+   "name": "call_group.gcs.upload",
+   "samples": 44,
+   "p50_ms": 75.291,
+   "threshold_ms": 376.455
+  },
+  {
+   "service": "load-markdown-recommendations",
+   "name": "call_group.service.call",
+   "samples": 22,
+   "p50_ms": 1245.931,
+   "threshold_ms": 6229.657
+  },
+  {
+   "service": "load-markdown-recommendations",
+   "name": "db.insert",
+   "samples": 198,
+   "p50_ms": 10.202,
+   "threshold_ms": 51.01
+  },
+  {
+   "service": "load-markdown-recommendations",
+   "name": "db.query",
+   "samples": 110,
+   "p50_ms": 8.622,
+   "threshold_ms": 43.11
+  },
+  {
+   "service": "load-markdown-recommendations",
+   "name": "gcs.download",
+   "samples": 132,
+   "p50_ms": 54.538,
+   "threshold_ms": 272.69
+  },
+  {
+   "service": "load-markdown-recommendations",
+   "name": "gcs.upload",
+   "samples": 88,
+   "p50_ms": 55.222,
+   "threshold_ms": 276.112
+  },
+  {
+   "service": "load-markdown-recommendations",
+   "name": "service.demand_forecaster.call",
+   "samples": 88,
+   "p50_ms": 297.146,
+   "threshold_ms": 1485.728
+  },
+  {
+   "service": "load-price-change-queue",
+   "name": "call_group.gcs.download",
+   "samples": 36,
+   "p50_ms": 102.924,
+   "threshold_ms": 514.622
+  },
+  {
+   "service": "load-price-change-queue",
+   "name": "call_group.gcs.upload",
+   "samples": 24,
+   "p50_ms": 129.897,
+   "threshold_ms": 649.483
+  },
+  {
+   "service": "load-price-change-queue",
+   "name": "db.insert",
+   "samples": 36,
+   "p50_ms": 10.883,
+   "threshold_ms": 54.415
+  },
+  {
+   "service": "load-price-change-queue",
+   "name": "db.query",
+   "samples": 48,
+   "p50_ms": 8.956,
+   "threshold_ms": 44.778
+  },
+  {
+   "service": "load-price-change-queue",
+   "name": "gcs.download",
+   "samples": 108,
+   "p50_ms": 49.355,
+   "threshold_ms": 246.775
+  },
+  {
+   "service": "load-price-change-queue",
+   "name": "gcs.upload",
+   "samples": 60,
+   "p50_ms": 50.645,
+   "threshold_ms": 253.225
+  },
+  {
+   "service": "load-price-change-queue",
+   "name": "service.notification_hub.call",
+   "samples": 24,
+   "p50_ms": 184.57,
+   "threshold_ms": 922.848
+  },
+  {
+   "service": "load-promo-performance-board",
+   "name": "call_group.db.query",
+   "samples": 24,
+   "p50_ms": 17.466,
+   "threshold_ms": 87.332
+  },
+  {
+   "service": "load-promo-performance-board",
+   "name": "call_group.gcs.download",
+   "samples": 24,
+   "p50_ms": 107.221,
+   "threshold_ms": 536.102
+  },
+  {
+   "service": "load-promo-performance-board",
+   "name": "call_group.gcs.upload",
+   "samples": 24,
+   "p50_ms": 134.097,
+   "threshold_ms": 670.487
+  },
+  {
+   "service": "load-promo-performance-board",
+   "name": "db.insert",
+   "samples": 120,
+   "p50_ms": 9.158,
+   "threshold_ms": 45.79
+  },
+  {
+   "service": "load-promo-performance-board",
+   "name": "db.query",
+   "samples": 36,
+   "p50_ms": 8.225,
+   "threshold_ms": 41.125
+  },
+  {
+   "service": "load-promo-performance-board",
+   "name": "gcs.download",
+   "samples": 48,
+   "p50_ms": 50.429,
+   "threshold_ms": 252.145
+  },
+  {
+   "service": "load-promo-performance-board",
+   "name": "gcs.upload",
+   "samples": 84,
+   "p50_ms": 51.807,
+   "threshold_ms": 259.037
+  },
+  {
+   "service": "load-promo-performance-board",
+   "name": "service.inventory_api.call",
+   "samples": 48,
+   "p50_ms": 325.361,
+   "threshold_ms": 1626.803
+  },
+  {
+   "service": "load-regional-ops-summary",
+   "name": "call_group.db.insert",
+   "samples": 84,
+   "p50_ms": 35.541,
+   "threshold_ms": 177.705
+  },
+  {
+   "service": "load-regional-ops-summary",
+   "name": "call_group.gcs.download",
+   "samples": 42,
+   "p50_ms": 84.28,
+   "threshold_ms": 421.4
+  },
+  {
+   "service": "load-regional-ops-summary",
+   "name": "call_group.gcs.upload",
+   "samples": 60,
+   "p50_ms": 176.825,
+   "threshold_ms": 884.125
+  },
+  {
+   "service": "load-regional-ops-summary",
+   "name": "call_group.service.call",
+   "samples": 60,
+   "p50_ms": 149.738,
+   "threshold_ms": 748.692
+  },
+  {
+   "service": "load-regional-ops-summary",
+   "name": "db.insert",
+   "samples": 1062,
+   "p50_ms": 8.847,
+   "threshold_ms": 44.235
+  },
+  {
+   "service": "load-regional-ops-summary",
+   "name": "gcs.download",
+   "samples": 108,
+   "p50_ms": 52.112,
+   "threshold_ms": 260.562
+  },
+  {
+   "service": "load-regional-ops-summary",
+   "name": "gcs.upload",
+   "samples": 204,
+   "p50_ms": 45.044,
+   "threshold_ms": 225.222
+  },
+  {
+   "service": "load-regional-ops-summary",
+   "name": "service.email_provider.call",
+   "samples": 168,
+   "p50_ms": 95.141,
+   "threshold_ms": 475.707
+  },
+  {
+   "service": "load-regional-ops-summary",
+   "name": "service.slack_webhook.call",
+   "samples": 54,
+   "p50_ms": 143.774,
+   "threshold_ms": 718.872
+  },
+  {
+   "service": "load-replenishment-forecast",
+   "name": "call_group.db.insert",
+   "samples": 54,
+   "p50_ms": 22.832,
+   "threshold_ms": 114.162
+  },
+  {
+   "service": "load-replenishment-forecast",
+   "name": "call_group.gcs.download",
+   "samples": 54,
+   "p50_ms": 45.353,
+   "threshold_ms": 226.767
+  },
+  {
+   "service": "load-replenishment-forecast",
+   "name": "db.insert",
+   "samples": 126,
+   "p50_ms": 8.884,
+   "threshold_ms": 44.422
+  },
+  {
+   "service": "load-replenishment-forecast",
+   "name": "db.query",
+   "samples": 54,
+   "p50_ms": 9.084,
+   "threshold_ms": 45.42
+  },
+  {
+   "service": "load-replenishment-forecast",
+   "name": "gcs.download",
+   "samples": 54,
+   "p50_ms": 45.26,
+   "threshold_ms": 226.3
+  },
+  {
+   "service": "load-replenishment-forecast",
+   "name": "gcs.upload",
+   "samples": 54,
+   "p50_ms": 55.706,
+   "threshold_ms": 278.528
+  },
+  {
+   "service": "load-returns-analysis-mart",
+   "name": "call_group.db.insert",
+   "samples": 32,
+   "p50_ms": 42.121,
+   "threshold_ms": 210.607
+  },
+  {
+   "service": "load-returns-analysis-mart",
+   "name": "call_group.db.query",
+   "samples": 32,
+   "p50_ms": 19.492,
+   "threshold_ms": 97.463
+  },
+  {
+   "service": "load-returns-analysis-mart",
+   "name": "call_group.gcs.download",
+   "samples": 32,
+   "p50_ms": 71.879,
+   "threshold_ms": 359.393
+  },
+  {
+   "service": "load-returns-analysis-mart",
+   "name": "db.insert",
+   "samples": 208,
+   "p50_ms": 10.703,
+   "threshold_ms": 53.513
+  },
+  {
+   "service": "load-returns-analysis-mart",
+   "name": "db.query",
+   "samples": 64,
+   "p50_ms": 11.332,
+   "threshold_ms": 56.657
+  },
+  {
+   "service": "load-returns-analysis-mart",
+   "name": "gcs.download",
+   "samples": 80,
+   "p50_ms": 53.876,
+   "threshold_ms": 269.377
+  },
+  {
+   "service": "load-returns-analysis-mart",
+   "name": "service.loyalty_service.call",
+   "samples": 48,
+   "p50_ms": 95.075,
+   "threshold_ms": 475.375
+  },
+  {
+   "service": "load-shrinkage-report",
+   "name": "call_group.db.insert",
+   "samples": 20,
+   "p50_ms": 28.231,
+   "threshold_ms": 141.155
+  },
+  {
+   "service": "load-shrinkage-report",
+   "name": "call_group.db.query",
+   "samples": 20,
+   "p50_ms": 31.339,
+   "threshold_ms": 156.695
+  },
+  {
+   "service": "load-shrinkage-report",
+   "name": "call_group.gcs.download",
+   "samples": 40,
+   "p50_ms": 70.335,
+   "threshold_ms": 351.675
+  },
+  {
+   "service": "load-shrinkage-report",
+   "name": "call_group.gcs.upload",
+   "samples": 60,
+   "p50_ms": 57.112,
+   "threshold_ms": 285.562
+  },
+  {
+   "service": "load-shrinkage-report",
+   "name": "call_group.service.call",
+   "samples": 40,
+   "p50_ms": 269.409,
+   "threshold_ms": 1347.045
+  },
+  {
+   "service": "load-shrinkage-report",
+   "name": "db.insert",
+   "samples": 60,
+   "p50_ms": 10.048,
+   "threshold_ms": 50.24
+  },
+  {
+   "service": "load-shrinkage-report",
+   "name": "db.query",
+   "samples": 60,
+   "p50_ms": 10.404,
+   "threshold_ms": 52.02
+  },
+  {
+   "service": "load-shrinkage-report",
+   "name": "gcs.download",
+   "samples": 100,
+   "p50_ms": 50.486,
+   "threshold_ms": 252.43
+  },
+  {
+   "service": "load-shrinkage-report",
+   "name": "gcs.upload",
+   "samples": 140,
+   "p50_ms": 51.894,
+   "threshold_ms": 259.468
+  },
+  {
+   "service": "load-shrinkage-report",
+   "name": "service.demand_forecaster.call",
+   "samples": 60,
+   "p50_ms": 299.175,
+   "threshold_ms": 1495.875
+  },
+  {
+   "service": "load-shrinkage-report",
+   "name": "service.notification_hub.call",
+   "samples": 20,
+   "p50_ms": 199.282,
+   "threshold_ms": 996.41
+  },
+  {
+   "service": "load-stock-alert-feed",
+   "name": "call_group.db.insert",
+   "samples": 32,
+   "p50_ms": 27.661,
+   "threshold_ms": 138.305
+  },
+  {
+   "service": "load-stock-alert-feed",
+   "name": "call_group.db.query",
+   "samples": 48,
+   "p50_ms": 23.905,
+   "threshold_ms": 119.528
+  },
+  {
+   "service": "load-stock-alert-feed",
+   "name": "call_group.gcs.download",
+   "samples": 48,
+   "p50_ms": 168.814,
+   "threshold_ms": 844.07
+  },
+  {
+   "service": "load-stock-alert-feed",
+   "name": "call_group.gcs.upload",
+   "samples": 32,
+   "p50_ms": 92.257,
+   "threshold_ms": 461.285
+  },
+  {
+   "service": "load-stock-alert-feed",
+   "name": "call_group.service.call",
+   "samples": 32,
+   "p50_ms": 213.007,
+   "threshold_ms": 1065.035
+  },
+  {
+   "service": "load-stock-alert-feed",
+   "name": "db.insert",
+   "samples": 80,
+   "p50_ms": 10.774,
+   "threshold_ms": 53.87
+  },
+  {
+   "service": "load-stock-alert-feed",
+   "name": "db.query",
+   "samples": 112,
+   "p50_ms": 8.957,
+   "threshold_ms": 44.785
+  },
+  {
+   "service": "load-stock-alert-feed",
+   "name": "gcs.download",
+   "samples": 192,
+   "p50_ms": 53.129,
+   "threshold_ms": 265.643
+  },
+  {
+   "service": "load-stock-alert-feed",
+   "name": "gcs.upload",
+   "samples": 80,
+   "p50_ms": 48.428,
+   "threshold_ms": 242.138
+  },
+  {
+   "service": "load-stock-alert-feed",
+   "name": "service.loyalty_service.call",
+   "samples": 48,
+   "p50_ms": 81.556,
+   "threshold_ms": 407.783
+  },
+  {
+   "service": "load-stock-alert-feed",
+   "name": "service.slack_webhook.call",
+   "samples": 32,
+   "p50_ms": 119.683,
+   "threshold_ms": 598.418
+  },
+  {
+   "service": "load-store-dashboards",
+   "name": "call_group.service.call",
+   "samples": 58,
+   "p50_ms": 292.016,
+   "threshold_ms": 1460.08
+  },
+  {
+   "service": "load-store-dashboards",
+   "name": "db.query",
+   "samples": 64,
+   "p50_ms": 9.747,
+   "threshold_ms": 48.735
+  },
+  {
+   "service": "load-store-dashboards",
+   "name": "gcs.download",
+   "samples": 32,
+   "p50_ms": 55.413,
+   "threshold_ms": 277.067
+  },
+  {
+   "service": "load-store-dashboards",
+   "name": "gcs.upload",
+   "samples": 48,
+   "p50_ms": 53.605,
+   "threshold_ms": 268.027
+  },
+  {
+   "service": "load-store-dashboards",
+   "name": "service.inventory_api.call",
+   "samples": 48,
+   "p50_ms": 358.058,
+   "threshold_ms": 1790.293
+  },
+  {
+   "service": "load-store-dashboards",
+   "name": "service.notification_hub.call",
+   "samples": 96,
+   "p50_ms": 159.819,
+   "threshold_ms": 799.092
+  },
+  {
+   "service": "load-store-manager-digest",
+   "name": "call_group.db.insert",
+   "samples": 72,
+   "p50_ms": 36.279,
+   "threshold_ms": 181.395
+  },
+  {
+   "service": "load-store-manager-digest",
+   "name": "call_group.gcs.download",
+   "samples": 40,
+   "p50_ms": 98.885,
+   "threshold_ms": 494.423
+  },
+  {
+   "service": "load-store-manager-digest",
+   "name": "call_group.gcs.upload",
+   "samples": 72,
+   "p50_ms": 172.0,
+   "threshold_ms": 860.002
+  },
+  {
+   "service": "load-store-manager-digest",
+   "name": "call_group.service.call",
+   "samples": 80,
+   "p50_ms": 206.026,
+   "threshold_ms": 1030.13
+  },
+  {
+   "service": "load-store-manager-digest",
+   "name": "db.insert",
+   "samples": 648,
+   "p50_ms": 9.176,
+   "threshold_ms": 45.88
+  },
+  {
+   "service": "load-store-manager-digest",
+   "name": "gcs.download",
+   "samples": 100,
+   "p50_ms": 55.175,
+   "threshold_ms": 275.875
+  },
+  {
+   "service": "load-store-manager-digest",
+   "name": "gcs.upload",
+   "samples": 192,
+   "p50_ms": 58.482,
+   "threshold_ms": 292.41
+  },
+  {
+   "service": "load-store-manager-digest",
+   "name": "service.email_provider.call",
+   "samples": 72,
+   "p50_ms": 122.499,
+   "threshold_ms": 612.493
+  },
+  {
+   "service": "load-store-manager-digest",
+   "name": "service.slack_webhook.call",
+   "samples": 96,
+   "p50_ms": 109.365,
+   "threshold_ms": 546.827
+  },
+  {
+   "service": "load-store-manager-digest",
+   "name": "service.tax_service.call",
+   "samples": 80,
+   "p50_ms": 112.522,
+   "threshold_ms": 562.612
+  },
+  {
+   "service": "load-supplier-portal",
+   "name": "call_group.db.insert",
+   "samples": 26,
+   "p50_ms": 23.348,
+   "threshold_ms": 116.74
+  },
+  {
+   "service": "load-supplier-portal",
+   "name": "call_group.db.query",
+   "samples": 26,
+   "p50_ms": 22.423,
+   "threshold_ms": 112.115
+  },
+  {
+   "service": "load-supplier-portal",
+   "name": "call_group.gcs.download",
+   "samples": 52,
+   "p50_ms": 42.315,
+   "threshold_ms": 211.575
+  },
+  {
+   "service": "load-supplier-portal",
+   "name": "call_group.gcs.upload",
+   "samples": 78,
+   "p50_ms": 144.814,
+   "threshold_ms": 724.07
+  },
+  {
+   "service": "load-supplier-portal",
+   "name": "call_group.service.call",
+   "samples": 52,
+   "p50_ms": 275.169,
+   "threshold_ms": 1375.845
+  },
+  {
+   "service": "load-supplier-portal",
+   "name": "db.insert",
+   "samples": 156,
+   "p50_ms": 9.005,
+   "threshold_ms": 45.025
+  },
+  {
+   "service": "load-supplier-portal",
+   "name": "db.query",
+   "samples": 52,
+   "p50_ms": 10.453,
+   "threshold_ms": 52.263
+  },
+  {
+   "service": "load-supplier-portal",
+   "name": "gcs.download",
+   "samples": 52,
+   "p50_ms": 42.209,
+   "threshold_ms": 211.045
+  },
+  {
+   "service": "load-supplier-portal",
+   "name": "gcs.upload",
+   "samples": 234,
+   "p50_ms": 53.193,
+   "threshold_ms": 265.963
+  },
+  {
+   "service": "load-supplier-portal",
+   "name": "service.loyalty_service.call",
+   "samples": 78,
+   "p50_ms": 78.656,
+   "threshold_ms": 393.282
+  },
+  {
+   "service": "load-supplier-portal",
+   "name": "service.tax_service.call",
+   "samples": 104,
+   "p50_ms": 117.092,
+   "threshold_ms": 585.46
+  },
+  {
+   "service": "load-weather-sales-report",
+   "name": "call_group.gcs.download",
+   "samples": 36,
+   "p50_ms": 66.267,
+   "threshold_ms": 331.335
+  },
+  {
+   "service": "load-weather-sales-report",
+   "name": "call_group.service.call",
+   "samples": 28,
+   "p50_ms": 129.791,
+   "threshold_ms": 648.955
+  },
+  {
+   "service": "load-weather-sales-report",
+   "name": "db.insert",
+   "samples": 36,
+   "p50_ms": 7.834,
+   "threshold_ms": 39.17
+  },
+  {
+   "service": "load-weather-sales-report",
+   "name": "db.query",
+   "samples": 48,
+   "p50_ms": 9.1,
+   "threshold_ms": 45.498
+  },
+  {
+   "service": "load-weather-sales-report",
+   "name": "gcs.download",
+   "samples": 72,
+   "p50_ms": 53.123,
+   "threshold_ms": 265.613
+  },
+  {
+   "service": "load-weather-sales-report",
+   "name": "service.notification_hub.call",
+   "samples": 84,
+   "p50_ms": 127.609,
+   "threshold_ms": 638.045
+  },
+  {
+   "service": "loyalty_service",
+   "name": "call_group.db.insert",
+   "samples": 480,
+   "p50_ms": 44.858,
+   "threshold_ms": 224.29
+  },
+  {
+   "service": "loyalty_service",
+   "name": "call_group.db.query",
+   "samples": 480,
+   "p50_ms": 30.337,
+   "threshold_ms": 151.688
+  },
+  {
+   "service": "loyalty_service",
+   "name": "db.insert",
+   "samples": 7680,
+   "p50_ms": 8.749,
+   "threshold_ms": 43.745
+  },
+  {
+   "service": "loyalty_service",
+   "name": "db.query",
+   "samples": 1440,
+   "p50_ms": 9.582,
+   "threshold_ms": 47.907
+  },
+  {
+   "service": "loyalty_service",
+   "name": "service.loyalty_service.handle",
+   "samples": 480,
+   "p50_ms": 76.889,
+   "threshold_ms": 384.447
+  },
+  {
+   "service": "notification_hub",
+   "name": "call_group.db.insert",
+   "samples": 616,
+   "p50_ms": 9.983,
+   "threshold_ms": 49.915
+  },
+  {
+   "service": "notification_hub",
+   "name": "call_group.service.call",
+   "samples": 616,
+   "p50_ms": 146.743,
+   "threshold_ms": 733.713
+  },
+  {
+   "service": "notification_hub",
+   "name": "db.insert",
+   "samples": 616,
+   "p50_ms": 9.848,
+   "threshold_ms": 49.24
+  },
+  {
+   "service": "notification_hub",
+   "name": "service.email_provider.call",
+   "samples": 1848,
+   "p50_ms": 108.649,
+   "threshold_ms": 543.245
+  },
+  {
+   "service": "notification_hub",
+   "name": "service.notification_hub.handle",
+   "samples": 616,
+   "p50_ms": 158.9,
+   "threshold_ms": 794.502
+  },
+  {
+   "service": "price_engine",
+   "name": "call_group.db.query",
+   "samples": 5288,
+   "p50_ms": 19.865,
+   "threshold_ms": 99.325
+  },
+  {
+   "service": "price_engine",
+   "name": "call_group.gcs.download",
+   "samples": 2644,
+   "p50_ms": 49.806,
+   "threshold_ms": 249.03
+  },
+  {
+   "service": "price_engine",
+   "name": "db.query",
+   "samples": 10576,
+   "p50_ms": 9.454,
+   "threshold_ms": 47.27
+  },
+  {
+   "service": "price_engine",
+   "name": "gcs.download",
+   "samples": 2644,
+   "p50_ms": 49.671,
+   "threshold_ms": 248.355
+  },
+  {
+   "service": "price_engine",
+   "name": "service.price_engine.handle",
+   "samples": 2644,
+   "p50_ms": 93.412,
+   "threshold_ms": 467.062
+  },
+  {
+   "service": "product_catalog",
+   "name": "call_group.db.query",
+   "samples": 5180,
+   "p50_ms": 40.724,
+   "threshold_ms": 203.623
+  },
+  {
+   "service": "product_catalog",
+   "name": "call_group.http.get",
+   "samples": 2590,
+   "p50_ms": 192.228,
+   "threshold_ms": 961.142
+  },
+  {
+   "service": "product_catalog",
+   "name": "db.query",
+   "samples": 20720,
+   "p50_ms": 9.327,
+   "threshold_ms": 46.635
+  },
+  {
+   "service": "product_catalog",
+   "name": "http.get",
+   "samples": 12948,
+   "p50_ms": 91.257,
+   "threshold_ms": 456.287
+  },
+  {
+   "service": "product_catalog",
+   "name": "service.product_catalog.handle",
+   "samples": 2590,
+   "p50_ms": 277.716,
+   "threshold_ms": 1388.582
+  },
+  {
+   "service": "transform-basket-affinity",
+   "name": "call_group.gcs.download",
+   "samples": 104,
+   "p50_ms": 45.627,
+   "threshold_ms": 228.132
+  },
+  {
+   "service": "transform-basket-affinity",
+   "name": "call_group.gcs.upload",
+   "samples": 52,
+   "p50_ms": 53.121,
+   "threshold_ms": 265.607
+  },
+  {
+   "service": "transform-basket-affinity",
+   "name": "call_group.service.call",
+   "samples": 156,
+   "p50_ms": 160.049,
+   "threshold_ms": 800.245
+  },
+  {
+   "service": "transform-basket-affinity",
+   "name": "gcs.download",
+   "samples": 104,
+   "p50_ms": 45.479,
+   "threshold_ms": 227.395
+  },
+  {
+   "service": "transform-basket-affinity",
+   "name": "gcs.upload",
+   "samples": 52,
+   "p50_ms": 52.904,
+   "threshold_ms": 264.52
+  },
+  {
+   "service": "transform-basket-affinity",
+   "name": "service.fx_rate_provider.call",
+   "samples": 104,
+   "p50_ms": 132.086,
+   "threshold_ms": 660.43
+  },
+  {
+   "service": "transform-basket-affinity",
+   "name": "service.price_engine.call",
+   "samples": 52,
+   "p50_ms": 101.545,
+   "threshold_ms": 507.725
+  },
+  {
+   "service": "transform-basket-affinity",
+   "name": "service.weather_api.call",
+   "samples": 104,
+   "p50_ms": 126.647,
+   "threshold_ms": 633.235
+  },
+  {
+   "service": "transform-daily-basket-stats",
+   "name": "call_group.gcs.download",
+   "samples": 116,
+   "p50_ms": 122.359,
+   "threshold_ms": 611.793
+  },
+  {
+   "service": "transform-daily-basket-stats",
+   "name": "call_group.gcs.upload",
+   "samples": 174,
+   "p50_ms": 89.481,
+   "threshold_ms": 447.407
+  },
+  {
+   "service": "transform-daily-basket-stats",
+   "name": "call_group.service.call",
+   "samples": 58,
+   "p50_ms": 307.077,
+   "threshold_ms": 1535.383
+  },
+  {
+   "service": "transform-daily-basket-stats",
+   "name": "gcs.download",
+   "samples": 290,
+   "p50_ms": 55.365,
+   "threshold_ms": 276.825
+  },
+  {
+   "service": "transform-daily-basket-stats",
+   "name": "gcs.upload",
+   "samples": 406,
+   "p50_ms": 48.957,
+   "threshold_ms": 244.785
+  },
+  {
+   "service": "transform-daily-basket-stats",
+   "name": "service.fx_rate_provider.call",
+   "samples": 174,
+   "p50_ms": 100.743,
+   "threshold_ms": 503.715
+  },
+  {
+   "service": "transform-demand-features",
+   "name": "call_group.gcs.download",
+   "samples": 72,
+   "p50_ms": 84.906,
+   "threshold_ms": 424.528
+  },
+  {
+   "service": "transform-demand-features",
+   "name": "call_group.gcs.upload",
+   "samples": 72,
+   "p50_ms": 122.488,
+   "threshold_ms": 612.44
+  },
+  {
+   "service": "transform-demand-features",
+   "name": "call_group.service.call",
+   "samples": 108,
+   "p50_ms": 255.377,
+   "threshold_ms": 1276.888
+  },
+  {
+   "service": "transform-demand-features",
+   "name": "gcs.download",
+   "samples": 216,
+   "p50_ms": 47.227,
+   "threshold_ms": 236.137
+  },
+  {
+   "service": "transform-demand-features",
+   "name": "gcs.upload",
+   "samples": 252,
+   "p50_ms": 50.696,
+   "threshold_ms": 253.478
+  },
+  {
+   "service": "transform-demand-features",
+   "name": "service.address_geocoder.call",
+   "samples": 72,
+   "p50_ms": 133.953,
+   "threshold_ms": 669.767
+  },
+  {
+   "service": "transform-demand-features",
+   "name": "service.price_engine.call",
+   "samples": 108,
+   "p50_ms": 104.886,
+   "threshold_ms": 524.43
+  },
+  {
+   "service": "transform-demand-features",
+   "name": "service.weather_api.call",
+   "samples": 36,
+   "p50_ms": 141.81,
+   "threshold_ms": 709.05
+  },
+  {
+   "service": "transform-ecommerce-funnel",
+   "name": "call_group.gcs.download",
+   "samples": 44,
+   "p50_ms": 128.584,
+   "threshold_ms": 642.922
+  },
+  {
+   "service": "transform-ecommerce-funnel",
+   "name": "call_group.gcs.upload",
+   "samples": 22,
+   "p50_ms": 40.967,
+   "threshold_ms": 204.835
+  },
+  {
+   "service": "transform-ecommerce-funnel",
+   "name": "call_group.service.call",
+   "samples": 66,
+   "p50_ms": 153.159,
+   "threshold_ms": 765.795
+  },
+  {
+   "service": "transform-ecommerce-funnel",
+   "name": "gcs.download",
+   "samples": 154,
+   "p50_ms": 49.227,
+   "threshold_ms": 246.137
+  },
+  {
+   "service": "transform-ecommerce-funnel",
+   "name": "gcs.upload",
+   "samples": 22,
+   "p50_ms": 40.837,
+   "threshold_ms": 204.183
+  },
+  {
+   "service": "transform-ecommerce-funnel",
+   "name": "service.fx_rate_provider.call",
+   "samples": 66,
+   "p50_ms": 135.221,
+   "threshold_ms": 676.107
+  },
+  {
+   "service": "transform-ecommerce-funnel",
+   "name": "service.price_engine.call",
+   "samples": 22,
+   "p50_ms": 89.576,
+   "threshold_ms": 447.88
+  },
+  {
+   "service": "transform-ecommerce-funnel",
+   "name": "service.weather_api.call",
+   "samples": 44,
+   "p50_ms": 103.025,
+   "threshold_ms": 515.125
+  },
+  {
+   "service": "transform-full-history-price-rebuild",
+   "name": "call_group.gcs.download",
+   "samples": 1140,
+   "p50_ms": 93.626,
+   "threshold_ms": 468.132
+  },
+  {
+   "service": "transform-full-history-price-rebuild",
+   "name": "call_group.gcs.upload",
+   "samples": 1140,
+   "p50_ms": 97.004,
+   "threshold_ms": 485.018
+  },
+  {
+   "service": "transform-full-history-price-rebuild",
+   "name": "call_group.service.call",
+   "samples": 2280,
+   "p50_ms": 244.178,
+   "threshold_ms": 1220.89
+  },
+  {
+   "service": "transform-full-history-price-rebuild",
+   "name": "gcs.download",
+   "samples": 2888,
+   "p50_ms": 51.228,
+   "threshold_ms": 256.142
+  },
+  {
+   "service": "transform-full-history-price-rebuild",
+   "name": "gcs.upload",
+   "samples": 2660,
+   "p50_ms": 50.487,
+   "threshold_ms": 252.438
+  },
+  {
+   "service": "transform-full-history-price-rebuild",
+   "name": "service.address_geocoder.call",
+   "samples": 836,
+   "p50_ms": 126.999,
+   "threshold_ms": 634.993
+  },
+  {
+   "service": "transform-full-history-price-rebuild",
+   "name": "service.demand_forecaster.call",
+   "samples": 1140,
+   "p50_ms": 283.784,
+   "threshold_ms": 1418.92
+  },
+  {
+   "service": "transform-full-history-price-rebuild",
+   "name": "service.fx_rate_provider.call",
+   "samples": 836,
+   "p50_ms": 116.599,
+   "threshold_ms": 582.995
+  },
+  {
+   "service": "transform-full-history-price-rebuild",
+   "name": "service.price_engine.call",
+   "samples": 912,
+   "p50_ms": 103.332,
+   "threshold_ms": 516.663
+  },
+  {
+   "service": "transform-full-history-price-rebuild",
+   "name": "service.product_catalog.call",
+   "samples": 912,
+   "p50_ms": 288.237,
+   "threshold_ms": 1441.185
+  },
+  {
+   "service": "transform-full-history-price-rebuild",
+   "name": "service.weather_api.call",
+   "samples": 1140,
+   "p50_ms": 123.115,
+   "threshold_ms": 615.572
+  },
+  {
+   "service": "transform-loyalty-segments",
+   "name": "call_group.gcs.download",
+   "samples": 272,
+   "p50_ms": 84.833,
+   "threshold_ms": 424.165
+  },
+  {
+   "service": "transform-loyalty-segments",
+   "name": "call_group.gcs.upload",
+   "samples": 68,
+   "p50_ms": 48.86,
+   "threshold_ms": 244.3
+  },
+  {
+   "service": "transform-loyalty-segments",
+   "name": "call_group.service.call",
+   "samples": 68,
+   "p50_ms": 146.512,
+   "threshold_ms": 732.558
+  },
+  {
+   "service": "transform-loyalty-segments",
+   "name": "gcs.download",
+   "samples": 816,
+   "p50_ms": 51.661,
+   "threshold_ms": 258.305
+  },
+  {
+   "service": "transform-loyalty-segments",
+   "name": "gcs.upload",
+   "samples": 68,
+   "p50_ms": 48.568,
+   "threshold_ms": 242.838
+  },
+  {
+   "service": "transform-loyalty-segments",
+   "name": "service.fx_rate_provider.call",
+   "samples": 204,
+   "p50_ms": 122.029,
+   "threshold_ms": 610.148
+  },
+  {
+   "service": "transform-margin-by-sku",
+   "name": "call_group.gcs.download",
+   "samples": 22,
+   "p50_ms": 59.483,
+   "threshold_ms": 297.415
+  },
+  {
+   "service": "transform-margin-by-sku",
+   "name": "call_group.gcs.upload",
+   "samples": 44,
+   "p50_ms": 124.846,
+   "threshold_ms": 624.23
+  },
+  {
+   "service": "transform-margin-by-sku",
+   "name": "call_group.service.call",
+   "samples": 22,
+   "p50_ms": 249.555,
+   "threshold_ms": 1247.775
+  },
+  {
+   "service": "transform-margin-by-sku",
+   "name": "gcs.download",
+   "samples": 66,
+   "p50_ms": 49.529,
+   "threshold_ms": 247.643
+  },
+  {
+   "service": "transform-margin-by-sku",
+   "name": "gcs.upload",
+   "samples": 154,
+   "p50_ms": 46.711,
+   "threshold_ms": 233.553
+  },
+  {
+   "service": "transform-margin-by-sku",
+   "name": "service.address_geocoder.call",
+   "samples": 88,
+   "p50_ms": 134.011,
+   "threshold_ms": 670.053
+  },
+  {
+   "service": "transform-markdown-candidates",
+   "name": "call_group.gcs.download",
+   "samples": 32,
+   "p50_ms": 85.216,
+   "threshold_ms": 426.078
+  },
+  {
+   "service": "transform-markdown-candidates",
+   "name": "call_group.service.call",
+   "samples": 32,
+   "p50_ms": 390.067,
+   "threshold_ms": 1950.335
+  },
+  {
+   "service": "transform-markdown-candidates",
+   "name": "gcs.download",
+   "samples": 96,
+   "p50_ms": 50.303,
+   "threshold_ms": 251.513
+  },
+  {
+   "service": "transform-markdown-candidates",
+   "name": "service.weather_api.call",
+   "samples": 64,
+   "p50_ms": 129.288,
+   "threshold_ms": 646.44
+  },
+  {
+   "service": "transform-price-elasticity",
+   "name": "call_group.gcs.download",
+   "samples": 180,
+   "p50_ms": 171.644,
+   "threshold_ms": 858.22
+  },
+  {
+   "service": "transform-price-elasticity",
+   "name": "call_group.gcs.upload",
+   "samples": 90,
+   "p50_ms": 61.306,
+   "threshold_ms": 306.53
+  },
+  {
+   "service": "transform-price-elasticity",
+   "name": "call_group.service.call",
+   "samples": 270,
+   "p50_ms": 353.243,
+   "threshold_ms": 1766.215
+  },
+  {
+   "service": "transform-price-elasticity",
+   "name": "gcs.download",
+   "samples": 540,
+   "p50_ms": 50.562,
+   "threshold_ms": 252.81
+  },
+  {
+   "service": "transform-price-elasticity",
+   "name": "gcs.upload",
+   "samples": 90,
+   "p50_ms": 61.184,
+   "threshold_ms": 305.92
+  },
+  {
+   "service": "transform-price-elasticity",
+   "name": "service.demand_forecaster.call",
+   "samples": 360,
+   "p50_ms": 286.774,
+   "threshold_ms": 1433.87
+  },
+  {
+   "service": "transform-price-elasticity",
+   "name": "service.fx_rate_provider.call",
+   "samples": 270,
+   "p50_ms": 120.977,
+   "threshold_ms": 604.883
+  },
+  {
+   "service": "transform-price-elasticity",
+   "name": "service.price_engine.call",
+   "samples": 90,
+   "p50_ms": 90.016,
+   "threshold_ms": 450.08
+  },
+  {
+   "service": "transform-promo-uplift",
+   "name": "call_group.gcs.download",
+   "samples": 20,
+   "p50_ms": 44.319,
+   "threshold_ms": 221.597
+  },
+  {
+   "service": "transform-promo-uplift",
+   "name": "call_group.gcs.upload",
+   "samples": 80,
+   "p50_ms": 71.769,
+   "threshold_ms": 358.845
+  },
+  {
+   "service": "transform-promo-uplift",
+   "name": "call_group.service.call",
+   "samples": 22,
+   "p50_ms": 493.192,
+   "threshold_ms": 2465.957
+  },
+  {
+   "service": "transform-promo-uplift",
+   "name": "gcs.download",
+   "samples": 20,
+   "p50_ms": 43.908,
+   "threshold_ms": 219.54
+  },
+  {
+   "service": "transform-promo-uplift",
+   "name": "gcs.upload",
+   "samples": 160,
+   "p50_ms": 52.487,
+   "threshold_ms": 262.435
+  },
+  {
+   "service": "transform-promo-uplift",
+   "name": "service.product_catalog.call",
+   "samples": 88,
+   "p50_ms": 269.858,
+   "threshold_ms": 1349.288
+  },
+  {
+   "service": "transform-shrinkage-estimates",
+   "name": "call_group.gcs.download",
+   "samples": 96,
+   "p50_ms": 58.676,
+   "threshold_ms": 293.38
+  },
+  {
+   "service": "transform-shrinkage-estimates",
+   "name": "call_group.gcs.upload",
+   "samples": 24,
+   "p50_ms": 47.675,
+   "threshold_ms": 238.377
+  },
+  {
+   "service": "transform-shrinkage-estimates",
+   "name": "call_group.service.call",
+   "samples": 48,
+   "p50_ms": 181.518,
+   "threshold_ms": 907.592
+  },
+  {
+   "service": "transform-shrinkage-estimates",
+   "name": "gcs.download",
+   "samples": 192,
+   "p50_ms": 49.008,
+   "threshold_ms": 245.042
+  },
+  {
+   "service": "transform-shrinkage-estimates",
+   "name": "gcs.upload",
+   "samples": 24,
+   "p50_ms": 46.309,
+   "threshold_ms": 231.545
+  },
+  {
+   "service": "transform-shrinkage-estimates",
+   "name": "service.address_geocoder.call",
+   "samples": 24,
+   "p50_ms": 129.944,
+   "threshold_ms": 649.72
+  },
+  {
+   "service": "transform-shrinkage-estimates",
+   "name": "service.fx_rate_provider.call",
+   "samples": 48,
+   "p50_ms": 140.087,
+   "threshold_ms": 700.435
+  },
+  {
+   "service": "transform-stock-cover-days",
+   "name": "call_group.gcs.upload",
+   "samples": 76,
+   "p50_ms": 66.822,
+   "threshold_ms": 334.108
+  },
+  {
+   "service": "transform-stock-cover-days",
+   "name": "call_group.service.call",
+   "samples": 114,
+   "p50_ms": 238.921,
+   "threshold_ms": 1194.605
+  },
+  {
+   "service": "transform-stock-cover-days",
+   "name": "gcs.upload",
+   "samples": 114,
+   "p50_ms": 51.672,
+   "threshold_ms": 258.358
+  },
+  {
+   "service": "transform-stock-cover-days",
+   "name": "service.address_geocoder.call",
+   "samples": 152,
+   "p50_ms": 134.85,
+   "threshold_ms": 674.25
+  },
+  {
+   "service": "transform-stock-cover-days",
+   "name": "service.demand_forecaster.call",
+   "samples": 114,
+   "p50_ms": 294.403,
+   "threshold_ms": 1472.015
+  },
+  {
+   "service": "transform-stock-cover-days",
+   "name": "service.weather_api.call",
+   "samples": 114,
+   "p50_ms": 124.746,
+   "threshold_ms": 623.728
+  },
+  {
+   "service": "transform-store-cluster-profiles",
+   "name": "call_group.gcs.download",
+   "samples": 20,
+   "p50_ms": 72.139,
+   "threshold_ms": 360.695
+  },
+  {
+   "service": "transform-store-cluster-profiles",
+   "name": "call_group.gcs.upload",
+   "samples": 40,
+   "p50_ms": 73.631,
+   "threshold_ms": 368.155
+  },
+  {
+   "service": "transform-store-cluster-profiles",
+   "name": "call_group.service.call",
+   "samples": 62,
+   "p50_ms": 343.414,
+   "threshold_ms": 1717.072
+  },
+  {
+   "service": "transform-store-cluster-profiles",
+   "name": "gcs.download",
+   "samples": 80,
+   "p50_ms": 47.866,
+   "threshold_ms": 239.33
+  },
+  {
+   "service": "transform-store-cluster-profiles",
+   "name": "gcs.upload",
+   "samples": 100,
+   "p50_ms": 50.444,
+   "threshold_ms": 252.222
+  },
+  {
+   "service": "transform-store-cluster-profiles",
+   "name": "service.demand_forecaster.call",
+   "samples": 66,
+   "p50_ms": 276.407,
+   "threshold_ms": 1382.035
+  },
+  {
+   "service": "transform-store-cluster-profiles",
+   "name": "service.fx_rate_provider.call",
+   "samples": 60,
+   "p50_ms": 137.51,
+   "threshold_ms": 687.548
+  },
+  {
+   "service": "transform-store-cluster-profiles",
+   "name": "service.price_engine.call",
+   "samples": 60,
+   "p50_ms": 105.098,
+   "threshold_ms": 525.49
+  },
+  {
+   "service": "transform-supplier-scorecard",
+   "name": "call_group.gcs.download",
+   "samples": 92,
+   "p50_ms": 68.007,
+   "threshold_ms": 340.037
+  },
+  {
+   "service": "transform-supplier-scorecard",
+   "name": "call_group.gcs.upload",
+   "samples": 92,
+   "p50_ms": 90.861,
+   "threshold_ms": 454.303
+  },
+  {
+   "service": "transform-supplier-scorecard",
+   "name": "call_group.service.call",
+   "samples": 138,
+   "p50_ms": 563.247,
+   "threshold_ms": 2816.237
+  },
+  {
+   "service": "transform-supplier-scorecard",
+   "name": "gcs.download",
+   "samples": 230,
+   "p50_ms": 48.855,
+   "threshold_ms": 244.275
+  },
+  {
+   "service": "transform-supplier-scorecard",
+   "name": "gcs.upload",
+   "samples": 276,
+   "p50_ms": 46.571,
+   "threshold_ms": 232.855
+  },
+  {
+   "service": "transform-supplier-scorecard",
+   "name": "service.address_geocoder.call",
+   "samples": 138,
+   "p50_ms": 124.751,
+   "threshold_ms": 623.753
+  },
+  {
+   "service": "transform-supplier-scorecard",
+   "name": "service.demand_forecaster.call",
+   "samples": 92,
+   "p50_ms": 300.993,
+   "threshold_ms": 1504.967
+  },
+  {
+   "service": "transform-supplier-scorecard",
+   "name": "service.product_catalog.call",
+   "samples": 92,
+   "p50_ms": 286.024,
+   "threshold_ms": 1430.12
+  },
+  {
+   "service": "transform-weather-adjusted-sales",
+   "name": "call_group.gcs.download",
+   "samples": 40,
+   "p50_ms": 76.493,
+   "threshold_ms": 382.467
+  },
+  {
+   "service": "transform-weather-adjusted-sales",
+   "name": "call_group.gcs.upload",
+   "samples": 60,
+   "p50_ms": 51.516,
+   "threshold_ms": 257.58
+  },
+  {
+   "service": "transform-weather-adjusted-sales",
+   "name": "call_group.service.call",
+   "samples": 20,
+   "p50_ms": 76.82,
+   "threshold_ms": 384.098
+  },
+  {
+   "service": "transform-weather-adjusted-sales",
+   "name": "gcs.download",
+   "samples": 60,
+   "p50_ms": 40.436,
+   "threshold_ms": 202.18
+  },
+  {
+   "service": "transform-weather-adjusted-sales",
+   "name": "gcs.upload",
+   "samples": 100,
+   "p50_ms": 51.181,
+   "threshold_ms": 255.905
+  },
+  {
+   "service": "transform-weather-adjusted-sales",
+   "name": "service.fx_rate_provider.call",
+   "samples": 20,
+   "p50_ms": 76.646,
+   "threshold_ms": 383.23
+  },
+  {
+   "service": "transform-weekly-category-rollup",
+   "name": "call_group.gcs.download",
+   "samples": 126,
+   "p50_ms": 92.487,
+   "threshold_ms": 462.435
+  },
+  {
+   "service": "transform-weekly-category-rollup",
+   "name": "call_group.gcs.upload",
+   "samples": 42,
+   "p50_ms": 126.156,
+   "threshold_ms": 630.78
+  },
+  {
+   "service": "transform-weekly-category-rollup",
+   "name": "call_group.service.call",
+   "samples": 126,
+   "p50_ms": 346.993,
+   "threshold_ms": 1734.965
+  },
+  {
+   "service": "transform-weekly-category-rollup",
+   "name": "gcs.download",
+   "samples": 252,
+   "p50_ms": 50.758,
+   "threshold_ms": 253.792
+  },
+  {
+   "service": "transform-weekly-category-rollup",
+   "name": "gcs.upload",
+   "samples": 84,
+   "p50_ms": 52.048,
+   "threshold_ms": 260.24
+  },
+  {
+   "service": "transform-weekly-category-rollup",
+   "name": "service.fx_rate_provider.call",
+   "samples": 126,
+   "p50_ms": 133.075,
+   "threshold_ms": 665.375
+  },
+  {
+   "service": "transform-weekly-category-rollup",
+   "name": "service.price_engine.call",
+   "samples": 126,
+   "p50_ms": 98.866,
+   "threshold_ms": 494.33
+  },
+  {
+   "service": "transform-weekly-category-rollup",
+   "name": "service.product_catalog.call",
+   "samples": 84,
+   "p50_ms": 292.435,
+   "threshold_ms": 1462.173
+  },
+  {
+   "service": "transform-year-end-basket-rollup",
+   "name": "call_group.gcs.download",
+   "samples": 1960,
+   "p50_ms": 70.026,
+   "threshold_ms": 350.13
+  },
+  {
+   "service": "transform-year-end-basket-rollup",
+   "name": "call_group.gcs.upload",
+   "samples": 1960,
+   "p50_ms": 113.576,
+   "threshold_ms": 567.882
+  },
+  {
+   "service": "transform-year-end-basket-rollup",
+   "name": "call_group.service.call",
+   "samples": 2940,
+   "p50_ms": 252.691,
+   "threshold_ms": 1263.455
+  },
+  {
+   "service": "transform-year-end-basket-rollup",
+   "name": "gcs.download",
+   "samples": 4900,
+   "p50_ms": 52.25,
+   "threshold_ms": 261.25
+  },
+  {
+   "service": "transform-year-end-basket-rollup",
+   "name": "gcs.upload",
+   "samples": 5096,
+   "p50_ms": 52.096,
+   "threshold_ms": 260.478
+  },
+  {
+   "service": "transform-year-end-basket-rollup",
+   "name": "service.address_geocoder.call",
+   "samples": 1274,
+   "p50_ms": 122.722,
+   "threshold_ms": 613.612
+  },
+  {
+   "service": "transform-year-end-basket-rollup",
+   "name": "service.demand_forecaster.call",
+   "samples": 1666,
+   "p50_ms": 288.976,
+   "threshold_ms": 1444.88
+  },
+  {
+   "service": "transform-year-end-basket-rollup",
+   "name": "service.fx_rate_provider.call",
+   "samples": 1568,
+   "p50_ms": 123.022,
+   "threshold_ms": 615.11
+  },
+  {
+   "service": "transform-year-end-basket-rollup",
+   "name": "service.price_engine.call",
+   "samples": 1274,
+   "p50_ms": 102.918,
+   "threshold_ms": 514.592
+  },
+  {
+   "service": "transform-year-end-basket-rollup",
+   "name": "service.product_catalog.call",
+   "samples": 1078,
+   "p50_ms": 284.404,
+   "threshold_ms": 1422.02
+  },
+  {
+   "service": "transform-year-end-basket-rollup",
+   "name": "service.weather_api.call",
+   "samples": 1078,
+   "p50_ms": 132.448,
+   "threshold_ms": 662.242
+  }
+ ],
+ "jobs": [
+  {
+   "job": "supermarket__load_category_manager_pack",
+   "runs": 22,
+   "p50_s": 23.094,
+   "max_s": 29.948,
+   "latency_threshold_ms": 34641,
+   "decision_wait_s": 45
+  },
+  {
+   "job": "supermarket__load_customer_churn_mart",
+   "runs": 28,
+   "p50_s": 40.014,
+   "max_s": 54.827,
+   "latency_threshold_ms": 60022,
+   "decision_wait_s": 90
+  },
+  {
+   "job": "supermarket__load_delivery_planning_board",
+   "runs": 24,
+   "p50_s": 19.672,
+   "max_s": 27.047,
+   "latency_threshold_ms": 29508,
+   "decision_wait_s": 45
+  },
+  {
+   "job": "supermarket__load_ecommerce_merch_feed",
+   "runs": 18,
+   "p50_s": 24.194,
+   "max_s": 34.109,
+   "latency_threshold_ms": 36291,
+   "decision_wait_s": 60
+  },
+  {
+   "job": "supermarket__load_executive_scorecard",
+   "runs": 18,
+   "p50_s": 38.909,
+   "max_s": 46.019,
+   "latency_threshold_ms": 58364,
+   "decision_wait_s": 90
+  },
+  {
+   "job": "supermarket__load_finance_margin_report",
+   "runs": 18,
+   "p50_s": 25.13,
+   "max_s": 30.224,
+   "latency_threshold_ms": 37695,
+   "decision_wait_s": 45
+  },
+  {
+   "job": "supermarket__load_full_year_data_warehouse_load",
+   "runs": 20,
+   "p50_s": 31.498,
+   "max_s": 38.539,
+   "latency_threshold_ms": 47248,
+   "decision_wait_s": 60
+  },
+  {
+   "job": "supermarket__load_historical_backfill_load",
+   "runs": 26,
+   "p50_s": 33.757,
+   "max_s": 48.248,
+   "latency_threshold_ms": 50636,
+   "decision_wait_s": 90
+  },
+  {
+   "job": "supermarket__load_labor_scheduling_input",
+   "runs": 16,
+   "p50_s": 23.332,
+   "max_s": 38.097,
+   "latency_threshold_ms": 34999,
+   "decision_wait_s": 60
+  },
+  {
+   "job": "supermarket__load_loyalty_crm_sync",
+   "runs": 22,
+   "p50_s": 35.864,
+   "max_s": 51.457,
+   "latency_threshold_ms": 53796,
+   "decision_wait_s": 90
+  },
+  {
+   "job": "supermarket__load_markdown_recommendations",
+   "runs": 22,
+   "p50_s": 21.564,
+   "max_s": 31.58,
+   "latency_threshold_ms": 32347,
+   "decision_wait_s": 45
+  },
+  {
+   "job": "supermarket__load_price_change_queue",
+   "runs": 12,
+   "p50_s": 38.835,
+   "max_s": 47.946,
+   "latency_threshold_ms": 58254,
+   "decision_wait_s": 90
+  },
+  {
+   "job": "supermarket__load_promo_performance_board",
+   "runs": 12,
+   "p50_s": 39.719,
+   "max_s": 50.418,
+   "latency_threshold_ms": 59579,
+   "decision_wait_s": 90
+  },
+  {
+   "job": "supermarket__load_regional_ops_summary",
+   "runs": 24,
+   "p50_s": 23.368,
+   "max_s": 34.967,
+   "latency_threshold_ms": 35053,
+   "decision_wait_s": 60
+  },
+  {
+   "job": "supermarket__load_replenishment_forecast",
+   "runs": 18,
+   "p50_s": 21.294,
+   "max_s": 27.996,
+   "latency_threshold_ms": 31942,
+   "decision_wait_s": 45
+  },
+  {
+   "job": "supermarket__load_returns_analysis_mart",
+   "runs": 16,
+   "p50_s": 38.898,
+   "max_s": 48.554,
+   "latency_threshold_ms": 58348,
+   "decision_wait_s": 90
+  },
+  {
+   "job": "supermarket__load_shrinkage_report",
+   "runs": 20,
+   "p50_s": 16.867,
+   "max_s": 29.038,
+   "latency_threshold_ms": 25301,
+   "decision_wait_s": 45
+  },
+  {
+   "job": "supermarket__load_stock_alert_feed",
+   "runs": 16,
+   "p50_s": 19.539,
+   "max_s": 33.369,
+   "latency_threshold_ms": 29309,
+   "decision_wait_s": 60
+  },
+  {
+   "job": "supermarket__load_store_dashboards",
+   "runs": 18,
+   "p50_s": 21.867,
+   "max_s": 35.619,
+   "latency_threshold_ms": 32801,
+   "decision_wait_s": 60
+  },
+  {
+   "job": "supermarket__load_store_manager_digest",
+   "runs": 24,
+   "p50_s": 43.279,
+   "max_s": 49.71,
+   "latency_threshold_ms": 64919,
+   "decision_wait_s": 90
+  },
+  {
+   "job": "supermarket__load_supplier_portal",
+   "runs": 26,
+   "p50_s": 35.66,
+   "max_s": 50.846,
+   "latency_threshold_ms": 53491,
+   "decision_wait_s": 90
+  },
+  {
+   "job": "supermarket__load_weather_sales_report",
+   "runs": 16,
+   "p50_s": 37.755,
+   "max_s": 44.693,
+   "latency_threshold_ms": 56633,
+   "decision_wait_s": 90
+  },
+  {
+   "job": "supermarket__transform_ecommerce_funnel",
+   "runs": 22,
+   "p50_s": 15.333,
+   "max_s": 20.142,
+   "latency_threshold_ms": 22999,
+   "decision_wait_s": 45
+  },
+  {
+   "job": "supermarket__transform_margin_by_sku",
+   "runs": 22,
+   "p50_s": 16.173,
+   "max_s": 22.078,
+   "latency_threshold_ms": 24259,
+   "decision_wait_s": 45
+  },
+  {
+   "job": "supermarket__transform_promo_uplift",
+   "runs": 20,
+   "p50_s": 15.694,
+   "max_s": 29.228,
+   "latency_threshold_ms": 23541,
+   "decision_wait_s": 45
+  },
+  {
+   "job": "supermarket__transform_store_cluster_profiles",
+   "runs": 20,
+   "p50_s": 14.219,
+   "max_s": 22.752,
+   "latency_threshold_ms": 21330,
+   "decision_wait_s": 45
+  }
+ ],
+ "source": "captures/supermarket_seed42/baseline_naive.jsonl"
+}
