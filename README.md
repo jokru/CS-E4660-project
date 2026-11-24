@@ -119,6 +119,8 @@ Problems faced
 
 A proper compute cluster could have overcome the apps performance limitation, but the time budget did not allow to go deeper.
 
+Adaptive tracing has a place but even in the age of AI is not a trivial thing.
+
 # Adaptive Tracing and Trace Reduction Test Bench
 
 The goal of this project is to test and compare different adaptive tracing and trace reduction methods (for example sampling strategies and per-component tracing parameters). To get realistic, repeatable trace data, it is built on `mock-io-app`: a Dagster app whose jobs perform mocked I/O (database, GCS, HTTP and microservice calls) described by YAML scenarios. Every call emits OpenTelemetry spans, so the same workload can be replayed against different collectors and reduction methods.

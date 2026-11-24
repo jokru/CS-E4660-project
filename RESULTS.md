@@ -1,6 +1,31 @@
 # Results
 
-## Rate benchmark: replay at increasing rates (2026-11-24)
+## Rate benchmark, production-style: 90 s holds, 1 GB limit (2026-11-24)
+
+Same capture and replay seed for every collector: `--rates 5,10,20 --duration 120 --decision-wait 90s --memory 1g --seed 1`. The plain tail samplers hold 90 s; `routed_tail_sampling` keeps its 45/60/90 s buckets. Raw: `bench/results.json`, log `bench/benchmark_rates_90s.log`. The earlier 5 s-wait run is archived in `archive/bench_before_new_methods/`.
+
+| rate | collector                  | peak MB | OOM | spans kept | evidence |
+| ---- | -------------------------- | ------- | --- | ---------- | -------- |
+| 5/s  | span_filter                | 110     | no  | 14.8%      | 100.0%   |
+| 10/s | span_filter                | 117     | no  | 14.9%      | 100.0%   |
+| 20/s | span_filter                | 111     | no  | 15.0%      | 100.0%   |
+| 5/s  | routed_tail_sampling       | 698     | no  | 7.9%       | 27.3%    |
+| 10/s | routed_tail_sampling       | 1059    | yes | 1.1%       | 4.2%     |
+| 20/s | routed_tail_sampling       | 1015    | yes | 0.0%       | 0.0%     |
+| 5/s  | anomalies_sampling         | 1037    | no  | 100.0%     | 100.0%   |
+| 10/s | anomalies_sampling         | 1047    | yes | 0.0%       | 0.0%     |
+| 20/s | anomalies_sampling         | 1063    | yes | 0.0%       | 0.0%     |
+| 5/s  | anomalies_sampling_limited | 185     | no  | 4.5%       | 3.2%     |
+| 10/s | anomalies_sampling_limited | 194     | no  | 2.3%       | 3.5%     |
+| 20/s | anomalies_sampling_limited | 189     | no  | 1.1%       | 1.6%     |
+
+- With equal holds and limits, `span_filter` is the only method that stays flat (110-117 MB), keeps 100% evidence and reduces to about 15% of spans, at every rate.
+- `anomalies_sampling` hits the 1 GB limit already at 5/s (1037 MB, no OOM but at the limit) and is OOM-killed at 10/s and 20/s, losing everything it held (0% kept).
+- `routed_tail_sampling` uses less memory than `anomalies_sampling` at 5/s (698 vs 1037 MB), its per-job holds do shorten the wait, but is also OOM-killed from 10/s, and keeps only 27% evidence at 5/s.
+- `anomalies_sampling_limited` survives only because its memory limiter refuses data (evidence 1.6-3.5%).
+- Evidence is in-sample for the thresholds (replayed seed-42 capture). Memory and reduction are the fair comparison.
+
+## Rate benchmark: 5 s holds, no memory limit (2026-11-24)
 
 `scripts/benchmark_rates.py --rates 5,10,20,40 --duration 30` on `captures/supermarket_seed42`, each collector alone in Docker (no memory limit), tail samplers with 5 s `decision_wait` except `routed_tail_sampling` (calibrated 45/60/90 s). Raw: `bench/results.json`. Replayed traces carry the seed-42 data the thresholds were calibrated on, so evidence is in-sample.
 
