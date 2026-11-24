@@ -1,5 +1,33 @@
 # Results
 
+## Rate benchmark: replay at increasing rates (2026-11-24)
+
+`scripts/benchmark_rates.py --rates 5,10,20,40 --duration 30` on `captures/supermarket_seed42`, each collector alone in Docker (no memory limit), tail samplers with 5 s `decision_wait` except `routed_tail_sampling` (calibrated 45/60/90 s). Raw: `bench/results.json`. Replayed traces carry the seed-42 data the thresholds were calibrated on, so evidence is in-sample.
+
+| rate | collector                  | peak MB | spans kept | evidence |
+| ---- | -------------------------- | ------- | ---------- | -------- |
+| 5/s  | span_filter                | 104     | 14.8%      | 100.0%   |
+| 10/s | span_filter                | 110     | 14.5%      | 100.0%   |
+| 20/s | span_filter                | 113     | 14.8%      | 100.0%   |
+| 40/s | span_filter                | 124     | 14.9%      | 100.0%   |
+| 5/s  | routed_tail_sampling       | 245     | 1.1%       | 0.0%     |
+| 10/s | routed_tail_sampling       | 443     | 7.9%       | 27.6%    |
+| 20/s | routed_tail_sampling       | 847     | 7.9%       | 27.3%    |
+| 40/s | routed_tail_sampling       | 1557    | 8.2%       | 26.9%    |
+| 5/s  | anomalies_sampling         | 159     | 100.0%     | 100.0%   |
+| 10/s | anomalies_sampling         | 262     | 100.0%     | 100.0%   |
+| 20/s | anomalies_sampling         | 392     | 100.0%     | 100.0%   |
+| 40/s | anomalies_sampling         | 1079    | 100.0%     | 100.0%   |
+| 40/s | baseline_naive             | 191     | 100.0%     | 100.0%   |
+| 40/s | sampling                   | 108     | 9.9%       | 10.6%    |
+
+- `span_filter` memory stays flat (104 to 124 MB, close to the 40/s baseline's 191 MB) while keeping 100% evidence at about 15% of spans. No OOM at any rate.
+- `routed_tail_sampling` memory grows with rate, from 245 MB at 5/s to 1.5 GB at 40/s, and keeps under 30% evidence. It is both the most expensive and the least accurate of the new methods here.
+- `anomalies_sampling` keeps everything (the 1 s latency policy matches every trace), so its memory (1 GB at 40/s) buys no reduction.
+- The 5/s `routed_tail_sampling` row is unreliable: the replay got a `DEADLINE_EXCEEDED` and achieved only 2.4 traces/s. Do not read its 0% evidence as a result.
+- The `anomalies_sampling_limited` rows are not stable between rates (97% kept at 5/s, 2.5% at 40/s), as in the earlier runs.
+- App-side methods (`job_buffer`, `resolution`) are not covered: the replay bypasses the app.
+
 ## Run 3: all methods, seed 8 (2026-11-24)
 
 Same setup as run 2 but seed 8, and a 200 s wait after the run so every hold (up to 90 s) flushes. Raw scores: `out/eval_seed8.txt`.

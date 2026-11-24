@@ -104,7 +104,7 @@ Done:
 Next:
 
 - Done (see RESULTS.md runs 2 and 3, seeds 7 and 8, thresholds calibrated on seed 42): `span_filter` and `app_resolution` keep about 15% of spans with 100% evidence, `app_job_buffer` keeps 29-41% of spans with 100% evidence, `routed_tail_sampling` keeps only 47% evidence. The routed shortfall is not a routing or flush problem: whole-trace duration barely separates anomalous from normal traces (anomalous traces median 78% of the job threshold, normal 70%), so the collector's trace-level latency policy cannot select them without keeping most normal traces. This supports the dead-end decision beyond memory use
-- Still to do: the rate benchmark with `span_filter` and `routed_tail_sampling`
+- Rate benchmark done (RESULTS.md): `span_filter` memory is flat (104-124 MB from 5 to 40 traces/s) at 100% evidence, `routed_tail_sampling` grows to 1.5 GB at 40/s with under 30% evidence
 - Tunable anomaly rate (about 1% or less) and rare versus bursty scenario variants
 - Emulate the app-side reducers in the replay, to benchmark them at high rates
 - Online statistical sampling (thresholds learned while running instead of calibrated, see notes)
