@@ -1,3 +1,113 @@
+# CS-E4660: Investigating tracing
+
+# 1. Research Questions
+
+- Is it worth it to go deeper than OTel collector config options for trace processing
+- Do simple reducers miss rare exceptions?
+- Does a smarter reducer matter enough for finding exceptions and anomalies?
+- Can an LLM keep up with reasonable costs?
+- Application level vs. collector level adaptability?
+
+# 2. Approach
+
+The project compares trace reduction methods on one realistic, repeatable workload, scoring each by how much it keeps against whether it keeps what matters: the traces with errors and anomalies.
+
+## Case study
+
+Production traces have no ground truth: nobody knows which traces held the problem an operator would have needed. So the workload comes from a mock data platform, the [Mock I/O app](#case-study-app-mock-io-app), built on Dagster. The [supermarket scenario](#supermarket-scenario) has 49 jobs (importers, transformers, loaders) calling databases, cloud storage, HTTP APIs, and first- and third-party services, which gives traces of about 900 spans across many services. Each job runs in its own process, and runs overlap.
+
+Problems are injected as labelled [anomalies](#anomalies): rare slow service calls, huge uploads, and outage windows, on top of a low background failure rate. Every injected anomaly is logged by trace and span ID, independently of what the collectors keep, so each method can be scored against what really happened. Outcomes are fixed by a seed, so the same workload can be replayed.
+
+## Methods
+
+The methods are grouped by where the reduction logic runs and how much it holds in memory, since that is what the research questions ask about:
+
+| Group                                | Methods                                                                    | Holds                             |
+| ------------------------------------ | -------------------------------------------------------------------------- | --------------------------------- |
+| Reference                            | `baseline_naive`                                                           | nothing, keeps everything         |
+| Stock collector, stateless           | `sampling` (10% of traces)                                                 | nothing                           |
+| Stock collector, tail sampling       | `anomalies_sampling`, `anomalies_sampling_limited`, `routed_tail_sampling` | whole traces until a decision     |
+| Collector with calibrated thresholds | `span_filter`                                                              | nothing                           |
+| Application side                     | `job_buffer`, `resolution`                                                 | a running job's spans, or nothing |
+| LLM agent                            | did not have time                                                          |                                   |
+
+The stock collector methods use only OpenTelemetry Collector configuration. `span_filter` and `routed_tail_sampling` are still plain configuration, but generated from thresholds learned from a recorded baseline run (5× the median duration per service and span name, and per-job run durations). This separates what the collector can do from where its parameters come from. The application-side reducers run inside the app, where they know when a job has finished and need not guess how long to wait. All methods decide on observable signals only (errors and durations), never on the injected anomaly labels.
+
+The method list grew from the results. The first experiments used the stock methods; tail sampling ran out of memory as the trace rate grew, so the later methods were designed to hold less or nothing ([Span-level and app-side methods](#span-level-and-app-side-methods)).
+
+## Metrics
+
+- **Reduction:** the share of traces, spans and bytes kept relative to the baseline.
+- **Evidence:** the share of anomalous traces of which at least one span with an injected anomaly was kept. This is the main accuracy measure, because span-level methods keep a skeleton of every trace, so trace-level recall is near 100% for them by construction.
+- **Recall by trace type:** anomalous, error, slow (at or above the baseline's 95th percentile duration) and normal traces, and per anomaly label. Recall on normal traces shows how much a method keeps without reason.
+- **Cost:** peak collector memory, whether the collector was killed for running out of memory, and requests it refused, at increasing trace rates.
+
+## Experimental design
+
+- **Accuracy:** one app workload (260 runs, 10 iterations of the 26 leaf jobs, Poisson arrivals at 0.5 runs/s with up to 8 at once, real latencies) is fed to every collector at once, merged into one OpenTelemetry Collector, with the app-side reducers sending their streams in parallel. Trace IDs differ between runs, so this is the only way to compare methods on the same traces.
+- **Out of sample:** thresholds are calibrated on seed 42 and evaluated on seeds 7 and 8.
+- **Scale:** the app tops out at a few runs per second (Dagster's process startup), so a [replay tool](#benchmark-high-trace-rates) resends a recorded capture at 5 to 40 traces/s, with fresh IDs and matching ground truth, to each collector alone. App-side reducers cannot be measured this way, since the replay bypasses the app.
+
+# 3. How
+
+The test bench is written in Python (3.12, managed with uv): the app on Dagster with the OpenTelemetry SDK, and the methods as OpenTelemetry Collector (contrib) configs run in Docker. Commands are in the [Command reference](#command-reference).
+
+```mermaid
+flowchart LR
+  cal[(seed 42 capture)] --> calib[calibrate_thresholds.py]
+  calib --> thr[(thresholds and generated configs)]
+  thr --> app
+  thr --> col
+  app[Mock I/O app] -->|all spans, port 4317| col[OpenTelemetry Collector:<br/>one pipeline per method]
+  app -->|job_buffer and resolution streams,<br/>ports 4319 and 4320| col
+  replay[mock-io-replay] -.->|recorded capture,<br/>5-40 traces/s| col
+  app --> gt[(ground truth)]
+  col --> out[(one output file per method)]
+  out --> eval[mock-io-eval]
+  gt --> eval
+```
+
+## Calibration
+
+`scripts/calibrate_thresholds.py` reads a `baseline_naive` capture of seed 42 and computes a latency threshold per service and span name (5× the median, for keys with at least 20 spans) and each job's run durations. It writes `thresholds/supermarket.json`, which the app-side reducers read, and generates the `span_filter` and `routed_tail_sampling` collector configs from it.
+
+## Accuracy runs
+
+1. Start one collector container with every method's config merged in. Each method has its own pipeline and output file, so they all see the same spans.
+2. Run the app workload with a new seed (7 or 8), the ground truth log and the app-side reducers enabled. The app sends every span to the collector's main port, and the reducers send their reduced streams to their own ports, so the full export is unaffected.
+3. Wait until the longest tail sampling hold has passed (200 s in run 3, for holds up to 90 s), then stop the collector so the last batches are written.
+4. Score every output against the baseline output and the ground truth with `mock-io-eval`, which prints the recall matrix.
+
+## Replay benchmark
+
+The app cannot produce the trace rates where the methods differ in cost. Every run goes through Dagster, which takes seconds to start the job processes, so the app tops out at a few runs per second, while tail sampling's memory only becomes a problem from about 10 traces/s (killed at a 1 GB limit with a 60 s decision wait). Without a faster load generator the memory results could not have been measured.
+
+`mock-io-replay` therefore skips the app and resends a recorded capture over OTLP at a target rate. Each copy of a trace gets new trace and span IDs and current timestamps, while its structure, durations, errors and anomaly labels are kept, and the ground truth is rewritten under the new IDs so the output can be scored as usual. With a fixed seed, every replay sends identical traces, so each collector runs alone (its memory measured with `docker stats`) and is scored against one baseline replay. `scripts/benchmark_rates.py` automates this for every collector at 5, 10, 20 and 40 traces/s.
+
+The replay has caveats that limit what it can answer:
+
+- **No application-side methods.** `job_buffer` and `resolution` run inside the app processes, and the replay bypasses the app, so they are not covered. The application versus collector comparison therefore rests on the accuracy runs at 0.5 runs/s only, and the application-side cost at high rates is unmeasured. Emulating the reducers in the replay would close this gap.
+- **Traces arrive whole.** A replayed trace is sent in one request, while app spans arrive over the length of a run, so the plain tail samplers use a short decision wait (5 s in the latest benchmark) instead of the 120 s needed for app runs. Their memory at a realistic wait would be higher.
+- **In-sample thresholds.** The replayed capture is the seed 42 run the thresholds were calibrated on, so evidence in the benchmark is optimistic. The accuracy runs give the out-of-sample figures.
+
+4 result
+linked to RQs
+
+Initial hypotheses:
+
+- **Naive sampling misses errors at its sampling rate.** Confirmed on average: `sampling` keeps about 10% of every trace type, anomalous or not. Rare anomaly types, with only a handful of traces each, scatter widely around that rate, and some are missed entirely (`slow_tax_service`: 0% in runs 1 and 2). Relates to "Do simple reducers miss rare exceptions?".
+- **Tail sampling keeps anomalies, but its memory grows with the trace rate until it runs out.** Confirmed: `anomalies_sampling` keeps 100% evidence at low rates, but holds every trace until its decision, and was killed at 10 traces/s with a 1 GB limit, losing everything. Its fixed 1 s latency policy also matched almost every trace, so it barely reduced anything. Relates to "Does a smarter reducer matter enough?".
+
+5 lesson
+
+Problems faced
+
+- Spent too long creating mock app
+- - Mock app was too slow anyway
+- - Replay made testing an agentic tracer more difficult
+
+A proper compute cluster could have overcome the apps performance limitation, but the time budget did not allow to go deeper.
+
 # Adaptive Tracing and Trace Reduction Test Bench
 
 The goal of this project is to test and compare different adaptive tracing and trace reduction methods (for example sampling strategies and per-component tracing parameters). To get realistic, repeatable trace data, it is built on `mock-io-app`: a Dagster app whose jobs perform mocked I/O (database, GCS, HTTP and microservice calls) described by YAML scenarios. Every call emits OpenTelemetry spans, so the same workload can be replayed against different collectors and reduction methods.
@@ -24,12 +134,12 @@ uv run pytest
 
 Scenario files live in `scenarios/` (override with `MOCK_IO_SCENARIO_DIR` and `MOCK_IO_SCENARIO_GLOB`). The file name is the scenario name; jobs are exposed as `<scenario>__<job>`.
 
-| File | Contents |
-| --- | --- |
+| File                       | Contents                                                                            |
+| -------------------------- | ----------------------------------------------------------------------------------- |
 | `small.yaml`, `mixed.yaml` | Small examples: sequential and gathered I/O, retries, copies, multiprocess executor |
-| `microservices.yaml` | First-party and third-party service calls |
-| `supermarket.yaml` | 49-job supermarket data platform: importers, transformers, loaders (see below) |
-| `stress/stress.yaml` | High-volume load, loaded only with `MOCK_IO_SCENARIO_DIR=scenarios/stress` |
+| `microservices.yaml`       | First-party and third-party service calls                                           |
+| `supermarket.yaml`         | 49-job supermarket data platform: importers, transformers, loaders (see below)      |
+| `stress/stress.yaml`       | High-volume load, loaded only with `MOCK_IO_SCENARIO_DIR=scenarios/stress`          |
 
 Structure of a scenario:
 
@@ -46,23 +156,23 @@ Structure of a scenario:
 
 ```yaml
 anomalies:
-- label: slow_tax_service      # written to the span as `mock_io.anomaly`
-  probability: 0.05            # chance per call (default 1.0)
-  latency_multiplier: 8        # and/or latency_add_ms
-  # fail: true                 # force a failure
-  # payload_bytes: 8388608     # override the payload size
-  # from_iteration: 5          # active for iterations in [from, to); `--repeat` / API `repeat` count iterations
-  # to_iteration: 8
+  - label: slow_tax_service # written to the span as `mock_io.anomaly`
+    probability: 0.05 # chance per call (default 1.0)
+    latency_multiplier: 8 # and/or latency_add_ms
+    # fail: true                 # force a failure
+    # payload_bytes: 8388608     # override the payload size
+    # from_iteration: 5          # active for iterations in [from, to); `--repeat` / API `repeat` count iterations
+    # to_iteration: 8
 ```
 
 At least one effect is required. Several matching anomalies combine and their labels are comma-separated. Scenarios without anomalies behave exactly as before. The supermarket scenario defines (see `SERVICE_ANOMALIES` and `GROUP_ANOMALIES` in the generator):
 
-| Label | Where | Effect | When |
-| --- | --- | --- | --- |
-| `slow_tax_service`, `slow_weather_api`, `slow_price_engine` | service calls | 20-30x latency or +1.5 s | rare, random |
-| `huge_blob` | GCS uploads | 8 MiB payload, 15x latency | rare, random |
-| `http_flap` | HTTP gets | failures, triggering op retries and larger traces | iterations 3-4 |
-| `email_outage` | `email_provider` | failures with retries | iterations 7-8 |
+| Label                                                       | Where            | Effect                                            | When           |
+| ----------------------------------------------------------- | ---------------- | ------------------------------------------------- | -------------- |
+| `slow_tax_service`, `slow_weather_api`, `slow_price_engine` | service calls    | 20-30x latency or +1.5 s                          | rare, random   |
+| `huge_blob`                                                 | GCS uploads      | 8 MiB payload, 15x latency                        | rare, random   |
+| `http_flap`                                                 | HTTP gets        | failures, triggering op retries and larger traces | iterations 3-4 |
+| `email_outage`                                              | `email_provider` | failures with retries                             | iterations 7-8 |
 
 Use `--repeat 10` or more to cover the windows. Latency anomalies are only visible in span durations if `--latency-scale` is not tiny (0.01 or higher).
 
@@ -108,11 +218,11 @@ uv run mock-io-run --scenario scenarios/supermarket.yaml --job load_store_dashbo
 
 Work overlaps at three levels:
 
-| Level | What runs in parallel | Controlled by |
-| --- | --- | --- |
-| Calls in a call group | the calls of a `mode: gather` group (asyncio) | `mode`, `max_concurrency` in the scenario |
-| Jobs in a run | independent jobs (e.g. the importers under a loader) in separate processes | the job's `executor: multiprocess`, or `mock-io-run --executor` |
-| Runs | whole runs | `mock-io-run` load mode (`--rate`, `--workers`), or `dagster dev` / the API |
+| Level                 | What runs in parallel                                                      | Controlled by                                                               |
+| --------------------- | -------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Calls in a call group | the calls of a `mode: gather` group (asyncio)                              | `mode`, `max_concurrency` in the scenario                                   |
+| Jobs in a run         | independent jobs (e.g. the importers under a loader) in separate processes | the job's `executor: multiprocess`, or `mock-io-run --executor`             |
+| Runs                  | whole runs                                                                 | `mock-io-run` load mode (`--rate`, `--workers`), or `dagster dev` / the API |
 
 `--executor` is `scenario` by default (each job's own `executor`; all supermarket jobs use `multiprocess`), or `in_process` / `multiprocess` for every job. The multiprocess executor starts each job in its own process, at most the CPU count at once (`DAGSTER_MULTIPROCESS_EXECUTOR_MAX_CONCURRENT` changes it). Use `--executor in_process` for a single process: faster to start, but jobs in a run execute one after another. Without `DAGSTER_HOME`, multiprocess runs use a temporary on-disk instance, since child processes cannot share an in-memory one. Under `dagster dev`, at most 10 runs execute at once (Dagster's default `max_concurrent_runs`).
 
@@ -217,7 +327,7 @@ An experiment runs one fixed workload through a collector and scores what the co
    - recall for anomalous, error, slow and normal traces, plus recall per anomaly label;
    - precision: the share of kept traces that are anomalous.
    - evidence: the share of anomalous traces of which at least one span an anomaly was injected into was kept. Trace recall counts a trace as kept if any of its spans is, so span-level methods (which keep every trace's skeleton) score about 100% there; evidence shows whether they kept what matters.
-   With several `--output` flags, or `--output-dir out` (every `*.jsonl` there except the reference and the ground-truth file), it prints a recall matrix instead: one row per method, columns for traces/spans/bytes kept, evidence and the recall of each trace type (anomalous, error, slow, normal, each anomaly label). Add `--json` for machine-readable output. Output traces that are not in the reference are ignored.
+     With several `--output` flags, or `--output-dir out` (every `*.jsonl` there except the reference and the ground-truth file), it prints a recall matrix instead: one row per method, columns for traces/spans/bytes kept, evidence and the recall of each trace type (anomalous, error, slow, normal, each anomaly label). Add `--json` for machine-readable output. Output traces that are not in the reference are ignored.
 
 A new method is a new `collectors/<method>/config.yaml` with its own `file/<method>` exporter (path `/out/<method>.jsonl`) and `traces/<method>` pipeline, so it can be merged with the others. Add it to the script's arguments and score it against the baseline capture.
 
@@ -229,17 +339,17 @@ bash scripts/run_collector.sh baseline_naive sampling anomalies_sampling anomali
 
 The script runs the named `collectors/<name>/config.yaml` files in one OpenTelemetry Collector (contrib) Docker image. The configs are merged, so a single workload feeds every collector and each writes `out/<name>.jsonl`. This is what makes scoring valid: all methods and the baseline see exactly the same traces, since trace IDs differ between runs. Always include `baseline_naive`.
 
-| Collector | Behaviour |
-| --- | --- |
-| `baseline_naive` | keeps every span (the reference) |
-| `sampling` | `probabilistic_sampler`: keeps 10% of traces by trace ID, blind to errors and latency |
-| `jaeger` | forwards every trace to Jaeger on host port 14317 (browsing only, writes no file) |
-| `anomalies_sampling` | `tail_sampling`: keeps a trace if it has an error, lasts over 1000 ms, or wins a 5% random sample; uses only observable signals, never the `mock_io.anomaly` label |
-| `anomalies_sampling_limited` | `anomalies_sampling` with `num_traces: 30`: simulates memory pressure. When more traces are waiting for a decision than that, the oldest is dropped without one |
-| `span_filter` | `filter` (stateless): drops detail spans faster than their calibrated threshold that are not errors; keeps the skeleton (`run.`/`job.`/`op.`), spans without a threshold, and 1% of whole traces. Generated, see [Span-level and app-side methods](#span-level-and-app-side-methods) |
-| `routed_tail_sampling` | `routing` connector + one `tail_sampling` per hold time: spans go by `mock_io.run_job` to a sampler whose `decision_wait` fits that job (45-90 s for supermarket); keeps errors, runs slower than 1.5× their job's median, 1% random. Generated |
-| `app_job_buffer` | receives the app's `job_buffer` stream on port 4319 and writes it unchanged |
-| `app_resolution` | receives the app's `resolution` stream on port 4320 and writes it unchanged |
+| Collector                    | Behaviour                                                                                                                                                                                                                                                                            |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `baseline_naive`             | keeps every span (the reference)                                                                                                                                                                                                                                                     |
+| `sampling`                   | `probabilistic_sampler`: keeps 10% of traces by trace ID, blind to errors and latency                                                                                                                                                                                                |
+| `jaeger`                     | forwards every trace to Jaeger on host port 14317 (browsing only, writes no file)                                                                                                                                                                                                    |
+| `anomalies_sampling`         | `tail_sampling`: keeps a trace if it has an error, lasts over 1000 ms, or wins a 5% random sample; uses only observable signals, never the `mock_io.anomaly` label                                                                                                                   |
+| `anomalies_sampling_limited` | `anomalies_sampling` with `num_traces: 30`: simulates memory pressure. When more traces are waiting for a decision than that, the oldest is dropped without one                                                                                                                      |
+| `span_filter`                | `filter` (stateless): drops detail spans faster than their calibrated threshold that are not errors; keeps the skeleton (`run.`/`job.`/`op.`), spans without a threshold, and 1% of whole traces. Generated, see [Span-level and app-side methods](#span-level-and-app-side-methods) |
+| `routed_tail_sampling`       | `routing` connector + one `tail_sampling` per hold time: spans go by `mock_io.run_job` to a sampler whose `decision_wait` fits that job (45-90 s for supermarket); keeps errors, runs slower than 1.5× their job's median, 1% random. Generated                                      |
+| `app_job_buffer`             | receives the app's `job_buffer` stream on port 4319 and writes it unchanged                                                                                                                                                                                                          |
+| `app_resolution`             | receives the app's `resolution` stream on port 4320 and writes it unchanged                                                                                                                                                                                                          |
 
 Tail sampling decides `decision_wait` (120 s; supermarket runs at `--latency-scale 1` take up to about 40 s) after a trace's first span, so it must exceed the longest run, and the collector must keep running for that long after the workload ends. Thresholds and rates are starting points to tune per experiment.
 
