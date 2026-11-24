@@ -37,7 +37,13 @@ from mock_io_app.scenario import (
     scenario_dir,
     scenario_glob,
 )
-from mock_io_app.tracing import as_service, get_tracer, setup_tracing, trace_tags
+from mock_io_app.tracing import (
+    as_service,
+    for_run_job,
+    get_tracer,
+    setup_tracing,
+    trace_tags,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -99,6 +105,7 @@ def _launch(
                 "mock_io.iteration": iteration,
             }
             with (
+                for_run_job(job.name),
                 as_service(job.scenario_service_name),
                 get_tracer().start_as_current_span(f"run.{job.name}", attributes=attributes),
             ):

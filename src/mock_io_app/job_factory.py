@@ -21,7 +21,13 @@ from mock_io_app.resources import (
     MockIOError,
 )
 from mock_io_app.scenario import ExpandedJob, OpSpec, closure
-from mock_io_app.tracing import as_service, context_from_tags, flush, get_tracer
+from mock_io_app.tracing import (
+    as_service,
+    context_from_tags,
+    flush,
+    for_run_job,
+    get_tracer,
+)
 
 SCENARIO_TAG = "mock_io/scenario"
 ITERATION_TAG = "mock_io/iteration"
@@ -61,6 +67,7 @@ def build_op(job_name: str, owner: ExpandedJob) -> OpDefinition:
         }
         total = 0
         with (
+            for_run_job(job_name),
             as_service(owner.service_name),
             get_tracer().start_as_current_span(
                 f"job.{owner.name}",

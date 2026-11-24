@@ -21,7 +21,13 @@ from dagster._core.execution.build_resources import wrap_resources_for_execution
 
 from mock_io_app.job_factory import ITERATION_TAG, SEED_TAG, build_job, default_resources
 from mock_io_app.scenario import ExpandedJob, expand_jobs, is_valid_name, leaf_jobs, load_scenario
-from mock_io_app.tracing import as_service, get_tracer, setup_tracing, trace_tags
+from mock_io_app.tracing import (
+    as_service,
+    for_run_job,
+    get_tracer,
+    setup_tracing,
+    trace_tags,
+)
 
 
 def _parse_args(argv: list[str] | None) -> argparse.Namespace:
@@ -87,6 +93,7 @@ def _run_once(
     )
     attributes = {"dagster.job": expanded.name, "mock_io.iteration": iteration}
     with (
+        for_run_job(expanded.name),
         as_service(expanded.scenario_service_name),
         get_tracer().start_as_current_span(f"run.{expanded.name}", attributes=attributes),
     ):

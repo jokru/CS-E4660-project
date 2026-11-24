@@ -6,7 +6,7 @@ from contextvars import ContextVar
 from opentelemetry import propagate, trace
 from opentelemetry.context import Context
 from opentelemetry.sdk.resources import Resource
-from opentelemetry.sdk.trace import SpanProcessor, TracerProvider
+from opentelemetry.sdk.trace import Span, SpanProcessor, TracerProvider
 from opentelemetry.sdk.trace.export import (
     BatchSpanProcessor,
     ConsoleSpanExporter,
@@ -17,12 +17,33 @@ TRACER_NAME = "mock_io_app"
 TRACEPARENT_TAG = "otel/traceparent"
 TRACESTATE_TAG = "otel/tracestate"
 
+RUN_JOB_ATTRIBUTE = "mock_io.run_job"
+
 _CARRIER_TO_TAG = {"traceparent": TRACEPARENT_TAG, "tracestate": TRACESTATE_TAG}
 
 _configured = False
 _processors: list[SpanProcessor] = []
 _service_providers: dict[str, TracerProvider] = {}
 _current_service: ContextVar[str | None] = ContextVar("mock_io_current_service", default=None)
+_current_run_job: ContextVar[str | None] = ContextVar("mock_io_current_run_job", default=None)
+
+
+class RunJobAttributeProcessor(SpanProcessor):
+    """Tags every span with the job being run, so collectors can route spans per job."""
+
+    def on_start(self, span: Span, parent_context: Context | None = None) -> None:
+        job = _current_run_job.get()
+        if job is not None:
+            span.set_attribute(RUN_JOB_ATTRIBUTE, job)
+
+
+@contextmanager
+def for_run_job(name: str) -> Iterator[None]:
+    token = _current_run_job.set(name)
+    try:
+        yield
+    finally:
+        _current_run_job.reset(token)
 
 
 def get_tracer() -> trace.Tracer:
@@ -81,8 +102,12 @@ def setup_tracing(service_name: str) -> None:
         processor = BatchSpanProcessor(_otlp_exporter())
     else:
         raise ValueError(f"unknown MOCK_IO_TRACE_EXPORTER {kind!r}")
-    _processors.append(processor)
-    provider.add_span_processor(processor)
+    from mock_io_app.app_reducers import build_app_reducers
+
+    reducers = build_app_reducers(os.environ.get("MOCK_IO_APP_REDUCERS", ""))
+    _processors.extend([RunJobAttributeProcessor(), processor, *reducers])
+    for added in _processors:
+        provider.add_span_processor(added)
     trace.set_tracer_provider(provider)
 
 
