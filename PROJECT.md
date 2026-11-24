@@ -66,21 +66,56 @@ Done:
 - `anomalies_sampling` hardly reduces anything: at real latencies almost every run lasts over 1 s, so the latency policy keeps 94.5% of normal traces. The fixed threshold must be relative to what is normal (e.g. per job), which motivates statistical sampling
 - `sampling` is blind: recall for every type is about its 10% rate (lower in small groups, e.g. 0% for slow_tax_service)
 - `http_flap` did not trigger in this run (probability 0.003), so it has no column
+- Rate benchmark (`scripts/benchmark_rates.py`): each collector alone, replaying the capture for 90 s per rate, `--decision-wait 60s --memory 1g`
+
+| rate/s | collector | peak MB | OOM | kept | anomalous | error | slow | normal |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 2 | baseline_naive | 124 | no | 100% | 100% | 100% | 100% | 100% |
+| 2 | sampling | 101 | no | 6.7% | 10.0% | 0.0% | 0.0% | 6.0% |
+| 2 | anomalies_sampling | 290 | no | 100% | 100% | 100% | 100% | 100% |
+| 2 | anomalies_sampling_limited | 143 | no | 16.7% | 15.0% | 0.0% | 20.0% | 18.0% |
+| 5 | baseline_naive | 129 | no | 100% | 100% | 100% | 100% | 100% |
+| 5 | sampling | 101 | no | 7.3% | 9.7% | 3.4% | 4.3% | 6.5% |
+| 5 | anomalies_sampling | 647 | no | 100% | 100% | 100% | 100% | 100% |
+| 5 | anomalies_sampling_limited | 168 | no | 6.7% | 7.1% | 13.8% | 4.3% | 6.8% |
+| 10 | baseline_naive | 138 | no | 100% | 100% | 100% | 100% | 100% |
+| 10 | sampling | 102 | no | 8.8% | 9.6% | 5.6% | 8.7% | 8.6% |
+| 10 | anomalies_sampling | 1064 | yes | 80.6% | 84.3% | 83.1% | 87.0% | 79.2% |
+| 10 | anomalies_sampling_limited | 150 | no | 3.3% | 2.2% | 1.4% | 0.0% | 3.7% |
+| 20 | baseline_naive | 133 | no | 100% | 100% | 100% | 100% | 100% |
+| 20 | sampling | 107 | no | 9.7% | 9.4% | 5.6% | 9.8% | 9.9% |
+| 20 | anomalies_sampling | 1052 | yes | 0% | 0% | 0% | 0% | 0% |
+| 20 | anomalies_sampling_limited | 194 | no | 1.7% | 2.1% | 5.0% | 2.2% | 1.4% |
+
+  - Stateless collectors (naive, probabilistic sampling) stay flat at about 100–140 MB regardless of rate
+  - Tail sampling memory grows with rate × `decision_wait` (about 2 MB per held trace): 290 → 647 MB from 2 to 5/s, then killed at the 1 GB limit at 10/s (after exporting 81% of traces) and at 20/s before its first decision (nothing kept, later requests refused)
+  - A trace cap (`num_traces: 30`) avoids OOM but silently drops the oldest traces: kept share falls as 1/rate, and recall drops with it, regardless of whether the trace was anomalous
+  - Failure mode of a smart reducer under load is total (OOM: lose everything), versus degraded (cap: lose most) or none (blind sampling)
+- **Decision: whole-trace tail sampling in the collector is a dead end for now.** Its memory is rate × `decision_wait` × trace size, our traces are large (about 900 spans) and long (production jobs can take 10 minutes, so the wait would be minutes), and an OOM loses everything. Instead, approaches that hold less or nothing (implemented, not yet measured):
+  - Calibration (`scripts/calibrate_thresholds.py`): per (service, span name) latency thresholds of 5× the median from a baseline capture, plus per-job run statistics; generates the two collector configs below and the thresholds the app reducers use. Calibrate on a different seed than the evaluation run
+  - Statistical span filter (`span_filter`): stateless collector filter that drops detail spans faster than their threshold unless they errored; keeps the skeleton (run/job/op spans) and 1% of whole traces. No per-trace memory
+  - Per-job hold time (`routed_tail_sampling`): the app tags every span with `mock_io.run_job`, a `routing` connector sends each job's spans to a tail sampler whose `decision_wait` fits that job's longest run (45/60/90 s buckets for supermarket, instead of 120 s for all), with a per-job latency threshold (1.5× the job's median run). Answers "a different hold duration per job"; still tail sampling, so memory still grows with rate, but by the job's own duration
+  - App-side job buffering (`job_buffer`): the app holds a job's spans in its own process until the job's root span ends (no guessing a wait), then sends all of them if anything errored or was slow, or 5% by trace ID. Memory is bounded by the running jobs and spread over the job processes
+  - App-side adaptive resolution (`resolution`): no buffering. Always sends the skeleton, plus failed or slow detail spans and the path up to them
+  - App-side reducers run in shadow next to the full export, each to its own collector (`app_job_buffer`, `app_resolution`), so one workload scores everything. The replay benchmark cannot measure them (it bypasses the app)
+  - New metric: evidence, the share of anomalous traces with at least one injected span kept. Span-level methods keep every trace's skeleton, so trace recall is about 100% for them by construction
+  - Offline estimate on the calibration capture itself (in-sample, so optimistic): `span_filter` and `resolution` keep about 14% of spans, `job_buffer` about 30% of spans (55% of traces); all keep evidence of 100% of anomalous traces
 
 Next:
 
-- Tune `anomalies_sampling` (latency threshold above normal run durations, e.g. per job) and rerun
+- Done (see RESULTS.md runs 2 and 3, seeds 7 and 8, thresholds calibrated on seed 42): `span_filter` and `app_resolution` keep about 15% of spans with 100% evidence, `app_job_buffer` keeps 29-41% of spans with 100% evidence, `routed_tail_sampling` keeps only 47% evidence. The routed shortfall is not a routing or flush problem: whole-trace duration barely separates anomalous from normal traces (anomalous traces median 78% of the job threshold, normal 70%), so the collector's trace-level latency policy cannot select them without keeping most normal traces. This supports the dead-end decision beyond memory use
+- Still to do: the rate benchmark with `span_filter` and `routed_tail_sampling`
 - Tunable anomaly rate (about 1% or less) and rare versus bursty scenario variants
-- Increase traces/s with `mock-io-replay` and see where each reducer degrades
-- Statistical sampling reducer (custom code, see notes)
-- LLM agent reducer or configuration agent, and its cost
-- Increasing trace resolution on anomalies, and application-level versus collector-level logic
+- Emulate the app-side reducers in the replay, to benchmark them at high rates
+- Online statistical sampling (thresholds learned while running instead of calibrated, see notes)
+- LLM agent as a configuration agent: reads the evaluation and calibration outputs and proposes collector configs (thresholds, which spans to filter), rather than deciding per trace
+- Plots of the results (from `mock-io-eval --json`)
 - Plots of the results (from `mock-io-eval --json`)
 
 ## Notes/ideas
 
 - per component tracing parameters
-- - consider how we could achieve a different "hold duration" for traces per job?
+- - consider how we could achieve a different "hold duration" for traces per job? (done: `routed_tail_sampling`, and `job_buffer` holds exactly until the job ends)
 - agent for configuration
 - time based differences in sampling
 - different faults (latency, full errors) (done: latency multiplier/add, failures, payload size, iteration windows)
