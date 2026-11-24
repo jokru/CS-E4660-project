@@ -27,7 +27,15 @@ from typing import Any
 
 os.environ.setdefault("GRPC_VERBOSITY", "ERROR")  # silence fork warnings from docker calls
 
-from mock_io_app.evaluation import evaluate, label_traces, load_ground_truth, load_traces
+import yaml
+
+from mock_io_app.evaluation import (
+    evaluate,
+    label_traces,
+    load_anomaly_spans,
+    load_ground_truth,
+    load_traces,
+)
 from mock_io_app.replay import grpc_exporter, load_capture, replay
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -39,6 +47,8 @@ DEFAULT_COLLECTORS = [
     "sampling",
     "anomalies_sampling",
     "anomalies_sampling_limited",
+    "span_filter",
+    "routed_tail_sampling",
 ]
 UNITS = {"B": 1, "KIB": 2**10, "MIB": 2**20, "GIB": 2**30, "KB": 1e3, "MB": 1e6, "GB": 1e9}
 
@@ -56,6 +66,19 @@ def parse_mem_usage(text: str) -> float:
     if not match or match[2].upper() not in UNITS:
         raise ValueError(f"cannot parse memory usage {text!r}")
     return float(match[1]) * UNITS[match[2].upper()]
+
+
+def hold_seconds(name: str, decision_wait: str) -> float:
+    """Longest tail-sampling hold of a collector: --decision-wait, or fixed ones in its config."""
+    config = yaml.safe_load((ROOT / "collectors" / name / "config.yaml").read_text())
+    waits = [
+        parse_seconds(settings["decision_wait"])
+        for settings in (config.get("processors") or {}).values()
+        if isinstance(settings, dict)
+        and "decision_wait" in settings
+        and "${" not in str(settings["decision_wait"])
+    ]
+    return max([parse_seconds(decision_wait), *waits])
 
 
 def docker(*args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
@@ -142,7 +165,7 @@ def run_collector(
             ground_truth_out=truth,
         )
         # Let tail sampling decide the last traces and the exporter write them.
-        time.sleep(parse_seconds(args.decision_wait) + 3)
+        time.sleep(hold_seconds(name, args.decision_wait) + 3)
     finally:
         if truth:
             truth.close()
@@ -164,7 +187,9 @@ def score_rate(runs: list[dict[str, Any]], rate_dir: Path) -> None:
     """Add reduction and recall to each run, scoring against this rate's baseline output."""
     reference_path = rate_dir / REFERENCE / f"{REFERENCE}.jsonl"
     reference = load_traces(reference_path)
-    labels = label_traces(reference, load_ground_truth(rate_dir / REFERENCE / "ground_truth.jsonl"))
+    truth_path = rate_dir / REFERENCE / "ground_truth.jsonl"
+    labels = label_traces(reference, load_ground_truth(truth_path))
+    anomaly_spans = load_anomaly_spans(truth_path)
     for run in runs:
         path = rate_dir / run["collector"] / f"{run['collector']}.jsonl"
         output = load_traces(path) if path.exists() else {}
@@ -174,10 +199,13 @@ def score_rate(runs: list[dict[str, Any]], rate_dir: Path) -> None:
             labels,
             reference_path.stat().st_size,
             path.stat().st_size if path.exists() else 0,
+            anomaly_spans,
         )
         run["reference_traces"] = len(reference)
         run["traces_kept"] = report["reduction"]["traces_kept"]
+        run["spans_kept"] = report["reduction"]["spans_kept"]
         run["bytes_kept"] = report["reduction"]["bytes_kept"]
+        run["evidence"] = report["evidence"]["recall"]
         run["recall"] = {name: row["recall"] for name, row in report["recall"].items()}
 
 
@@ -194,6 +222,8 @@ def format_table(runs: list[dict[str, Any]]) -> str:
         "peak MB",
         "OOM",
         "kept",
+        "spans",
+        "evidence",
         "anomalous",
         "error",
         "slow",
@@ -212,6 +242,8 @@ def format_table(runs: list[dict[str, Any]]) -> str:
                 f"{run['peak_memory_mb']:.0f}",
                 "yes" if run["oom_killed"] else "no",
                 _pct(run.get("traces_kept")),
+                _pct(run.get("spans_kept")),
+                _pct(run.get("evidence")),
                 *(_pct(recall.get(t)) for t in ("anomalous", "error", "slow", "normal")),
             ]
         )

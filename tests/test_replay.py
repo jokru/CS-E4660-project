@@ -139,3 +139,19 @@ def test_seeded_replays_send_the_same_trace_ids(tmp_path: Path) -> None:
     assert len(trace_ids(7)) == 4
     assert trace_ids(7) == trace_ids(7) != trace_ids(8)
     assert trace_ids(None) != trace_ids(None)
+
+
+def test_capture_without_run_job_gets_it_from_the_run_span(tmp_path: Path) -> None:
+    capture = tmp_path / "capture.jsonl"
+    spans = [
+        _span(ROOT, "", 1_000, 5_000, name="run.daily"),
+        _span(CHILD, ROOT, 2_000, 4_000),
+    ]
+    capture.write_text(
+        json.dumps({"resourceSpans": [{"scopeSpans": [{"scope": {}, "spans": spans}]}]}) + "\n"
+    )
+    [template] = load_capture(capture)
+
+    for span in template.resource_spans[0].scope_spans[0].spans:
+        [attribute] = span.attributes
+        assert (attribute.key, attribute.value.string_value) == ("mock_io.run_job", "daily")

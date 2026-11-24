@@ -23,6 +23,8 @@ from google.protobuf.json_format import ParseDict
 from opentelemetry.proto.collector.trace.v1.trace_service_pb2 import ExportTraceServiceRequest
 from opentelemetry.proto.trace.v1.trace_pb2 import ResourceSpans
 
+from mock_io_app.tracing import RUN_JOB_ATTRIBUTE
+
 _ID_FIELDS = ("traceId", "spanId", "parentSpanId")
 
 
@@ -83,6 +85,7 @@ def load_capture(path: Path, ground_truth: Path | None = None) -> list[TraceTemp
         template = TraceTemplate(
             trace_id=bytes.fromhex(trace_id), end_ns=0, ground_truth=records.get(trace_id, [])
         )
+        _add_run_job(grouped[trace_id])
         for key, spans in grouped[trace_id].items():
             resource, scope = scopes[key]
             message = ParseDict(
@@ -95,6 +98,19 @@ def load_capture(path: Path, ground_truth: Path | None = None) -> list[TraceTemp
                 template.span_count += 1
         templates.append(template)
     return templates
+
+
+def _add_run_job(spans_by_scope: dict[tuple[str, str], list[dict[str, Any]]]) -> None:
+    """Captures from before the app set RUN_JOB_ATTRIBUTE get it from the trace's `run.*` span."""
+    spans = [span for group in spans_by_scope.values() for span in group]
+    jobs = {s["name"].removeprefix("run.") for s in spans if s["name"].startswith("run.")}
+    if len(jobs) != 1:
+        return
+    attribute = {"key": RUN_JOB_ATTRIBUTE, "value": {"stringValue": jobs.pop()}}
+    for span in spans:
+        attributes = span.setdefault("attributes", [])
+        if not any(a["key"] == RUN_JOB_ATTRIBUTE for a in attributes):
+            attributes.append(attribute)
 
 
 def instantiate(

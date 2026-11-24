@@ -5,6 +5,7 @@ from mock_io_app.evaluation import (
     evaluate,
     format_report,
     label_traces,
+    load_anomaly_spans,
     load_ground_truth,
     load_traces,
     main,
@@ -75,6 +76,23 @@ def test_evaluate_reports_reduction_and_recall(tmp_path: Path) -> None:
     assert "recall" in format_report(report)
 
 
+def test_evidence_needs_an_injected_span_kept(tmp_path: Path) -> None:
+    reference, _, _ = _fixture(tmp_path)
+    truth = tmp_path / "spans_truth.jsonl"
+    truth.write_text(json.dumps({"trace_id": "a", "span_id": "a2", "anomalies": ["x"]}) + "\n")
+    ref = load_traces(reference)
+    labels = label_traces(ref, load_ground_truth(truth))
+    skeleton_only = tmp_path / "skeleton.jsonl"
+    _write(skeleton_only, [_span("a", "a1", 0, 10)])
+    with_span = tmp_path / "with_span.jsonl"
+    _write(with_span, [_span("a", "a2", 1, 5)])
+
+    for path, evidence in ((skeleton_only, 0.0), (with_span, 1.0)):
+        report = evaluate(ref, load_traces(path), labels, anomaly_spans=load_anomaly_spans(truth))
+        assert report["recall"]["anomalous"]["recall"] == 1.0
+        assert report["evidence"]["recall"] == evidence
+
+
 def test_cli_prints_json(tmp_path: Path, capsys) -> None:
     reference, output, truth = _fixture(tmp_path)
     args = ["--reference", str(reference), "--output", str(output), "--ground-truth", str(truth)]
@@ -90,7 +108,7 @@ def test_cli_prints_matrix_for_several_outputs(tmp_path: Path, capsys) -> None:
     assert main([*base, "--output", str(output), "--output", str(nothing)]) == 0
 
     lines = capsys.readouterr().out.splitlines()
-    assert lines[0].split()[:4] == ["method", "traces", "bytes", "anomalous"]
+    assert lines[0].split()[:6] == ["method", "traces", "spans", "bytes", "evidence", "anomalous"]
     rows = {line.split()[0]: line.split() for line in lines[1:3]}
     assert rows["output"][1] == "60.0%"
     assert rows["nothing"][1] == "0.0%"

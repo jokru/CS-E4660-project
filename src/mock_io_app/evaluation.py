@@ -82,6 +82,18 @@ def load_ground_truth(path: Path) -> dict[str, frozenset[str]]:
     return {trace_id: frozenset(found) for trace_id, found in labels.items()}
 
 
+def load_anomaly_spans(path: Path) -> dict[str, set[str]]:
+    """Map trace id to the ids of the spans the anomalies were injected into."""
+    spans: dict[str, set[str]] = defaultdict(set)
+    with path.open() as handle:
+        for line in handle:
+            if line.strip():
+                record = json.loads(line)
+                if "span_id" in record:
+                    spans[record["trace_id"]].add(record["span_id"])
+    return dict(spans)
+
+
 def _percentile(values: list[int], percentile: float) -> float:
     ordered = sorted(values)
     rank = max(0, math.ceil(percentile / 100 * len(ordered)) - 1)
@@ -118,8 +130,14 @@ def evaluate(
     labels: dict[str, TraceLabels],
     reference_bytes: int = 0,
     output_bytes: int = 0,
+    anomaly_spans: dict[str, set[str]] | None = None,
 ) -> dict[str, Any]:
-    """Reduction and retention metrics; output traces missing from the reference are ignored."""
+    """Reduction and retention metrics; output traces missing from the reference are ignored.
+
+    With `anomaly_spans`, `evidence` is the share of anomalous traces of which at least one span
+    an anomaly was injected into is kept: for span-level reducers, keeping a trace's skeleton
+    alone counts as keeping the trace but not its evidence.
+    """
     kept = {trace_id for trace_id in output if trace_id in reference}
     ref_spans = sum(len(t.spans) for t in reference.values())
     kept_spans = sum(len(output[t].spans & reference[t].spans) for t in kept)
@@ -141,6 +159,12 @@ def evaluate(
             by_label[name].add(trace_id)
 
     anomalous_kept = len(kept & groups["anomalous"])
+    evidence = None
+    if anomaly_spans is not None:
+        with_evidence = {
+            t for t in kept & groups["anomalous"] if output[t].spans & anomaly_spans.get(t, set())
+        }
+        evidence = _recall(with_evidence, groups["anomalous"])
     return {
         "reference": {"traces": len(reference), "spans": ref_spans, "bytes": reference_bytes},
         "output": {"traces": len(kept), "spans": kept_spans, "bytes": output_bytes},
@@ -154,6 +178,7 @@ def evaluate(
         },
         "recall": {name: _recall(kept, wanted) for name, wanted in groups.items()},
         "recall_by_anomaly": {name: _recall(kept, by_label[name]) for name in sorted(by_label)},
+        "evidence": evidence,
         "precision": {"anomalous": anomalous_kept / len(kept) if kept else None},
     }
 
@@ -171,6 +196,8 @@ def format_report(report: dict[str, Any]) -> str:
         f"bytes kept {_fmt(red['bytes_kept'])}, mean trace completeness "
         f"{_fmt(red['mean_trace_completeness'])}",
         f"precision (kept traces that are anomalous): {_fmt(report['precision']['anomalous'])}",
+        "evidence (anomalous traces with an injected span kept): "
+        + _fmt((report.get("evidence") or {}).get("recall")),
         "",
         f"{'recall':<28}{'kept':>6}{'total':>7}{'recall':>9}",
     ]
@@ -186,7 +213,7 @@ def format_matrix(reports: dict[str, dict[str, Any]]) -> str:
     """Methods as rows, trace types as columns: reduction first, then recall per type."""
     types = list(next(iter(reports.values()))["recall"])
     anomaly_labels = sorted({n for r in reports.values() for n in r["recall_by_anomaly"]})
-    headers = ["traces", "bytes", *types, *anomaly_labels]
+    headers = ["traces", "spans", "bytes", "evidence", *types, *anomaly_labels]
     width = max(len(h) for h in headers) + 2
     name_width = max(len(n) for n in reports) + 2
     lines = ["".join([f"{'method':<{name_width}}", *(f"{h:>{width}}" for h in headers)])]
@@ -194,13 +221,16 @@ def format_matrix(reports: dict[str, dict[str, Any]]) -> str:
         by_anomaly = report["recall_by_anomaly"]
         cells = [
             _fmt(report["reduction"]["traces_kept"]),
+            _fmt(report["reduction"]["spans_kept"]),
             _fmt(report["reduction"]["bytes_kept"]),
+            _fmt((report.get("evidence") or {}).get("recall")),
             *(_fmt(report["recall"][t]["recall"]) for t in types),
             *(_fmt(by_anomaly[a]["recall"]) if a in by_anomaly else "n/a" for a in anomaly_labels),
         ]
         lines.append("".join([f"{name:<{name_width}}", *(f"{c:>{width}}" for c in cells)]))
     lines.append(
-        "\ntraces/bytes: share kept of the reference; other columns: recall of that trace type."
+        "\ntraces/spans/bytes: share kept of the reference; evidence: anomalous traces with an"
+        " injected span kept;\nother columns: recall of that trace type (any span kept)."
     )
     return "\n".join(lines)
 
@@ -238,6 +268,7 @@ def main(argv: list[str] | None = None) -> int:
 
     reference = load_traces(args.reference)
     ground_truth = load_ground_truth(args.ground_truth)
+    anomaly_spans = load_anomaly_spans(args.ground_truth)
     labels = label_traces(reference, ground_truth, args.slow_percentile)
     reports = {
         path.stem: evaluate(
@@ -246,6 +277,7 @@ def main(argv: list[str] | None = None) -> int:
             labels,
             args.reference.stat().st_size,
             path.stat().st_size,
+            anomaly_spans,
         )
         for path in outputs
     }
