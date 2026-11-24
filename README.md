@@ -90,15 +90,26 @@ The replay has caveats that limit what it can answer:
 - **Traces arrive whole.** A replayed trace is sent in one request, while app spans arrive over the length of a run, so the plain tail samplers use a short decision wait (5 s in the latest benchmark) instead of the 120 s needed for app runs. Their memory at a realistic wait would be higher.
 - **In-sample thresholds.** The replayed capture is the seed 42 run the thresholds were calibrated on, so evidence in the benchmark is optimistic. The accuracy runs give the out-of-sample figures.
 
-4 result
-linked to RQs
+# 4. result
 
 Initial hypotheses:
 
 - **Naive sampling misses errors at its sampling rate.** Confirmed on average: `sampling` keeps about 10% of every trace type, anomalous or not. Rare anomaly types, with only a handful of traces each, scatter widely around that rate, and some are missed entirely (`slow_tax_service`: 0% in runs 1 and 2). Relates to "Do simple reducers miss rare exceptions?".
 - **Tail sampling keeps anomalies, but its memory grows with the trace rate until it runs out.** Confirmed: `anomalies_sampling` keeps 100% evidence at low rates, but holds every trace until its decision, and was killed at 10 traces/s with a 1 GB limit, losing everything. Its fixed 1 s latency policy also matched almost every trace, so it barely reduced anything. Relates to "Does a smarter reducer matter enough?".
 
-5 lesson
+
+- Is it worth it to go deeper than OTel collector config options for trace processing?
+- - Inconclusive
+- Do simple reducers miss rare exceptions?
+- - Yes
+- Does a smarter reducer matter enough for finding exceptions and anomalies?
+- - Inconclusive
+- Can an LLM keep up with reasonable costs?
+- - Could not test
+- Application level vs. collector level adaptability?
+- - Some advantages in application level
+
+# 5. lesson
 
 Problems faced
 
