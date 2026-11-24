@@ -68,29 +68,29 @@ Done:
 - `http_flap` did not trigger in this run (probability 0.003), so it has no column
 - Rate benchmark (`scripts/benchmark_rates.py`): each collector alone, replaying the capture for 90 s per rate, `--decision-wait 60s --memory 1g`
 
-| rate/s | collector | peak MB | OOM | kept | anomalous | error | slow | normal |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 2 | baseline_naive | 124 | no | 100% | 100% | 100% | 100% | 100% |
-| 2 | sampling | 101 | no | 6.7% | 10.0% | 0.0% | 0.0% | 6.0% |
-| 2 | anomalies_sampling | 290 | no | 100% | 100% | 100% | 100% | 100% |
-| 2 | anomalies_sampling_limited | 143 | no | 16.7% | 15.0% | 0.0% | 20.0% | 18.0% |
-| 5 | baseline_naive | 129 | no | 100% | 100% | 100% | 100% | 100% |
-| 5 | sampling | 101 | no | 7.3% | 9.7% | 3.4% | 4.3% | 6.5% |
-| 5 | anomalies_sampling | 647 | no | 100% | 100% | 100% | 100% | 100% |
-| 5 | anomalies_sampling_limited | 168 | no | 6.7% | 7.1% | 13.8% | 4.3% | 6.8% |
-| 10 | baseline_naive | 138 | no | 100% | 100% | 100% | 100% | 100% |
-| 10 | sampling | 102 | no | 8.8% | 9.6% | 5.6% | 8.7% | 8.6% |
-| 10 | anomalies_sampling | 1064 | yes | 80.6% | 84.3% | 83.1% | 87.0% | 79.2% |
-| 10 | anomalies_sampling_limited | 150 | no | 3.3% | 2.2% | 1.4% | 0.0% | 3.7% |
-| 20 | baseline_naive | 133 | no | 100% | 100% | 100% | 100% | 100% |
-| 20 | sampling | 107 | no | 9.7% | 9.4% | 5.6% | 9.8% | 9.9% |
-| 20 | anomalies_sampling | 1052 | yes | 0% | 0% | 0% | 0% | 0% |
-| 20 | anomalies_sampling_limited | 194 | no | 1.7% | 2.1% | 5.0% | 2.2% | 1.4% |
+| rate/s | collector                  | peak MB | OOM | kept  | anomalous | error | slow  | normal |
+| ------ | -------------------------- | ------- | --- | ----- | --------- | ----- | ----- | ------ |
+| 2      | baseline_naive             | 124     | no  | 100%  | 100%      | 100%  | 100%  | 100%   |
+| 2      | sampling                   | 101     | no  | 6.7%  | 10.0%     | 0.0%  | 0.0%  | 6.0%   |
+| 2      | anomalies_sampling         | 290     | no  | 100%  | 100%      | 100%  | 100%  | 100%   |
+| 2      | anomalies_sampling_limited | 143     | no  | 16.7% | 15.0%     | 0.0%  | 20.0% | 18.0%  |
+| 5      | baseline_naive             | 129     | no  | 100%  | 100%      | 100%  | 100%  | 100%   |
+| 5      | sampling                   | 101     | no  | 7.3%  | 9.7%      | 3.4%  | 4.3%  | 6.5%   |
+| 5      | anomalies_sampling         | 647     | no  | 100%  | 100%      | 100%  | 100%  | 100%   |
+| 5      | anomalies_sampling_limited | 168     | no  | 6.7%  | 7.1%      | 13.8% | 4.3%  | 6.8%   |
+| 10     | baseline_naive             | 138     | no  | 100%  | 100%      | 100%  | 100%  | 100%   |
+| 10     | sampling                   | 102     | no  | 8.8%  | 9.6%      | 5.6%  | 8.7%  | 8.6%   |
+| 10     | anomalies_sampling         | 1064    | yes | 80.6% | 84.3%     | 83.1% | 87.0% | 79.2%  |
+| 10     | anomalies_sampling_limited | 150     | no  | 3.3%  | 2.2%      | 1.4%  | 0.0%  | 3.7%   |
+| 20     | baseline_naive             | 133     | no  | 100%  | 100%      | 100%  | 100%  | 100%   |
+| 20     | sampling                   | 107     | no  | 9.7%  | 9.4%      | 5.6%  | 9.8%  | 9.9%   |
+| 20     | anomalies_sampling         | 1052    | yes | 0%    | 0%        | 0%    | 0%    | 0%     |
+| 20     | anomalies_sampling_limited | 194     | no  | 1.7%  | 2.1%      | 5.0%  | 2.2%  | 1.4%   |
 
-  - Stateless collectors (naive, probabilistic sampling) stay flat at about 100–140 MB regardless of rate
-  - Tail sampling memory grows with rate × `decision_wait` (about 2 MB per held trace): 290 → 647 MB from 2 to 5/s, then killed at the 1 GB limit at 10/s (after exporting 81% of traces) and at 20/s before its first decision (nothing kept, later requests refused)
-  - A trace cap (`num_traces: 30`) avoids OOM but silently drops the oldest traces: kept share falls as 1/rate, and recall drops with it, regardless of whether the trace was anomalous
-  - Failure mode of a smart reducer under load is total (OOM: lose everything), versus degraded (cap: lose most) or none (blind sampling)
+- Stateless collectors (naive, probabilistic sampling) stay flat at about 100–140 MB regardless of rate
+- Tail sampling memory grows with rate × `decision_wait` (about 2 MB per held trace): 290 → 647 MB from 2 to 5/s, then killed at the 1 GB limit at 10/s (after exporting 81% of traces) and at 20/s before its first decision (nothing kept, later requests refused)
+- A trace cap (`num_traces: 30`) avoids OOM but silently drops the oldest traces: kept share falls as 1/rate, and recall drops with it, regardless of whether the trace was anomalous
+- Failure mode of a smart reducer under load is total (OOM: lose everything), versus degraded (cap: lose most) or none (blind sampling)
 - **Decision: whole-trace tail sampling in the collector is a dead end for now.** Its memory is rate × `decision_wait` × trace size, our traces are large (about 900 spans) and long (production jobs can take 10 minutes, so the wait would be minutes), and an OOM loses everything. Instead, approaches that hold less or nothing (implemented, not yet measured):
   - Calibration (`scripts/calibrate_thresholds.py`): per (service, span name) latency thresholds of 5× the median from a baseline capture, plus per-job run statistics; generates the two collector configs below and the thresholds the app reducers use. Calibrate on a different seed than the evaluation run
   - Statistical span filter (`span_filter`): stateless collector filter that drops detail spans faster than their threshold unless they errored; keeps the skeleton (run/job/op spans) and 1% of whole traces. No per-trace memory
