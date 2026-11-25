@@ -5,8 +5,8 @@
 - Is it worth it to go deeper than OTel collector config options for trace processing
 - Do simple reducers miss rare exceptions?
 - Does a smarter reducer matter enough for finding exceptions and anomalies?
-- Can an LLM keep up with reasonable costs?
 - Application level vs. collector level adaptability?
+- Can an LLM keep up with reasonable costs?
 
 # 2. Approach
 
