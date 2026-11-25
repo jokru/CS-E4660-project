@@ -29,6 +29,7 @@ os.environ.setdefault("GRPC_VERBOSITY", "ERROR")  # silence fork warnings from d
 
 import yaml
 
+from mock_io_app.app_reducers import DEFAULT_ENDPOINTS, Thresholds
 from mock_io_app.evaluation import (
     evaluate,
     label_traces,
@@ -37,6 +38,7 @@ from mock_io_app.evaluation import (
     load_traces,
 )
 from mock_io_app.replay import grpc_exporter, load_capture, replay
+from mock_io_app.replay_reducers import Reducer
 
 ROOT = Path(__file__).resolve().parent.parent
 CONTAINER = "otelcol-bench"
@@ -49,7 +51,12 @@ DEFAULT_COLLECTORS = [
     "anomalies_sampling_limited",
     "span_filter",
     "routed_tail_sampling",
+    "app_job_buffer",
+    "app_resolution",
 ]
+# App-side reducers cannot run in the replay's absence of an app, so the replay applies their
+# rules (replay_reducers.py) and sends only what they would forward to the collector's own port.
+APP_REDUCERS = {"app_job_buffer": "job_buffer", "app_resolution": "resolution"}
 UNITS = {"B": 1, "KIB": 2**10, "MIB": 2**20, "GIB": 2**30, "KB": 1e3, "MB": 1e6, "GB": 1e9}
 
 
@@ -97,6 +104,16 @@ class CollectorContainer:
         self._stop_sampling = threading.Event()
         self._sampler: threading.Thread | None = None
 
+    @staticmethod
+    def _extra_ports(config: Path) -> list[str]:
+        """Publish receivers on other ports (the app_* collectors listen on their own)."""
+        ports = re.findall(r"endpoint: 0\.0\.0\.0:(\d+)", config.read_text())
+        return [
+            arg
+            for port in sorted(set(ports) - {"4317", "4318"})
+            for arg in ("-p", f"{port}:{port}")
+        ]
+
     def start(self) -> None:
         docker("rm", "-f", CONTAINER, check=False)
         self.out_dir.mkdir(parents=True, exist_ok=True)
@@ -107,6 +124,7 @@ class CollectorContainer:
             "-e", f"DECISION_WAIT={self.decision_wait}",
             *(["--memory", self.memory] if self.memory else []),
             "-p", "4317:4317",
+            *self._extra_ports(config),
             "-v", f"{self.out_dir.resolve()}:/out",
             "-v", f"{config}:/etc/otelcol/{self.name}.yaml:ro",
             IMAGE, f"--config=/etc/otelcol/{self.name}.yaml",
@@ -154,9 +172,15 @@ def run_collector(
     try:
         if name == REFERENCE:
             truth = (run_dir / "ground_truth.jsonl").open("w")
+        reducer = endpoint = None
+        if name in APP_REDUCERS:
+            reducer = Reducer(APP_REDUCERS[name], Thresholds.load(args.thresholds))
+            port = DEFAULT_ENDPOINTS[APP_REDUCERS[name]].rsplit(":", 1)[1]
+            endpoint = f"http://127.0.0.1:{port}"
         stats = replay(
             templates,
-            grpc_exporter(args.endpoint),
+            grpc_exporter(endpoint or args.endpoint),
+            reducer=reducer,
             traces=traces,
             rate=rate,
             workers=args.workers,
@@ -291,6 +315,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--batch", type=int, default=5)
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--endpoint", default="http://127.0.0.1:4317")
+    parser.add_argument(
+        "--thresholds",
+        type=Path,
+        default=ROOT / "thresholds" / "supermarket.json",
+        help="thresholds for the app_* reducers",
+    )
     parser.add_argument("--out-dir", type=Path, default=ROOT / "bench")
     parser.add_argument("--keep", action="store_true", help="keep collector outputs (large)")
     args = parser.parse_args(argv)

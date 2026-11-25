@@ -23,6 +23,8 @@ from google.protobuf.json_format import ParseDict
 from opentelemetry.proto.collector.trace.v1.trace_service_pb2 import ExportTraceServiceRequest
 from opentelemetry.proto.trace.v1.trace_pb2 import ResourceSpans
 
+from mock_io_app.app_reducers import DEFAULT_SAMPLE_RATE, Thresholds
+from mock_io_app.replay_reducers import REDUCERS, Reducer
 from mock_io_app.tracing import RUN_JOB_ATTRIBUTE
 
 _ID_FIELDS = ("traceId", "spanId", "parentSpanId")
@@ -114,10 +116,14 @@ def _add_run_job(spans_by_scope: dict[tuple[str, str], list[dict[str, Any]]]) ->
 
 
 def instantiate(
-    template: TraceTemplate, now_ns: int, rng: random.Random
+    template: TraceTemplate, now_ns: int, rng: random.Random, reducer: "Reducer | None" = None
 ) -> tuple[list[ResourceSpans], list[dict[str, Any]]]:
-    """Copy a trace with fresh IDs, shifted to end at now_ns; return spans and ground truth."""
+    """Copy a trace with fresh IDs, shifted to end at now_ns; return spans and ground truth.
+
+    With a `reducer`, only the spans it keeps are copied (ground truth is kept whole).
+    """
     trace_id = rng.randbytes(16)
+    kept = reducer.kept_span_ids(template, trace_id) if reducer else None
     shift = now_ns - template.end_ns
     span_ids: dict[bytes, bytes] = {}
 
@@ -130,7 +136,12 @@ def instantiate(
     for original in template.resource_spans:
         copy = ResourceSpans()
         copy.CopyFrom(original)
-        for span in copy.scope_spans[0].spans:
+        dropped: list[int] = []
+        for index, span in enumerate(copy.scope_spans[0].spans):
+            if kept is not None and span.span_id not in kept:
+                dropped.append(index)
+            # IDs are assigned for every span, kept or not, so a reduced copy carries the same
+            # IDs as the full copy of the same seeded replay (needed to score it).
             span.trace_id = trace_id
             span.span_id = new_span_id(span.span_id)
             if span.parent_span_id:
@@ -143,6 +154,10 @@ def instantiate(
                 if link.trace_id == template.trace_id:
                     link.trace_id = trace_id
                     link.span_id = new_span_id(link.span_id)
+        for index in reversed(dropped):
+            del copy.scope_spans[0].spans[index]
+        if dropped and not copy.scope_spans[0].spans:
+            continue
         copies.append(copy)
 
     records = []
@@ -203,6 +218,7 @@ def replay(
     shuffle: bool = False,
     ground_truth_out: TextIO | None = None,
     clock: Any = time,
+    reducer: "Reducer | None" = None,
 ) -> ReplayStats:
     """Send `traces` copies cycling through `templates`, at `rate` traces/s (None = flat out).
 
@@ -241,10 +257,10 @@ def replay(
                 # With a seed, IDs depend only on the seed and position, so separate replays
                 # (e.g. one collector at a time) send the same traces and ground truth.
                 rng = random.Random(f"{seed}:{index}" if seed is not None else os.urandom(16))
-                copies, trace_records = instantiate(template, now_ns, rng)
+                copies, trace_records = instantiate(template, now_ns, rng, reducer)
                 request.resource_spans.extend(copies)
                 records += trace_records
-                spans += template.span_count
+                spans += sum(len(scope.spans) for copy in copies for scope in copy.scope_spans)
             try:
                 export(request)
                 failed = None
@@ -312,7 +328,18 @@ def main(argv: list[str] | None = None) -> int:
         default=os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT", "http://127.0.0.1:4317"),
         help="OTLP gRPC endpoint (default: OTEL_EXPORTER_OTLP_ENDPOINT or 127.0.0.1:4317)",
     )
+    parser.add_argument(
+        "--reducer",
+        choices=REDUCERS,
+        help="send only what this app-side reducer would forward (needs --thresholds)",
+    )
+    parser.add_argument("--thresholds", type=Path, help="thresholds JSON for --reducer")
+    parser.add_argument(
+        "--sample-rate", type=float, default=DEFAULT_SAMPLE_RATE, help="job_buffer random keep rate"
+    )
     args = parser.parse_args(argv)
+    if args.reducer and not args.thresholds:
+        parser.error("--reducer needs --thresholds")
     if args.ground_truth_out and not args.ground_truth:
         parser.error("--ground-truth-out needs --ground-truth")
     for name in ("workers", "batch", "traces"):
@@ -324,6 +351,11 @@ def main(argv: list[str] | None = None) -> int:
     if out and out.resolve() in {capture, args.ground_truth.resolve()}:
         parser.error("--ground-truth-out must differ from the inputs")
 
+    reducer = (
+        Reducer(args.reducer, Thresholds.load(args.thresholds), args.sample_rate)
+        if args.reducer
+        else None
+    )
     templates = load_capture(args.capture, args.ground_truth)
     if not templates:
         parser.error(f"no traces in {args.capture}")
@@ -341,6 +373,7 @@ def main(argv: list[str] | None = None) -> int:
             seed=args.seed,
             shuffle=args.shuffle,
             ground_truth_out=handle,
+            reducer=reducer,
         )
     finally:
         if handle:
