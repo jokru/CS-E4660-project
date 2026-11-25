@@ -14,7 +14,7 @@ Same benchmark as above, but replaying the seed-8 live capture (`captures/superm
 | 40/s | app_job_buffer | 40.6%      | 100.0%   | 93.7%       | 41.9%              | 139     |
 
 - Out of sample, `span_filter` and `app_resolution` keep the same share of spans (about 15%) and all of the evidence, so the in-sample results were not an artifact of calibrating on the replayed data.
-- `app_job_buffer` keeps more spans on this capture (41%, against 24-29% on the seed-42 capture) with 100% evidence. Its reduction depends on the capture, because it keeps whole parts, and on seed 8 more parts were slow or sampled.
+- `app_job_buffer` keeps more spans on this capture (41%, against 24-29% on the seed-42 capture) with 100% evidence. Its reduction depends on the capture, because it keeps whole parts; I have not checked why seed 8 has more parts that are slow or errored.
 
 ## Rate benchmark including app-side methods (replay-emulated reducers, 2026-11-24)
 
