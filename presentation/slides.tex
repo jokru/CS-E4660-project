@@ -12,6 +12,9 @@
 \usecolortheme{seahorse}
 \setbeamertemplate{navigation symbols}{}
 \setbeamertemplate{footline}[frame number]
+% Plain glyph bullets: the default shaded ball bullets render only once in some PDF viewers.
+\setbeamertemplate{itemize item}{\color{structure}$\bullet$}
+\setbeamertemplate{itemize subitem}{\color{structure}$\circ$}
 
 \newcommand{\m}[1]{\texttt{\detokenize{#1}}}
 \definecolor{good}{RGB}{34,139,34}
@@ -37,8 +40,8 @@
     \item Is it worth going deeper than OpenTelemetry collector config options for trace processing?
     \item Do simple reducers miss rare exceptions?
     \item Does a smarter reducer matter enough for finding exceptions and anomalies?
-    \item Can an LLM keep up at reasonable cost? \hfill \textit{(not tested)}
     \item Application-level vs.\ collector-level adaptability?
+    \item Can an LLM keep up at reasonable cost? \hfill \textit{(not tested)}
   \end{itemize}
 \end{frame}
 
@@ -52,7 +55,7 @@
       \textbf{Mock data platform} (Dagster + OpenTelemetry)
       \begin{itemize}
         \item 49 jobs: importers, transformers, loaders
-        \item DB, cloud storage, HTTP, first- and third-party services
+        \item IO operations mocked with descriptive names and trace metadata: DB, cloud storage, HTTP, first- and third-party services
         \item $\approx$900 spans per trace, jobs in their own processes
         \item Overlapping runs, seeded and repeatable
       \end{itemize}
@@ -299,7 +302,7 @@
         \item Hold nothing where possible: memory is rate $\times$ hold time.
         \item Calibrate on a recent baseline; drift matters.
         \item Measure against a ground truth; trace-level recall hides losses.
-        \item Check the measurement: two results were wrong at first (replay changed span IDs; tail samplers compared at different holds).
+        \item Mocking and a single laptop limit scale, a compute cluster would have taken more time than available.
       \end{itemize}
     \end{column}
     \begin{column}{0.48\textwidth}
@@ -307,12 +310,11 @@
       \begin{itemize}
         \item One synthetic workload; no real production traces
         \item Mock app too slow for high rates, so replay is used for scale
-        \item Rare anomaly rates ($\le$1\%) and the LLM agent untested
+        \item LLM agent was not tested
         \item In-app cost of reducers unmeasured
         \item Mostly one run per setting
       \end{itemize}
       \smallskip
-      \textbf{AI usage:} code and docs written with Copilot (Claude models) under the author's direction; checked with tests and runs.
     \end{column}
   \end{columns}
 \end{frame}
