@@ -106,7 +106,7 @@ Next:
 - Done (see RESULTS.md runs 2 and 3, seeds 7 and 8, thresholds calibrated on seed 42): `span_filter` and `app_resolution` keep about 15% of spans with 100% evidence, `app_job_buffer` keeps 29-41% of spans with 100% evidence, `routed_tail_sampling` keeps only 47% evidence. The routed shortfall is not a routing or flush problem: whole-trace duration barely separates anomalous from normal traces (anomalous traces median 78% of the job threshold, normal 70%), so the collector's trace-level latency policy cannot select them without keeping most normal traces. This supports the dead-end decision beyond memory use
 - Rate benchmark done (RESULTS.md): `span_filter` memory is flat (104-124 MB from 5 to 40 traces/s) at 100% evidence, `routed_tail_sampling` grows to 1.5 GB at 40/s with under 30% evidence. With equal 90 s holds and a 1 GB limit (RESULTS.md) `anomalies_sampling` and `routed_tail_sampling` are both OOM-killed from 10 traces/s, while `span_filter` stays at about 115 MB with 100% evidence
 - Tunable anomaly rate (about 1% or less) and rare versus bursty scenario variants
-- Emulate the app-side reducers in the replay, to benchmark them at high rates
+- Done: app-side reducers are emulated in the replay (`replay_reducers.py`, validated span for span against the live processors) and benchmarked at 5-40 traces/s on two seeds (RESULTS.md). Still open: the in-app cost of the reducers (CPU, spans `job_buffer` buffers)
 - Online statistical sampling (thresholds learned while running instead of calibrated, see notes)
 - LLM agent as a configuration agent: reads the evaluation and calibration outputs and proposes collector configs (thresholds, which spans to filter), rather than deciding per trace
 - Plots of the results (from `mock-io-eval --json`)

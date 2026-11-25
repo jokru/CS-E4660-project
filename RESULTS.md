@@ -1,5 +1,23 @@
 # Results
 
+## Rate benchmark including app-side methods (replay-emulated reducers, 2026-11-24)
+
+`mock-io-replay` now applies the app-side reducers' rules to each replayed trace (`src/mock_io_app/replay_reducers.py`) and sends only what the app would forward, to the collector's own port. Validated against the real processors: on the seed-8 live capture the emulation keeps exactly the same spans (resolution 31,920 and job_buffer 89,487 of 220,354), and a unit test compares both on synthetic traces. One approximation: a `job.*` span is treated as having a remote parent (jobs run in their own process); every other parent link is local.
+
+`--rates 5,10,20,40 --duration 60 --decision-wait 5s --memory 1g`, two replay seeds (1 and 2), same capture and thresholds as above, so evidence is in-sample. None of these collectors hold traces, so the hold time does not matter. Raw logs: `bench_app_s1/`, `bench_app_s2/`. "peak MB" is the receiving collector's memory, not the cost of running the reducer in the app.
+
+| collector      | spans kept (s1 / s2) | evidence (s1 / s2) | peak MB, 5/s to 40/s (s1) | slow recall | normal traces kept |
+| -------------- | -------------------- | ------------------ | ------------------------- | ----------- | ------------------ |
+| span_filter    | 14.5-15.0% / 14.6-15.0% | 100% / 100%     | 107-121                   | 100%        | 100%               |
+| app_resolution | 14.2% / 14.2%        | 100% / 100%        | 62-78                     | 100%        | 100%               |
+| app_job_buffer | 26.6-29.2% / 23.8-28.9% | 100% / 100%     | 94-112                    | 93.5-100%   | 29-36%             |
+
+- Both seeds reproduce the live-run result: all three keep 100% of the evidence; `app_resolution` is cheapest at about 14% of spans, `span_filter` about 15%, `app_job_buffer` 24-29%.
+- Rate has no effect on any of them (5 to 40 traces/s): the reduction and the receiving collector's memory stay flat, because none of them hold traces in the collector.
+- `app_job_buffer` is the only one that drops whole traces (it keeps 29-36% of normal traces) and the only one with slow recall below 100% (it samples 5% of normal parts, and its slow recall is a trace-level measure).
+- The seed-2 run of `span_filter` at 40/s had one `DEADLINE_EXCEEDED` request (achieved 25.7 traces/s), so that row is slightly short of its target.
+- Not measured here: the cost of running the reducers inside the app (CPU, and the spans `job_buffer` holds for running jobs).
+
 ## Rate benchmark, production-style: 90 s holds, 1 GB limit (2026-11-24)
 
 Same capture and replay seed for every collector: `--rates 5,10,20 --duration 120 --decision-wait 90s --memory 1g --seed 1`. The plain tail samplers hold 90 s; `routed_tail_sampling` keeps its 45/60/90 s buckets. Raw: `bench/results.json`, log `bench/benchmark_rates_90s.log`. The earlier 5 s-wait run is archived in `archive/bench_before_new_methods/`.
