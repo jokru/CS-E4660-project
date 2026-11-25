@@ -1,5 +1,23 @@
 # Results
 
+## Threshold drift: latencies scaled 0.5x and 2x (live, seed 9, 2026-11-25)
+
+Thresholds stay calibrated on the seed-42 capture at normal latency. Live runs: `mock-io-run --latency-scale {0.5,2} --rate 0.5 --runs 260 --workers 8 --seed 9`, `baseline_naive`, `span_filter`, `app_job_buffer` and `app_resolution` fed at once. Raw output: `archive/drift_scale_0.5/` and `archive/drift_scale_2/` (not in git). The runs include the scenario's injected job failures, so `mock-io-run` exits with 1 as before; all runs completed.
+
+| latency scale | collector      | traces | spans kept | evidence | slow recall | normal traces kept |
+| ------------- | -------------- | ------ | ---------- | -------- | ----------- | ------------------ |
+| 0.5           | span_filter    | 100.0% | 15.0%      | 98.9%    | 100.0%      | 100.0%             |
+| 0.5           | app_resolution | 100.0% | 14.1%      | 97.8%    | 100.0%      | 100.0%             |
+| 0.5           | app_job_buffer | 57.3%  | 39.2%      | 97.8%    | 100.0%      | 34.3%              |
+| 2             | span_filter    | 100.0% | 15.5%      | 100.0%   | 100.0%      | 100.0%             |
+| 2             | app_resolution | 100.0% | 17.3%      | 100.0%   | 100.0%      | 100.0%             |
+| 2             | app_job_buffer | 98.1%  | 92.2%      | 100.0%   | 100.0%      | 97.1%              |
+
+- **Faster than calibrated (0.5x):** thresholds are then too high, and the first evidence misses appear: 98.9% for `span_filter`, 97.8% for the others. All three still keep nearly everything that matters. I have not examined which anomalies were missed.
+- **Slower than calibrated (2x):** evidence stays at 100%, because thresholds are then too low and more spans count as slow. `span_filter` and `app_resolution` barely grow (15.5% and 17.3% of spans). `app_job_buffer` is the sensitive one: it keeps 92% of spans (98% of traces), so its reduction almost disappears, since a part is kept whenever any of its spans is slow.
+- Takeaway: a latency shift in either direction does not break the span-level methods, but drift to slower latencies removes `app_job_buffer`'s reduction, and drift to faster latencies starts to cost evidence. Recalibrate on a recent baseline capture when the workload changes.
+- One run per scale, so differences of about one percentage point in evidence are not significant.
+
 ## Rate benchmark, out-of-sample capture (seed 8, 2026-11-25)
 
 Same benchmark as above, but replaying the seed-8 live capture (`captures/supermarket_seed8/`), which the thresholds (calibrated on seed 42) have never seen, so evidence is out-of-sample. `--rates 10,40 --duration 60 --decision-wait 5s --memory 1g --seed 1`. Raw log: `bench_oos/`.
