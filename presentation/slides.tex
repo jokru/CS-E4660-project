@@ -84,7 +84,7 @@
     Stock, tail sampling & \m{anomalies_sampling}, \m{anomalies_sampling_limited}, & whole traces \\
      & \m{routed_tail_sampling} (per-job hold 45--90\,s) & until decision \\
     Calibrated collector & \m{span_filter} & nothing \\
-    Application side & \m{job_buffer}, \m{resolution} & a job, or nothing \\
+    Application side & \m{job_buffer}, \m{span_filter_path} & a job, or nothing \\
     LLM agent & --- (no time) & \\
     \bottomrule
   \end{tabular}
@@ -154,7 +154,7 @@
         ybar, bar width=7pt, width=0.95\textwidth, height=0.58\textheight,
         ymin=0, ymax=110, ylabel={share kept (\%)},
         symbolic x coords={a,b,c,d,e,f,g},
-        xtick=data, xticklabels={\m{sampling}, \m{anomalies_sampling}, \m{anomalies_sampling_limited}, \m{routed_tail_sampling}, \m{span_filter}, \m{app_job_buffer}, \m{app_resolution}}, x tick label style={rotate=20, anchor=east, font=\scriptsize},
+        xtick=data, xticklabels={\m{sampling}, \m{anomalies_sampling}, \m{anomalies_sampling_limited}, \m{routed_tail_sampling}, \m{span_filter}, \m{app_job_buffer}, \m{app_span_filter_path}}, x tick label style={rotate=20, anchor=east, font=\scriptsize},
         legend style={at={(0.5,1.05)}, anchor=south, legend columns=2, font=\footnotesize},
         enlarge x limits=0.08, nodes near coords, every node near coord/.append style={font=\tiny},
       ]
@@ -241,7 +241,7 @@
     Method & spans kept & evidence & slow recall & normal traces kept & collector MB \\
     \midrule
     \m{span_filter} & 15\% & 100\% & 100\% & 100\% & 104--125 \\
-    \m{app_resolution} & 14\% & 100\% & 100\% & 100\% & 62--90 \\
+    \m{app_span_filter_path} & 14\% & 100\% & 100\% & 100\% & 62--90 \\
     \m{app_job_buffer} & 24--41\% & 100\% & 94--100\% & 29--42\% & 84--139 \\
     \bottomrule
   \end{tabular}
@@ -266,10 +266,10 @@
     latency & method & spans kept & evidence & normal traces kept \\
     \midrule
     $\times$0.5 & \m{span_filter}     & 15.0\% & 98.9\% & 100\% \\
-    $\times$0.5 & \m{app_resolution}  & 14.1\% & 97.8\% & 100\% \\
+    $\times$0.5 & \m{app_span_filter_path}  & 14.1\% & 97.8\% & 100\% \\
     $\times$0.5 & \m{app_job_buffer}  & 39.2\% & 97.8\% & 34\% \\
     $\times$2   & \m{span_filter}     & 15.5\% & 100\% & 100\% \\
-    $\times$2   & \m{app_resolution}  & 17.3\% & 100\% & 100\% \\
+    $\times$2   & \m{app_span_filter_path}  & 17.3\% & 100\% & 100\% \\
     $\times$2   & \m{app_job_buffer}  & \bad{92.2\%} & 100\% & 97\% \\
     \bottomrule
   \end{tabular}
@@ -288,7 +288,7 @@
     \item[Simple reducers miss rare exceptions?] \textbf{Yes.} 10\% sampling keeps 13--15\% of the evidence; some anomaly types are missed completely.
     \item[Smarter reducer worth it?] \textbf{Yes, for calibrated span-level thresholds}: 100\% evidence at 15\% of the spans. Not tested for an LLM-based reducer.
     \item[LLM at reasonable cost?] \textbf{Not tested.}
-    \item[Application vs.\ collector?] \textbf{Some advantages in the app}: it knows when a job ends and \m{resolution} keeps the fewest spans. But \m{span_filter} reaches the same evidence without touching the app, \m{job_buffer} is the most drift-sensitive, and the in-app cost is unmeasured.
+    \item[Application vs.\ collector?] \textbf{Some advantages in the app}: it knows when a job ends and \m{span_filter_path} keeps the fewest spans. But \m{span_filter} reaches the same evidence without touching the app, \m{job_buffer} is the most drift-sensitive, and the in-app cost is unmeasured.
   \end{description}
 \end{frame}
 

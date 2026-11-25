@@ -10,7 +10,7 @@ from opentelemetry.trace import NonRecordingSpan, SpanContext, Status, StatusCod
 
 from mock_io_app.app_reducers import (
     JobBufferProcessor,
-    ResolutionProcessor,
+    SpanFilterPathProcessor,
     Thresholds,
     is_sampled,
 )
@@ -82,10 +82,10 @@ def test_job_buffer_decides_each_local_root_separately(exported: InMemorySpanExp
     }
 
 
-def test_resolution_keeps_skeleton_and_the_path_to_interesting_spans(
+def test_span_filter_path_keeps_skeleton_and_the_path_to_interesting_spans(
     exported: InMemorySpanExporter,
 ) -> None:
-    tracer = _tracer(ResolutionProcessor(SimpleSpanProcessor(exported), Thresholds(FAST)))
+    tracer = _tracer(SpanFilterPathProcessor(SimpleSpanProcessor(exported), Thresholds(FAST)))
     with (
         tracer.start_as_current_span("job.a", context=_remote_parent()),
         tracer.start_as_current_span("op.x"),

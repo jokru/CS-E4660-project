@@ -28,7 +28,7 @@ The methods are grouped by where the reduction logic runs and how much it holds 
 | Stock collector, stateless           | `sampling` (10% of traces)                                                 | nothing                           |
 | Stock collector, tail sampling       | `anomalies_sampling`, `anomalies_sampling_limited`, `routed_tail_sampling` | whole traces until a decision     |
 | Collector with calibrated thresholds | `span_filter`                                                              | nothing                           |
-| Application side                     | `job_buffer`, `resolution`                                                 | a running job's spans, or nothing |
+| Application side                     | `job_buffer`, `span_filter_path`                                                 | a running job's spans, or nothing |
 | LLM agent                            | did not have time                                                          |                                   |
 
 The stock collector methods use only OpenTelemetry Collector configuration. `span_filter` and `routed_tail_sampling` are still plain configuration, but generated from thresholds learned from a recorded baseline run (5× the median duration per service and span name, and per-job run durations). This separates what the collector can do from where its parameters come from. The application-side reducers run inside the app, where they know when a job has finished and need not guess how long to wait. All methods decide on observable signals only (errors and durations), never on the injected anomaly labels.
@@ -59,7 +59,7 @@ flowchart LR
   thr --> app
   thr --> col
   app[Mock I/O app] -->|all spans, port 4317| col[OpenTelemetry Collector:<br/>one pipeline per method]
-  app -->|job_buffer and resolution streams,<br/>ports 4319 and 4320| col
+  app -->|job_buffer and span_filter_path streams,<br/>ports 4319 and 4320| col
   replay[mock-io-replay] -.->|recorded capture,<br/>5-40 traces/s| col
   app --> gt[(ground truth)]
   col --> out[(one output file per method)]
@@ -86,7 +86,7 @@ The app cannot produce the trace rates where the methods differ in cost. Every r
 
 The replay has caveats that limit what it can answer:
 
-- **Application-side methods are emulated, and their in-app cost is unmeasured.** `job_buffer` and `resolution` run inside the app processes, which the replay bypasses. `mock-io-replay --reducer` therefore applies their keep/drop rules to each replayed trace (`replay_reducers.py`) and sends only what the app would forward. On the seed 8 capture the emulation keeps exactly the same spans as the real processors (31,920 for `resolution` and 89,487 for `job_buffer`, of 220,354), with one approximation: a `job.*` span is treated as having a remote parent. The benchmark measures reduction, evidence and the receiving collector's memory, but not the CPU and memory the reducers cost inside the app.
+- **Application-side methods are emulated, and their in-app cost is unmeasured.** `job_buffer` and `span_filter_path` run inside the app processes, which the replay bypasses. `mock-io-replay --reducer` therefore applies their keep/drop rules to each replayed trace (`replay_reducers.py`) and sends only what the app would forward. On the seed 8 capture the emulation keeps exactly the same spans as the real processors (31,920 for `span_filter_path` and 89,487 for `job_buffer`, of 220,354), with one approximation: a `job.*` span is treated as having a remote parent. The benchmark measures reduction, evidence and the receiving collector's memory, but not the CPU and memory the reducers cost inside the app.
 - **Traces arrive whole.** A replayed trace is sent in one request, while app spans arrive over the length of a run, so the plain tail samplers use a short decision wait (5 s in the first benchmark) instead of the 120 s needed for app runs. A second benchmark used 90 s holds for every tail sampler (plus 1 GB memory limit), which is the comparable setting for memory.
 - **In-sample thresholds.** The replayed seed 42 capture is the one the thresholds were calibrated on, so its evidence is optimistic. A replay of the seed 8 capture, which the thresholds never saw, gave the same results for the methods that hold nothing. The accuracy runs are out of sample as well.
 
@@ -109,10 +109,10 @@ All numbers are in `RESULTS.md`. Evidence is the share of anomalous traces of wh
 | `anomalies_sampling_limited` | 1-38%    | 0-97%        | survives by refusing data; unstable between runs                    |
 | `routed_tail_sampling`     | 8-37%      | 47%          | 698 MB at 5/s; killed at 10/s                                       |
 | `span_filter`              | 15%        | 100%         | flat, 104-125 MB from 5 to 40/s                                     |
-| `app_resolution`           | 14%        | 100%         | flat, collector side 62-90 MB; in-app cost not measured             |
+| `app_span_filter_path`           | 14%        | 100%         | flat, collector side 62-90 MB; in-app cost not measured             |
 | `app_job_buffer`           | 24-41%     | 100%         | flat on the collector; reduction depends on the capture and drift   |
 
-- **Calibrated span-level methods win.** `span_filter` and `app_resolution` keep 100% of the evidence at about 15% of the spans, on two unseen seeds (7 and 8), in replays at 5 to 40 traces/s, and on a capture the thresholds had never seen. Random sampling keeps 13-15% of the evidence at a similar volume.
+- **Calibrated span-level methods win.** `span_filter` and `app_span_filter_path` keep 100% of the evidence at about 15% of the spans, on two unseen seeds (7 and 8), in replays at 5 to 40 traces/s, and on a capture the thresholds had never seen. Random sampling keeps 13-15% of the evidence at a similar volume.
 - **Tail sampling is a dead end here, for two reasons.** Its memory grows with rate times hold time, so with realistic 90 s holds both tail samplers are killed at 10 traces/s. And whole-trace latency cannot find the anomalies: anomalous traces reach a median 78% of their job's slow threshold and normal traces 70%, so any cutoff that finds the anomalies also keeps nearly every normal trace. `routed_tail_sampling` (per-job holds of 45 to 90 s) saves some memory but kept only 47% of the evidence and missed most slow-service anomalies.
 - **Latency drift.** With latencies scaled to 0.5x, evidence slips to 98-99%; at 2x it stays 100%, but `app_job_buffer` keeps 92% of the spans, so its reduction disappears. The span-level methods grew only to 15-17%. Recalibrating on a recent capture handles both.
 - **Not tested.** The LLM agent, the in-app CPU and memory cost of the reducers, rare anomaly rates of about 1% or less, and a real production workload.
@@ -128,7 +128,7 @@ Answers to the research questions:
 - Can an LLM keep up with reasonable costs?
 - - Could not test
 - Application level vs. collector level adaptability?
-- - Some advantages in application level: the app knows when a job ends, so `job_buffer` needs no hold time guess, and `resolution` holds nothing and keeps the fewest spans. But `span_filter` reaches the same evidence at the collector without touching the app, `job_buffer` is the most sensitive to drift, and the in-app cost was not measured.
+- - Some advantages in application level: the app knows when a job ends, so `job_buffer` needs no hold time guess, and `span_filter_path` holds nothing and keeps the fewest spans. But `span_filter` reaches the same evidence at the collector without touching the app, `job_buffer` is the most sensitive to drift, and the in-app cost was not measured.
 
 # 5. lesson
 
@@ -155,7 +155,7 @@ Adaptive tracing has a place but even in the age of AI is not a trivial thing.
 The goal of this project is to test and compare different adaptive tracing and trace reduction methods (for example sampling strategies and per-component tracing parameters). To get realistic, repeatable trace data, it is built on `mock-io-app`: a Dagster app whose jobs perform mocked I/O (database, GCS, HTTP and microservice calls) described by YAML scenarios. Every call emits OpenTelemetry spans, so the same workload can be replayed against different collectors and reduction methods.
 
 - [Mock I/O app](#mock-io-app): the workload generator (implemented).
-- [Collectors and reduction methods](#collectors-and-reduction-methods): the systems under test (baseline, fixed and tail sampling, span filtering, per-job routed tail sampling, app-side job buffering and adaptive resolution, and the evaluation harness exist; the LLM agent is pending).
+- [Collectors and reduction methods](#collectors-and-reduction-methods): the systems under test (baseline, fixed and tail sampling, span filtering, per-job routed tail sampling, app-side job buffering and span filtering with path, and the evaluation harness exist; the LLM agent is pending).
 
 # AI Usage
 
@@ -342,7 +342,7 @@ src/mock_io_app/
   job_factory.py    builds Dagster jobs and ops from scenarios
   resources/        fake db, gcs, http, service clients
   tracing.py        OpenTelemetry setup and context propagation
-  app_reducers.py   app-side reducers (job_buffer, resolution), MOCK_IO_APP_REDUCERS
+  app_reducers.py   app-side reducers (job_buffer, span_filter_path), MOCK_IO_APP_REDUCERS
   api/              FastAPI app, Dagster gateway, mock-io-ctl client
   evaluation.py     mock-io-eval: scores collector output against the baseline capture
   replay.py         mock-io-replay: resends a recorded capture at high rates (benchmark)
@@ -355,7 +355,7 @@ tests/
 
 # Collectors and reduction methods
 
-Implemented so far: the baseline, fixed sampling, tail sampling (plain, memory-capped and routed per job), a calibrated span filter, two app-side reducers (job buffering and adaptive resolution), and the evaluation loop they are measured with. The LLM agent is pending.
+Implemented so far: the baseline, fixed sampling, tail sampling (plain, memory-capped and routed per job), a calibrated span filter, two app-side reducers (job buffering and span filtering with path), and the evaluation loop they are measured with. The LLM agent is pending.
 
 ## Experiments
 
@@ -391,7 +391,7 @@ The script runs the named `collectors/<name>/config.yaml` files in one OpenTelem
 | `span_filter`                | `filter` (stateless): drops detail spans faster than their calibrated threshold that are not errors; keeps the skeleton (`run.`/`job.`/`op.`), spans without a threshold, and 1% of whole traces. Generated, see [Span-level and app-side methods](#span-level-and-app-side-methods) |
 | `routed_tail_sampling`       | `routing` connector + one `tail_sampling` per hold time: spans go by `mock_io.run_job` to a sampler whose `decision_wait` fits that job (45-90 s for supermarket); keeps errors, runs slower than 1.5× their job's median, 1% random. Generated                                      |
 | `app_job_buffer`             | receives the app's `job_buffer` stream on port 4319 and writes it unchanged                                                                                                                                                                                                          |
-| `app_resolution`             | receives the app's `resolution` stream on port 4320 and writes it unchanged                                                                                                                                                                                                          |
+| `app_span_filter_path`             | receives the app's `span_filter_path` stream on port 4320 and writes it unchanged                                                                                                                                                                                                          |
 
 Tail sampling decides `decision_wait` (120 s; supermarket runs at `--latency-scale 1` take up to about 40 s) after a trace's first span, so it must exceed the longest run, and the collector must keep running for that long after the workload ends. Thresholds and rates are starting points to tune per experiment.
 
@@ -406,9 +406,9 @@ Tail sampling turned out to be a dead end at higher rates: it holds every span f
 - **`routed_tail_sampling`** (collector): a hold time per job instead of one for all. The app tags every span with `mock_io.run_job` (the job being run) so the `routing` connector can route spans, not only whole traces. Spans without it (old captures, API request spans) go to a 120 s default; `mock-io-replay` adds it to old captures from their `run.*` span. An API request that launches several jobs has one trace whose spans split across samplers.
 - **App-side reducers** (`src/mock_io_app/app_reducers.py`) run in the app next to the full export (shadow mode), each sending its reduced stream to its own collector port, so the baseline still gets everything:
   - `job_buffer`: buffers the spans of each local trace part (a job's spans in its process, or the CLI's `run.*` span) until its root ends, then sends all of them if any errored or was slow, or the trace wins a 5% sample (`MOCK_IO_JOB_BUFFER_SAMPLE_RATE`; decided from the trace ID, so all processes agree), and drops them otherwise. Memory is bounded by the jobs currently running, and it knows when a job is done instead of waiting. Parts are decided separately, so kept traces can be partial.
-  - `resolution`: no buffering. Sends the skeleton always, and a detail span if it errored, was slow, has no threshold, or has a sent descendant (children end before their parents, so the path up to an interesting span is kept).
+  - `span_filter_path`: no buffering. Sends the skeleton always, and a detail span if it errored, was slow, has no threshold, or has a sent descendant (children end before their parents, so the path up to an interesting span is kept).
 
-  Enable them with `MOCK_IO_APP_REDUCERS=job_buffer,resolution` and `MOCK_IO_THRESHOLDS=thresholds/supermarket.json` (endpoints `MOCK_IO_JOB_BUFFER_ENDPOINT`, default `localhost:4319`, and `MOCK_IO_RESOLUTION_ENDPOINT`, `localhost:4320`), and run the `app_job_buffer` and `app_resolution` collectors; `run_collector.sh` publishes their ports. Their cost is in the app processes, so `mock-io-replay` and the rate benchmark (which bypass the app) cannot measure them.
+  Enable them with `MOCK_IO_APP_REDUCERS=job_buffer,span_filter_path` and `MOCK_IO_THRESHOLDS=thresholds/supermarket.json` (endpoints `MOCK_IO_JOB_BUFFER_ENDPOINT`, default `localhost:4319`, and `MOCK_IO_SPAN_FILTER_PATH_ENDPOINT`, `localhost:4320`), and run the `app_job_buffer` and `app_span_filter_path` collectors; `run_collector.sh` publishes their ports. Their cost is in the app processes, so `mock-io-replay` and the rate benchmark (which bypass the app) cannot measure them.
 
 **Jaeger alongside the collectors.** The `jaeger` collector forwards every trace to a local Jaeger, so you can browse traces while the experiment runs. The app sends to the collector on 4317, so move Jaeger's OTLP port to 14317:
 
@@ -502,7 +502,7 @@ docker run --rm -v "$PWD/collectors:/c:ro" otel/opentelemetry-collector-contrib:
 # Terminal 1: collectors (baseline plus methods, see Experiments); leave running
 rm -rf out ground_truth.jsonl
 bash scripts/run_collector.sh baseline_naive sampling anomalies_sampling anomalies_sampling_limited \
-  span_filter routed_tail_sampling app_job_buffer app_resolution   # or: all (needs Jaeger on 14317)
+  span_filter routed_tail_sampling app_job_buffer app_span_filter_path   # or: all (needs Jaeger on 14317)
 
 # Optional, terminal 2: Dagster UI to watch the runs (http://127.0.0.1:3000)
 mkdir -p .dagster_home
@@ -512,9 +512,9 @@ DAGSTER_HOME="$PWD/.dagster_home" uv run dagster dev -p 3000
 # each with parallel jobs (multiprocess). 260 runs = 10 iterations of the 26 leaf jobs, so all
 # anomaly windows are covered. DAGSTER_HOME makes the runs show up in the Dagster UI; omit it to
 # use a temporary instance instead.
-# MOCK_IO_APP_REDUCERS adds the app-side reducers' streams (to app_job_buffer / app_resolution).
+# MOCK_IO_APP_REDUCERS adds the app-side reducers' streams (to app_job_buffer / app_span_filter_path).
 DAGSTER_HOME="$PWD/.dagster_home" MOCK_IO_TRACE_EXPORTER=otlp MOCK_IO_GROUND_TRUTH_FILE=ground_truth.jsonl \
-  MOCK_IO_APP_REDUCERS=job_buffer,resolution MOCK_IO_THRESHOLDS=thresholds/supermarket.json \
+  MOCK_IO_APP_REDUCERS=job_buffer,span_filter_path MOCK_IO_THRESHOLDS=thresholds/supermarket.json \
   uv run mock-io-run --scenario scenarios/supermarket.yaml --latency-scale 1 \
   --rate 0.5 --runs 260 --workers 8 --seed 7
 

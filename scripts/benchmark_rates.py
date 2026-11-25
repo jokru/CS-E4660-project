@@ -52,11 +52,11 @@ DEFAULT_COLLECTORS = [
     "span_filter",
     "routed_tail_sampling",
     "app_job_buffer",
-    "app_resolution",
+    "app_span_filter_path",
 ]
 # App-side reducers cannot run in the replay's absence of an app, so the replay applies their
 # rules (replay_reducers.py) and sends only what they would forward to the collector's own port.
-APP_REDUCERS = {"app_job_buffer": "job_buffer", "app_resolution": "resolution"}
+APP_REDUCERS = {"app_job_buffer": "job_buffer", "app_span_filter_path": "span_filter_path"}
 UNITS = {"B": 1, "KIB": 2**10, "MIB": 2**20, "GIB": 2**30, "KB": 1e3, "MB": 1e6, "GB": 1e9}
 
 

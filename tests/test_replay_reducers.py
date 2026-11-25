@@ -9,7 +9,7 @@ from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 from opentelemetry.trace import NonRecordingSpan, SpanContext, Status, StatusCode, TraceFlags
 
-from mock_io_app.app_reducers import JobBufferProcessor, ResolutionProcessor, Thresholds
+from mock_io_app.app_reducers import JobBufferProcessor, SpanFilterPathProcessor, Thresholds
 from mock_io_app.replay import TraceTemplate, instantiate
 from mock_io_app.replay_reducers import Reducer
 
@@ -104,13 +104,13 @@ def _run(name: str, scenario: str, rate: float) -> tuple[list, set[bytes]]:
     processor = (
         JobBufferProcessor(downstream, THRESHOLDS, rate)
         if name == "job_buffer"
-        else ResolutionProcessor(downstream, THRESHOLDS)
+        else SpanFilterPathProcessor(downstream, THRESHOLDS)
     )
     spans = _run_trace(processor, TRACE_ID, scenario)
     return spans, {s.context.span_id.to_bytes(8, "big") for s in exported.get_finished_spans()}
 
 
-@pytest.mark.parametrize("name", ["job_buffer", "resolution"])
+@pytest.mark.parametrize("name", ["job_buffer", "span_filter_path"])
 @pytest.mark.parametrize("scenario", ["normal", "slow", "slow_other", "error"])
 @pytest.mark.parametrize("rate", [0.0, 1.0])
 def test_replay_reducer_keeps_the_same_spans_as_the_real_processor(
@@ -120,12 +120,14 @@ def test_replay_reducer_keeps_the_same_spans_as_the_real_processor(
     template = _template(spans)
     emulated = Reducer(name, THRESHOLDS, rate).kept_span_ids(template, TRACE_ID.to_bytes(16, "big"))
     assert emulated == real
-    assert len(real) < len(spans) or scenario != "normal" or rate == 1.0 or name == "resolution"
+    assert (
+        len(real) < len(spans) or scenario != "normal" or rate == 1.0 or name == "span_filter_path"
+    )
 
 
 def test_instantiate_copies_only_kept_spans() -> None:
     template = _template(_run_trace(_Capture(), TRACE_ID, "slow"))
-    reducer = Reducer("resolution", THRESHOLDS)
+    reducer = Reducer("span_filter_path", THRESHOLDS)
     copies, _ = instantiate(template, 10**18, random.Random(1), reducer)
     full, _ = instantiate(template, 10**18, random.Random(1))
     sent = sum(len(c.scope_spans[0].spans) for c in copies)
@@ -141,7 +143,7 @@ def test_reducer_rejects_unknown_names() -> None:
 def test_reduced_copy_carries_the_same_ids_as_the_full_copy() -> None:
     """A seeded reduced replay must be scorable against the seeded full replay."""
     template = _template(_run_trace(_Capture(), TRACE_ID, "slow"))
-    reducer = Reducer("resolution", THRESHOLDS)
+    reducer = Reducer("span_filter_path", THRESHOLDS)
     reduced, _ = instantiate(template, 10**18, random.Random(7), reducer)
     full, _ = instantiate(template, 10**18, random.Random(7))
 

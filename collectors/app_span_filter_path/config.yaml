@@ -1,0 +1,21 @@
+# app_span_filter_path: receives the app's own reduced stream (MOCK_IO_APP_REDUCERS=span_filter_path sends it to port
+# 4320 next to the full export) and writes it unchanged. See src/mock_io_app/app_reducers.py.
+receivers:
+  otlp/app_span_filter_path:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4320
+
+processors:
+  batch: {}
+
+exporters:
+  file/app_span_filter_path:
+    path: /out/app_span_filter_path.jsonl
+
+service:
+  pipelines:
+    traces/app_span_filter_path:
+      receivers: [otlp/app_span_filter_path]
+      processors: [batch]
+      exporters: [file/app_span_filter_path]

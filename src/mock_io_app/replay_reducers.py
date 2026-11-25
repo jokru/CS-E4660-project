@@ -1,4 +1,4 @@
-"""Apply the app-side reducers (job_buffer, resolution) to replayed traces.
+"""Apply the app-side reducers (job_buffer, span_filter_path) to replayed traces.
 
 The replay bypasses the app, so the reducers in `app_reducers.py` never see its spans. This module
 reproduces their keep/drop rules on a recorded trace, so a replay can send the reduced stream
@@ -10,7 +10,7 @@ One approximation: the real processors know which parent links cross a process b
 (`SpanContext.is_remote`). A capture does not record that, so a `job.*` span is treated as having
 a remote parent (each job runs in its own process under the `run.*` span) and every other parent
 link as local. On the seed-8 live capture this reproduces the real processors' output span for
-span (31,920 spans for `resolution`, 89,487 for `job_buffer`, of 220,354).
+span (31,920 spans for `span_filter_path`, 89,487 for `job_buffer`, of 220,354).
 """
 
 import threading
@@ -25,7 +25,7 @@ from mock_io_app.app_reducers import (
     is_sampled,
 )
 
-REDUCERS = ("job_buffer", "resolution")
+REDUCERS = ("job_buffer", "span_filter_path")
 _ERROR = Status.STATUS_CODE_ERROR
 
 
@@ -81,8 +81,8 @@ def _local_parent(info: _SpanInfo, by_id: dict[bytes, _SpanInfo]) -> _SpanInfo |
     return parent if parent is not None and _same_process(parent, info) else None
 
 
-def resolution_keep(infos: list[_SpanInfo]) -> set[bytes]:
-    """Spans `ResolutionProcessor` forwards: skeleton, errors, slow or uncalibrated spans, and
+def span_filter_path_keep(infos: list[_SpanInfo]) -> set[bytes]:
+    """Spans `SpanFilterPathProcessor` forwards: skeleton, errors, slow or uncalibrated spans, and
     the local ancestors of a forwarded detail span."""
     by_id = {i.span_id: i for i in infos}
     marked: set[bytes] = set()
@@ -141,14 +141,16 @@ class Reducer:
             if id(template) not in self._plans:
                 infos = _span_infos(template, self.thresholds)
                 self._plans[id(template)] = (
-                    resolution_keep(infos) if self.name == "resolution" else job_buffer_parts(infos)
+                    span_filter_path_keep(infos)
+                    if self.name == "span_filter_path"
+                    else job_buffer_parts(infos)
                 )
             return self._plans[id(template)]
 
     def kept_span_ids(self, template, trace_id: bytes) -> set[bytes]:
         """Original span IDs of `template` that survive, for a copy sent under `trace_id`."""
         plan = self._plan(template)
-        if self.name == "resolution":
+        if self.name == "span_filter_path":
             return set(plan)  # type: ignore[arg-type]
         sampled = is_sampled(int.from_bytes(trace_id, "big"), self.sample_rate)
         kept: set[bytes] = set()

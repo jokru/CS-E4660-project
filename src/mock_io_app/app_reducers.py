@@ -7,9 +7,9 @@ reduced stream per reducer:
 - `job_buffer`: buffers each local trace part (a job's spans in one process) until its local root
   ends, then forwards all of it if any span errored or was slow, or the trace is sampled, and
   drops it otherwise. Memory is bounded by the spans of the jobs currently running.
-- `resolution`: no buffering. Always forwards the skeleton (`run.`, `job.`, `op.` spans), and a
-  detail span only if it errored, was slow, or has a forwarded descendant (children end first,
-  so a kept span marks its parent to keep).
+- `span_filter_path`: no buffering. Always forwards the skeleton (`run.`, `job.`, `op.` spans),
+  and a detail span only if it errored, was slow, or has a forwarded descendant (children end
+  first, so a kept span marks its parent to keep).
 
 "Slow" compares a span's duration to a per (service.name, span name) threshold calibrated from a
 baseline capture by scripts/calibrate_thresholds.py.
@@ -27,7 +27,7 @@ from opentelemetry.trace import StatusCode
 
 SKELETON_PREFIXES = ("run.", "job.", "op.")
 DEFAULT_SAMPLE_RATE = 0.05
-DEFAULT_ENDPOINTS = {"job_buffer": "localhost:4319", "resolution": "localhost:4320"}
+DEFAULT_ENDPOINTS = {"job_buffer": "localhost:4319", "span_filter_path": "localhost:4320"}
 
 
 @dataclass(frozen=True)
@@ -132,7 +132,7 @@ class JobBufferProcessor(_Forwarding):
             return sum(len(p.spans) for p in self._parts.values())
 
 
-class ResolutionProcessor(_Forwarding):
+class SpanFilterPathProcessor(_Forwarding):
     def __init__(self, downstream: SpanProcessor, thresholds: Thresholds) -> None:
         super().__init__(downstream)
         self.thresholds = thresholds
@@ -191,5 +191,5 @@ def build_app_reducers(spec: str) -> list[SpanProcessor]:
             rate = float(os.environ.get("MOCK_IO_JOB_BUFFER_SAMPLE_RATE", DEFAULT_SAMPLE_RATE))
             reducers.append(JobBufferProcessor(downstream, thresholds, rate))
         else:
-            reducers.append(ResolutionProcessor(downstream, thresholds))
+            reducers.append(SpanFilterPathProcessor(downstream, thresholds))
     return reducers
