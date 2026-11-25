@@ -12,3 +12,7 @@ ground_truth.jsonl
 captures/
 bench/
 bench_oos/
+bench_app_s1/
+bench_app_s2/
+archive/
+log.txt

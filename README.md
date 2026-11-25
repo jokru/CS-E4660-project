@@ -86,9 +86,9 @@ The app cannot produce the trace rates where the methods differ in cost. Every r
 
 The replay has caveats that limit what it can answer:
 
-- **No application-side methods.** `job_buffer` and `resolution` run inside the app processes, and the replay bypasses the app, so they are not covered. The application versus collector comparison therefore rests on the accuracy runs at 0.5 runs/s only, and the application-side cost at high rates is unmeasured. Emulating the reducers in the replay would close this gap.
-- **Traces arrive whole.** A replayed trace is sent in one request, while app spans arrive over the length of a run, so the plain tail samplers use a short decision wait (5 s in the latest benchmark) instead of the 120 s needed for app runs. Their memory at a realistic wait would be higher.
-- **In-sample thresholds.** The replayed capture is the seed 42 run the thresholds were calibrated on, so evidence in the benchmark is optimistic. The accuracy runs give the out-of-sample figures.
+- **Application-side methods are emulated, and their in-app cost is unmeasured.** `job_buffer` and `resolution` run inside the app processes, which the replay bypasses. `mock-io-replay --reducer` therefore applies their keep/drop rules to each replayed trace (`replay_reducers.py`) and sends only what the app would forward. On the seed 8 capture the emulation keeps exactly the same spans as the real processors (31,920 for `resolution` and 89,487 for `job_buffer`, of 220,354), with one approximation: a `job.*` span is treated as having a remote parent. The benchmark measures reduction, evidence and the receiving collector's memory, but not the CPU and memory the reducers cost inside the app.
+- **Traces arrive whole.** A replayed trace is sent in one request, while app spans arrive over the length of a run, so the plain tail samplers use a short decision wait (5 s in the first benchmark) instead of the 120 s needed for app runs. A second benchmark used 90 s holds for every tail sampler (plus 1 GB memory limit), which is the comparable setting for memory.
+- **In-sample thresholds.** The replayed seed 42 capture is the one the thresholds were calibrated on, so its evidence is optimistic. A replay of the seed 8 capture, which the thresholds never saw, gave the same results for the methods that hold nothing. The accuracy runs are out of sample as well.
 
 # 4. result
 
@@ -98,16 +98,37 @@ Initial hypotheses:
 - **Tail sampling keeps anomalies, but its memory grows with the trace rate until it runs out.** Confirmed: `anomalies_sampling` keeps 100% evidence at low rates, but holds every trace until its decision, and was killed at 10 traces/s with a 1 GB limit, losing everything. Its fixed 1 s latency policy also matched almost every trace, so it barely reduced anything. Relates to "Does a smarter reducer matter enough?".
 
 
+## Findings
+
+All numbers are in `RESULTS.md`. Evidence is the share of anomalous traces of which an injected-anomaly span was kept.
+
+| Method                     | Spans kept | Evidence     | Memory and cost                                                     |
+| -------------------------- | ---------- | ------------ | ------------------------------------------------------------------- |
+| `sampling` (10%)           | 10-13%     | 13-15%       | flat (108 MB at 40 traces/s)                                        |
+| `anomalies_sampling`       | 100%       | 100%         | 1 GB at 5 traces/s with 90 s holds; killed at 10/s                  |
+| `anomalies_sampling_limited` | 1-38%    | 0-97%        | survives by refusing data; unstable between runs                    |
+| `routed_tail_sampling`     | 8-37%      | 47%          | 698 MB at 5/s; killed at 10/s                                       |
+| `span_filter`              | 15%        | 100%         | flat, 104-125 MB from 5 to 40/s                                     |
+| `app_resolution`           | 14%        | 100%         | flat, collector side 62-90 MB; in-app cost not measured             |
+| `app_job_buffer`           | 24-41%     | 100%         | flat on the collector; reduction depends on the capture and drift   |
+
+- **Calibrated span-level methods win.** `span_filter` and `app_resolution` keep 100% of the evidence at about 15% of the spans, on two unseen seeds (7 and 8), in replays at 5 to 40 traces/s, and on a capture the thresholds had never seen. Random sampling keeps 13-15% of the evidence at a similar volume.
+- **Tail sampling is a dead end here, for two reasons.** Its memory grows with rate times hold time, so with realistic 90 s holds both tail samplers are killed at 10 traces/s. And whole-trace latency cannot find the anomalies: anomalous traces reach a median 78% of their job's slow threshold and normal traces 70%, so any cutoff that finds the anomalies also keeps nearly every normal trace. `routed_tail_sampling` (per-job holds of 45 to 90 s) saves some memory but kept only 47% of the evidence and missed most slow-service anomalies.
+- **Latency drift.** With latencies scaled to 0.5x, evidence slips to 98-99%; at 2x it stays 100%, but `app_job_buffer` keeps 92% of the spans, so its reduction disappears. The span-level methods grew only to 15-17%. Recalibrating on a recent capture handles both.
+- **Not tested.** The LLM agent, the in-app CPU and memory cost of the reducers, rare anomaly rates of about 1% or less, and a real production workload.
+
+Answers to the research questions:
+
 - Is it worth it to go deeper than OTel collector config options for trace processing?
-- - Inconclusive
+- - Partly. The best collector-side method, `span_filter`, is still plain collector configuration, but generated from thresholds learned from a baseline capture. The stock tail sampling configurations were the ones that failed. What pays off is calibrated, span-level decisions, not custom code.
 - Do simple reducers miss rare exceptions?
 - - Yes
 - Does a smarter reducer matter enough for finding exceptions and anomalies?
-- - Inconclusive
+- - Yes for calibrated span-level thresholds (100% evidence at 15% of the spans, against 13-15% evidence for random sampling). Not tested for an LLM-based reducer.
 - Can an LLM keep up with reasonable costs?
 - - Could not test
 - Application level vs. collector level adaptability?
-- - Some advantages in application level
+- - Some advantages in application level: the app knows when a job ends, so `job_buffer` needs no hold time guess, and `resolution` holds nothing and keeps the fewest spans. But `span_filter` reaches the same evidence at the collector without touching the app, `job_buffer` is the most sensitive to drift, and the in-app cost was not measured.
 
 # 5. lesson
 
@@ -118,6 +139,14 @@ Problems faced
 - - Replay made testing an agentic tracer more difficult
 
 A proper compute cluster could have overcome the apps performance limitation, but the time budget did not allow to go deeper.
+
+What we learned
+
+- Decide on the span, not the trace: a slow call stands out on its own even when the whole job is long, while whole-trace latency barely separates anomalous from normal traces.
+- Holding traces costs memory in proportion to rate times hold time, and a collector that runs out of memory loses everything it holds, not just the excess. Hold nothing where possible.
+- Thresholds need calibration on a recent baseline, and drift matters: slower latencies than calibrated erase `job_buffer`'s reduction, faster ones start to cost evidence.
+- Measure with a ground truth. Trace-level recall hides what span-level methods lose, which is why the evidence metric was added.
+- Check the measurement before trusting it: two of the benchmark results were wrong at first (a replay bug that changed span IDs, and tail samplers compared at different hold times).
 
 Adaptive tracing has a place but even in the age of AI is not a trivial thing.
 
