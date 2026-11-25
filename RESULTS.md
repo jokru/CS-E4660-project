@@ -1,5 +1,21 @@
 # Results
 
+## Rate benchmark, out-of-sample capture (seed 8, 2026-11-25)
+
+Same benchmark as above, but replaying the seed-8 live capture (`captures/supermarket_seed8/`), which the thresholds (calibrated on seed 42) have never seen, so evidence is out-of-sample. `--rates 10,40 --duration 60 --decision-wait 5s --memory 1g --seed 1`. Raw log: `bench_oos/`.
+
+| rate | collector      | spans kept | evidence | slow recall | normal traces kept | peak MB |
+| ---- | -------------- | ---------- | -------- | ----------- | ------------------ | ------- |
+| 10/s | span_filter    | 15.0%      | 100.0%   | 100.0%      | 100.0%             | 106     |
+| 10/s | app_resolution | 14.5%      | 100.0%   | 100.0%      | 100.0%             | 68      |
+| 10/s | app_job_buffer | 40.8%      | 100.0%   | 96.9%       | 40.9%              | 98      |
+| 40/s | span_filter    | 15.2%      | 100.0%   | 100.0%      | 100.0%             | 125     |
+| 40/s | app_resolution | 14.5%      | 100.0%   | 100.0%      | 100.0%             | 90      |
+| 40/s | app_job_buffer | 40.6%      | 100.0%   | 93.7%       | 41.9%              | 139     |
+
+- Out of sample, `span_filter` and `app_resolution` keep the same share of spans (about 15%) and all of the evidence, so the in-sample results were not an artifact of calibrating on the replayed data.
+- `app_job_buffer` keeps more spans on this capture (41%, against 24-29% on the seed-42 capture) with 100% evidence. Its reduction depends on the capture, because it keeps whole parts, and on seed 8 more parts were slow or sampled.
+
 ## Rate benchmark including app-side methods (replay-emulated reducers, 2026-11-24)
 
 `mock-io-replay` now applies the app-side reducers' rules to each replayed trace (`src/mock_io_app/replay_reducers.py`) and sends only what the app would forward, to the collector's own port. Validated against the real processors: on the seed-8 live capture the emulation keeps exactly the same spans (resolution 31,920 and job_buffer 89,487 of 220,354), and a unit test compares both on synthetic traces. One approximation: a `job.*` span is treated as having a remote parent (jobs run in their own process); every other parent link is local.
