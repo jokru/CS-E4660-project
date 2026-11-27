@@ -1,6 +1,6 @@
 # jaeger: forwards every trace to a local Jaeger (not a reduction method; for browsing the traces).
 # Start Jaeger with host port 14317 mapped to its OTLP gRPC port, so it does not clash with the
-# collector's 4317 (see README). Leave this collector out when Jaeger is not running.
+# collector's 4317 (see RUNNING.md). Leave this collector out when Jaeger is not running.
 receivers:
   otlp:
     protocols:

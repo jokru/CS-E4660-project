@@ -1,5 +1,7 @@
 # Project idea
 
+> Rough working notes kept during the project: the original idea, intermediate results and decisions. The finalized research report is [README.md](README.md); setup and running instructions are in [RUNNING.md](RUNNING.md).
+
 ## The problem
 
 - In a production application, a lot of requests
@@ -109,7 +111,6 @@ Next:
 - Done: app-side reducers are emulated in the replay (`replay_reducers.py`, validated span for span against the live processors) and benchmarked at 5-40 traces/s on two seeds (RESULTS.md). Still open: the in-app cost of the reducers (CPU, spans `job_buffer` buffers)
 - Online statistical sampling (thresholds learned while running instead of calibrated, see notes)
 - LLM agent as a configuration agent: reads the evaluation and calibration outputs and proposes collector configs (thresholds, which spans to filter), rather than deciding per trace
-- Plots of the results (from `mock-io-eval --json`)
 - Plots of the results (from `mock-io-eval --json`)
 
 ## Notes/ideas

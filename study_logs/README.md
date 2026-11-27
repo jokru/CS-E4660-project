@@ -1,0 +1,6 @@
+# References
+
+- Study log 1: L. Fabri, B. Häckel, A. M. Oberländer, M. Rieg and A. Stohr. "Disentangling Human-AI Hybrids: Conceptualizing the Interworking of Humans and AI-Enabled Systems." *Business & Information Systems Engineering*, 65(6), pp. 623-641, 2023. [doi:10.1007/s12599-023-00810-1](https://doi.org/10.1007/s12599-023-00810-1)
+- Study log 2: D. G. Reichelt, S. Yang, M. Hansson and W. Hasselbring. "Benchmarking the Overhead of Distributed Tracing Agents." In *Proceedings of the 17th ACM/SPEC International Conference on Performance Engineering (ICPE '26)*, pp. 147-161, 2026. [doi:10.1145/3777884.3797004](https://doi.org/10.1145/3777884.3797004)
+- Study log 4: Z. Seyedghorban, E. Klimov, A. van Deursen, A. Panichella and B. Kulahcioglu Ozkan. "Observability and Fault Injection for LLM-Based Multi-Agent Systems in Software Engineering." In *Proceedings of the 2026 IEEE International Conference on Software Testing, Verification and Validation (ICST 2026)*, pp. 211-215, 2026. [doi:10.1109/ICST69053.2026.00037](https://doi.org/10.1109/ICST69053.2026.00037), [arXiv:2608.24271](https://arxiv.org/abs/2608.24271)
+- Study log 4: [Agent Patterns Catalog](https://www.agentpatternscatalog.org/).
