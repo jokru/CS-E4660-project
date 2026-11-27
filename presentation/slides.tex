@@ -41,7 +41,6 @@
     \item Do simple reducers miss rare exceptions?
     \item Does a smarter reducer matter enough for finding exceptions and anomalies?
     \item Application-level vs.\ collector-level adaptability?
-    \item Can an LLM keep up at reasonable cost? \hfill \textit{(not tested)}
   \end{itemize}
 \end{frame}
 
@@ -286,9 +285,7 @@
   \begin{description}
     \item[Beyond collector config?] \textbf{Partly.} The best collector method is still plain config, but generated from calibrated thresholds. The stock tail-sampling configs failed. What pays off is calibrated, span-level decisions, not custom code.
     \item[Simple reducers miss rare exceptions?] \textbf{Yes.} 10\% sampling keeps 13--15\% of the evidence; some anomaly types are missed completely.
-    \item[Smarter reducer worth it?] \textbf{Yes, for calibrated span-level thresholds}: 100\% evidence at 15\% of the spans. Not tested for an LLM-based reducer.
-    \item[LLM at reasonable cost?] \textbf{Not tested.}
-    \item[Application vs.\ collector?] \textbf{Some advantages in the app}: it knows when a job ends and \m{span_filter_path} keeps the fewest spans. But \m{span_filter} reaches the same evidence without touching the app, \m{job_buffer} is the most drift-sensitive, and the in-app cost is unmeasured.
+    \item[Smarter reducer worth it?] \textbf{Yes, for calibrated span-level thresholds}: 100\% evidence at 15\% of the spans.    \item[Application vs.\ collector?] \textbf{Some advantages in the app}: it knows when a job ends and \m{span_filter_path} keeps the fewest spans. But \m{span_filter} reaches the same evidence without touching the app, \m{job_buffer} is the most drift-sensitive, and the in-app cost is unmeasured.
   \end{description}
 \end{frame}
 
@@ -317,6 +314,20 @@
       \smallskip
     \end{column}
   \end{columns}
+\end{frame}
+
+% ------------------------------------------------------------------
+\begin{frame}{Future work}
+  \small
+  \begin{itemize}
+    \item \textbf{Open research question:} can an LLM or agent keep up at reasonable cost? Dynamic sampling rate and reconfiguration, not built or tested here.
+    \item \textbf{Application-structure-aware reduction:} keep critical paths and widely used dependencies, give high-value jobs stricter thresholds.
+    \item \textbf{Drift handling:} learn thresholds online and re-calibrate automatically when the share of flagged spans moves.
+    \item \textbf{Combine layers:} app-side \m{span_filter_path} to cut volume, then a collector tail sampler on the small stream.
+    \item \textbf{More anomaly types:} error bursts, new span names, changed fan-out; a latency threshold cannot see these.
+    \item \textbf{Adaptive budget and context:} target a span rate, and keep neighbours and a few normal traces next to each anomaly.
+    \item \textbf{Realism:} in-app cost of the reducers, rarer anomalies (about 1\% or less), real production traces.
+  \end{itemize}
 \end{frame}
 
 \end{document}

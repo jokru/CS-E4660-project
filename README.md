@@ -6,7 +6,6 @@
 - Do simple reducers miss rare exceptions?
 - Does a smarter reducer matter enough for finding exceptions and anomalies?
 - Application level vs. collector level adaptability?
-- Can an LLM keep up with reasonable costs?
 
 # 2. Approach
 
@@ -115,7 +114,7 @@ All numbers are in `RESULTS.md`. Evidence is the share of anomalous traces of wh
 - **Calibrated span-level methods win.** `span_filter` and `app_span_filter_path` keep 100% of the evidence at about 15% of the spans, on two unseen seeds (7 and 8), in replays at 5 to 40 traces/s, and on a capture the thresholds had never seen. Random sampling keeps 13-15% of the evidence at a similar volume.
 - **Tail sampling is a dead end here, for two reasons.** Its memory grows with rate times hold time, so with realistic 90 s holds both tail samplers are killed at 10 traces/s. And whole-trace latency cannot find the anomalies: anomalous traces reach a median 78% of their job's slow threshold and normal traces 70%, so any cutoff that finds the anomalies also keeps nearly every normal trace. `routed_tail_sampling` (per-job holds of 45 to 90 s) saves some memory but kept only 47% of the evidence and missed most slow-service anomalies.
 - **Latency drift.** With latencies scaled to 0.5x, evidence slips to 98-99%; at 2x it stays 100%, but `app_job_buffer` keeps 92% of the spans, so its reduction disappears. The span-level methods grew only to 15-17%. Recalibrating on a recent capture handles both.
-- **Not tested.** The LLM agent, the in-app CPU and memory cost of the reducers, rare anomaly rates of about 1% or less, and a real production workload.
+- **Not tested.** The in-app CPU and memory cost of the reducers, rare anomaly rates of about 1% or less, and a real production workload.
 
 Answers to the research questions:
 
@@ -124,10 +123,7 @@ Answers to the research questions:
 - Do simple reducers miss rare exceptions?
 - - Yes
 - Does a smarter reducer matter enough for finding exceptions and anomalies?
-- - Yes for calibrated span-level thresholds (100% evidence at 15% of the spans, against 13-15% evidence for random sampling). Not tested for an LLM-based reducer.
-- Can an LLM keep up with reasonable costs?
-- - Could not test
-- Application level vs. collector level adaptability?
+- - Yes for calibrated span-level thresholds (100% evidence at 15% of the spans, against 13-15% evidence for random sampling).- Application level vs. collector level adaptability?
 - - Some advantages in application level: the app knows when a job ends, so `job_buffer` needs no hold time guess, and `span_filter_path` holds nothing and keeps the fewest spans. But `span_filter` reaches the same evidence at the collector without touching the app, `job_buffer` is the most sensitive to drift, and the in-app cost was not measured.
 
 # 5. lesson
@@ -149,6 +145,24 @@ What we learned
 - Check the measurement before trusting it: two of the benchmark results were wrong at first (a replay bug that changed span IDs, and tail samplers compared at different hold times).
 
 Adaptive tracing has a place but even in the age of AI is not a trivial thing.
+
+
+# 6. Future work
+- Can an LLM/agent keep up at reasonable cost? Dynamic sampling rate and reconfiguration (research question not answered, no agent was built or tested)
+- Application-structure-aware reduction: weight the keep decision by how much a part of the application matters, instead of treating all spans alike.
+- - Critical paths: keep every span on a job's critical path, and trim the parallel branches that do not set its duration.
+- - Dependencies: keep the spans of services many other jobs depend on, and the first spans after a dependency fails or changes behaviour.
+- - Business importance: give high-value jobs (for example the executive scorecard) a stricter anomaly threshold than low-value ones.
+- Ideas that follow from the findings:
+- - Learn thresholds online and detect drift automatically: re-calibrate when the share of spans flagged slow moves, since drift was the weakest point of `job_buffer` and of all calibrated methods.
+- - Combine layers: an app-side `span_filter_path` to cut volume at the source and a collector-side tail sampler on the reduced stream, which makes the hold memory small.
+- - Cover anomaly types that are not slow spans: error bursts, new span names, changed call counts or fan-out. A per-span latency threshold cannot see these.
+- - Adaptive budget: raise or lower the thresholds to hit a target span rate or storage budget, instead of a fixed multiplier.
+- - Keep context around an anomaly: when a span is flagged, also keep its neighbours and a few normal traces of the same job as comparison.
+- - Measure the in-app cost (CPU, memory, added latency) of the reducers and replay at rates and anomaly frequencies closer to production.
+
+
+
 
 # Adaptive Tracing and Trace Reduction Test Bench
 
